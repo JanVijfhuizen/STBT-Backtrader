@@ -19,6 +19,7 @@ int main()
 	arenaCreateInfo.free = Free;
 	auto arena = jv::Arena::Create(arenaCreateInfo);
 
-	DeepMother mother{};
+	DeepMotherCreateInfo motherCreateInfo{};
+	auto mother = DeepMother::Create(arena, motherCreateInfo);
 	return 0;
 }

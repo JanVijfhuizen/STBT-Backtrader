@@ -13,7 +13,7 @@ struct DeepInstance final
 	struct ConnectionInfo final
 	{
 		uint32_t id;
-		float weight = 0;
+		float weight = 1;
 	};
 
 	jv::LinkedList<NeuronInfo> neurons;

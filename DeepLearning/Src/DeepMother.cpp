@@ -6,45 +6,100 @@
 #include "JLib/LinkedList.h"
 #include "JLib/LinkedListUtils.h"
 #include "JLib/Math.h"
+#include "JLib/VectorUtils.h"
 
-void DeepMother::Apply(jv::Arena& arena, const DeepInstance& instance, jv::Array<uint32_t>* outIds,
-                       uint64_t* outScope) const
+uint32_t DeepMother::AddNode(jv::Arena& arena, const DeepMotherMetaData& metaData, DeepInstance& instance, const bool fromConnection)
 {
-	*outScope = arena.CreateScope();
-	*outIds = jv::CreateArray<uint32_t>(arena, instance.neurons.GetCount());
+	_neurons.Add();
+	const uint32_t nId = _neurons.count - 1;
+	auto& iNeuron = Add(arena, instance.neurons);
+	iNeuron.id = nId;
+	iNeuron.threshold = static_cast<float>(rand()) / (RAND_MAX / 1.f);
+	iNeuron.decay = static_cast<float>(rand()) / (RAND_MAX / 1.f);
+
+	if(fromConnection && metaData.connectionIds.length > 0)
+	{
+		const uint32_t rId = rand() % metaData.connectionIds.length;
+		const auto& conn = _connections[metaData.connectionIds[rId]];
+
+		auto& conn1 = _connections.Add();
+		conn1.from = conn.from;
+		conn1.to = nId;
+		conn1.weight = conn.weight;
+		auto& conn2 = _connections.Add();
+		conn2.from = nId;
+		conn2.to = conn.to;
+		conn2.weight = conn.weight;
+
+		instance.connections[rId].id = _connections.length - 2;
+		Add(arena, instance.connections).id = _connections.length - 1;
+	}
+
+	return nId;
+}
+
+DeepMother DeepMother::Create(jv::Arena& arena, const DeepMotherCreateInfo& info)
+{
+	DeepMother mother{};
+	mother._neurons = jv::CreateVector<Neuron>(arena, info.neuronCapacity);
+	mother._connections = jv::CreateVector<Connection>(arena, info.connectionCapacity);
+	return mother;
+}
+
+void DeepMother::UpdateInputValue(const uint32_t id, const float value, const float delta) const
+{
+	_neurons[id].value += value * delta;
+}
+
+float DeepMother::ReadValue(const uint32_t id) const
+{
+	return _neurons[id].value;
+}
+
+DeepMotherMetaData DeepMother::Apply(jv::Arena& arena, const DeepInstance& instance) const
+{
+	DeepMotherMetaData metaData{};
+	const auto nIds = jv::CreateArray<uint32_t>(arena, instance.neurons.GetCount());
+	const auto cIds = jv::CreateArray<uint32_t>(arena, instance.connections.GetCount());
 
 	uint32_t i = 0;
 	for (const auto& neuron : instance.neurons)
 	{
-		auto& mNeuron = neurons[neuron.id];
+		auto& mNeuron = _neurons[neuron.id];
 		mNeuron.connIds = {};
 		mNeuron.threshold = neuron.threshold;
 		mNeuron.decay = neuron.decay;
-		(*outIds)[i++] = neuron.id;
+		nIds[i++] = neuron.id;
 	}
 
+	uint32_t j = 0;
 	for (const auto& connection : instance.connections)
 	{
-		auto& mConnection = connections[connection.id];
+		auto& mConnection = _connections[connection.id];
 		mConnection.weight = connection.weight;
-		auto& mNeuron = neurons[mConnection.from];
+		auto& mNeuron = _neurons[mConnection.from];
 		Add(arena, mNeuron.connIds) = mConnection.to;
+		nIds[j++] = connection.id;
 	}
+
+	metaData.neuronIds = nIds;
+	metaData.connectionIds = cIds;
+	return metaData;
 }
 
-void DeepMother::Update(const jv::Array<uint32_t>& ids, const float dt) const
+void DeepMother::Update(const jv::Array<uint32_t>& ids, const float delta) const
 {
 	for (const auto& id : ids)
 	{
-		auto& neuron = neurons[id];
+		auto& neuron = _neurons[id];
 		neuron.value = jv::Min<float>(neuron.value, 1);
 		for (const auto& connId : neuron.connIds)
 		{
-			const auto& connection = connections[connId];
-			auto& cNeuron = neurons[connection.to];
+			const auto& connection = _connections[connId];
+			auto& cNeuron = _neurons[connection.to];
 			cNeuron.value += connection.weight;
 		}
-		neuron.value -= neuron.decay * dt;
+		neuron.value -= neuron.decay * delta;
 		neuron.value = jv::Max<float>(neuron.value, 0);
 	}
 }

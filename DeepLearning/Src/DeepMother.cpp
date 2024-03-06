@@ -8,19 +8,24 @@
 #include "JLib/Math.h"
 #include "JLib/VectorUtils.h"
 
-uint32_t DeepMother::AddNode(jv::Arena& arena, const DeepMotherMetaData& metaData, DeepInstance& instance, const bool fromConnection)
+void RandomizeNeuron(DeepInstance::NeuronInfo& neuron)
+{
+	neuron.threshold = static_cast<float>(rand()) / (RAND_MAX / 1.f);
+	neuron.decay = static_cast<float>(rand()) / (RAND_MAX / 1.f);
+}
+
+uint32_t DeepMother::AddNeuron(jv::Arena& arena, const DeepMotherMetaData* metaData, DeepInstance& instance, const bool fromConnection)
 {
 	_neurons.Add();
 	const uint32_t nId = _neurons.count - 1;
 	auto& iNeuron = Add(arena, instance.neurons);
 	iNeuron.id = nId;
-	iNeuron.threshold = static_cast<float>(rand()) / (RAND_MAX / 1.f);
-	iNeuron.decay = static_cast<float>(rand()) / (RAND_MAX / 1.f);
+	RandomizeNeuron(iNeuron);
 
-	if(fromConnection && metaData.connectionIds.length > 0)
+	if(fromConnection && metaData->connectionIds.length > 0)
 	{
-		const uint32_t rId = rand() % metaData.connectionIds.length;
-		const auto& conn = _connections[metaData.connectionIds[rId]];
+		const uint32_t rId = rand() % metaData->connectionIds.length;
+		const auto& conn = _connections[metaData->connectionIds[rId]];
 
 		auto& conn1 = _connections.Add();
 		conn1.from = conn.from;
@@ -56,6 +61,60 @@ float DeepMother::ReadValue(const uint32_t id) const
 	return _neurons[id].value;
 }
 
+uint32_t DeepMother::AddNode(jv::Arena& arena, DeepInstance& instance)
+{
+	return AddNeuron(arena, nullptr, instance, false);
+}
+
+void DeepMother::Mutate(jv::Arena& arena, const DeepMotherMetaData& metaData, DeepInstance& instance)
+{
+	// Randomly adjust neuron values.
+	for (auto& neuron : instance.neurons)
+	{
+		if (rand() % thresholdMutationChance == 0)
+		{
+			const float mutation = static_cast<float>(rand()) / (RAND_MAX / 2.f) - 1;
+			neuron.threshold += mutation;
+		}
+		if (rand() % decayMutationChance == 0)
+		{
+			const float mutation = static_cast<float>(rand()) / (RAND_MAX / 2.f) - 1;
+			neuron.decay += mutation;
+		}
+	}
+	// Randomly adjust weight values.
+	for (auto& connection : instance.connections)
+	{
+		if (rand() % weightMutationChance != 0)
+			continue;
+		
+		const float mutation = static_cast<float>(rand()) / (RAND_MAX / 2.f) - 1;
+		connection.weight += mutation;
+	}
+	// Randomly spawn new neurons.
+	if(rand() % neuronSpawnChance == 0)
+	{
+		_neurons.Add();
+		auto& nInfo = Add(arena, instance.neurons);
+		nInfo.id = _neurons.count - 1;
+		RandomizeNeuron(nInfo);
+	}
+	// Randomly spawn new connections.
+	if (rand() % connectionSpawnChance == 0)
+	{
+		auto& conn = _connections.Add();
+		const uint32_t from = rand() % metaData.neuronIds.length;
+		uint32_t to = from;
+		while(to == from)
+			to = rand() % metaData.neuronIds.length;
+		conn.from = metaData.neuronIds[from];
+		conn.to = metaData.neuronIds[to];
+
+		auto& cInfo = Add(arena, instance.connections);
+		cInfo.id = _connections.count - 1;
+	}
+}
+
 DeepMotherMetaData DeepMother::Apply(jv::Arena& arena, const DeepInstance& instance) const
 {
 	DeepMotherMetaData metaData{};
@@ -87,9 +146,9 @@ DeepMotherMetaData DeepMother::Apply(jv::Arena& arena, const DeepInstance& insta
 	return metaData;
 }
 
-void DeepMother::Update(const jv::Array<uint32_t>& ids, const float delta) const
+void DeepMother::Update(const DeepMotherMetaData& metaData, const float delta) const
 {
-	for (const auto& id : ids)
+	for (const auto& id : metaData.neuronIds)
 	{
 		auto& neuron = _neurons[id];
 		neuron.value = jv::Min<float>(neuron.value, 1);

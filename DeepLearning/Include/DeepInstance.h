@@ -16,6 +16,6 @@ struct DeepInstance final
 		float weight = 1;
 	};
 
-	jv::LinkedList<NeuronInfo> neurons;
-	jv::LinkedList<ConnectionInfo> connections;
+	jv::LinkedList<NeuronInfo> neurons{};
+	jv::LinkedList<ConnectionInfo> connections{};
 };

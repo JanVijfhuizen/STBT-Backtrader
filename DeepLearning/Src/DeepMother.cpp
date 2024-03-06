@@ -36,8 +36,8 @@ uint32_t DeepMother::AddNeuron(jv::Arena& arena, const DeepMotherMetaData* metaD
 		conn2.to = conn.to;
 		conn2.weight = conn.weight;
 
-		instance.connections[rId].id = _connections.length - 2;
-		Add(arena, instance.connections).id = _connections.length - 1;
+		instance.connections[rId].id = _connections.count - 2;
+		Add(arena, instance.connections).id = _connections.count - 1;
 	}
 
 	return nId;
@@ -51,7 +51,7 @@ DeepMother DeepMother::Create(jv::Arena& arena, const DeepMotherCreateInfo& info
 	return mother;
 }
 
-void DeepMother::UpdateInputValue(const uint32_t id, const float value, const float delta) const
+void DeepMother::InputValue(const uint32_t id, const float value, const float delta) const
 {
 	_neurons[id].value += value * delta;
 }
@@ -75,11 +75,13 @@ void DeepMother::Mutate(jv::Arena& arena, const DeepMotherMetaData& metaData, De
 		{
 			const float mutation = static_cast<float>(rand()) / (RAND_MAX / 2.f) - 1;
 			neuron.threshold += mutation;
+			neuron.threshold = jv::Clamp<float>(neuron.threshold, 0, 1);
 		}
 		if (rand() % decayMutationChance == 0)
 		{
 			const float mutation = static_cast<float>(rand()) / (RAND_MAX / 2.f) - 1;
 			neuron.decay += mutation;
+			neuron.decay = jv::Max<float>(neuron.decay, 0);
 		}
 	}
 	// Randomly adjust weight values.
@@ -94,7 +96,7 @@ void DeepMother::Mutate(jv::Arena& arena, const DeepMotherMetaData& metaData, De
 	// Randomly spawn new neurons.
 	if(rand() % neuronSpawnChance == 0)
 	{
-		_neurons.Add();
+		AddNeuron(arena, &metaData, instance, true);
 		auto& nInfo = Add(arena, instance.neurons);
 		nInfo.id = _neurons.count - 1;
 		RandomizeNeuron(nInfo);

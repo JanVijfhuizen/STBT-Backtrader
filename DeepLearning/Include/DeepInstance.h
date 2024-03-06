@@ -6,8 +6,8 @@ struct DeepInstance final
 	struct NeuronInfo final
 	{
 		uint32_t id;
-		float threshold = 0;
-		float decay = 1;
+		float threshold;
+		float decay;
 	};
 
 	struct ConnectionInfo final

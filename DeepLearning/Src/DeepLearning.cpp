@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include <iostream>
+
 #include "DeepInstance.h"
 #include "DeepMother.h"
 #include "JLib/Arena.h"
@@ -16,6 +18,8 @@ void Free(void* ptr)
 
 int main()
 {
+	srand(static_cast <unsigned> (time(0)));
+
 	jv::ArenaCreateInfo arenaCreateInfo{};
 	arenaCreateInfo.alloc = Alloc;
 	arenaCreateInfo.free = Free;
@@ -39,6 +43,14 @@ int main()
 
 	const auto metaData = mother.Apply(tempArena, deepInstance);
 	for (int i = 0; i < 1000; ++i)
-		mother.Update(metaData, 0.1f);
+	{
+		const float inp = sin(.1f * i);
+
+		for (int j = 0; j < 3; ++j)
+			mother.InputValue(j, inp, .1f);
+
+		mother.Update(metaData, .1f);
+		std::cout << mother.ReadValue(3) << " / " << mother.ReadValue(4) << std::endl;
+	}
 	return 0;
 }

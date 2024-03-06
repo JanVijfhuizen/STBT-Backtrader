@@ -33,7 +33,7 @@ struct DeepMother final
 	uint32_t weightMutationChance = 10;
 
 	[[nodiscard]] static DeepMother Create(jv::Arena& arena, const DeepMotherCreateInfo& info);
-	void UpdateInputValue(uint32_t id, float value, float delta) const;
+	void InputValue(uint32_t id, float value, float delta) const;
 	[[nodiscard]] float ReadValue(uint32_t id) const;
 	uint32_t AddNode(jv::Arena& arena, DeepInstance& instance);
 	void Mutate(jv::Arena& arena, const DeepMotherMetaData& metaData, DeepInstance& instance);

@@ -26,7 +26,7 @@ struct DeepMotherMetaData final
 
 struct DeepMother final
 {
-	uint32_t neuronSpawnChance = 100;
+	uint32_t neuronSpawnChance = 500;
 	uint32_t connectionSpawnChance = 100;
 	uint32_t thresholdMutationChance = 10;
 	uint32_t decayMutationChance = 10;
@@ -34,7 +34,7 @@ struct DeepMother final
 
 	[[nodiscard]] static DeepMother Create(jv::Arena& arena, const DeepMotherCreateInfo& info);
 	void InputValue(uint32_t id, float value, float delta) const;
-	[[nodiscard]] float ReadValue(uint32_t id) const;
+	[[nodiscard]] bool ReadOutput(uint32_t id) const;
 	uint32_t AddNode(jv::Arena& arena, DeepInstance& instance);
 	void Mutate(jv::Arena& arena, const DeepMotherMetaData& metaData, DeepInstance& instance);
 	[[nodiscard]] DeepMotherMetaData Apply(jv::Arena& arena, const DeepInstance& instance) const;

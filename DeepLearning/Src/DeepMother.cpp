@@ -56,9 +56,10 @@ void DeepMother::InputValue(const uint32_t id, const float value, const float de
 	_neurons[id].value += value * delta;
 }
 
-float DeepMother::ReadValue(const uint32_t id) const
+bool DeepMother::ReadOutput(const uint32_t id) const
 {
-	return _neurons[id].value;
+	const auto& neuron = _neurons[id];
+	return neuron.value > neuron.threshold;
 }
 
 uint32_t DeepMother::AddNode(jv::Arena& arena, DeepInstance& instance)
@@ -101,14 +102,17 @@ void DeepMother::Mutate(jv::Arena& arena, const DeepMotherMetaData& metaData, De
 		nInfo.id = _neurons.count - 1;
 		RandomizeNeuron(nInfo);
 	}
+
 	// Randomly spawn new connections.
 	if (rand() % connectionSpawnChance == 0)
 	{
 		auto& conn = _connections.Add();
-		const uint32_t from = rand() % metaData.neuronIds.length;
+		const uint32_t l = metaData.neuronIds.length;
+		const uint32_t from = rand() % l;
 		uint32_t to = from;
 		while(to == from)
-			to = rand() % metaData.neuronIds.length;
+			to = rand() % l;
+
 		conn.from = metaData.neuronIds[from];
 		conn.to = metaData.neuronIds[to];
 
@@ -140,7 +144,7 @@ DeepMotherMetaData DeepMother::Apply(jv::Arena& arena, const DeepInstance& insta
 		mConnection.weight = connection.weight;
 		auto& mNeuron = _neurons[mConnection.from];
 		Add(arena, mNeuron.connIds) = mConnection.to;
-		nIds[j++] = connection.id;
+		cIds[j++] = connection.id;
 	}
 
 	metaData.neuronIds = nIds;
@@ -153,13 +157,19 @@ void DeepMother::Update(const DeepMotherMetaData& metaData, const float delta) c
 	for (const auto& id : metaData.neuronIds)
 	{
 		auto& neuron = _neurons[id];
-		neuron.value = jv::Min<float>(neuron.value, 1);
-		for (const auto& connId : neuron.connIds)
+		neuron.value = jv::Clamp<float>(neuron.value, 0, 1);
+
+		const float overflow = neuron.value > neuron.threshold;
+		if(overflow > 0)
 		{
-			const auto& connection = _connections[connId];
-			auto& cNeuron = _neurons[connection.to];
-			cNeuron.value += connection.weight;
+			for (const auto& connId : neuron.connIds)
+			{
+				const auto& connection = _connections[connId];
+				auto& cNeuron = _neurons[connection.to];
+				cNeuron.value += connection.weight;
+			}
 		}
+		
 		neuron.value -= neuron.decay * delta;
 		neuron.value = jv::Max<float>(neuron.value, 0);
 	}

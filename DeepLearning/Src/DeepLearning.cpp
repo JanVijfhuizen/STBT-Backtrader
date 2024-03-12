@@ -50,7 +50,7 @@ int main()
 			mother.InputValue(j, inp, .1f);
 
 		mother.Update(metaData, .1f);
-		std::cout << mother.ReadValue(3) << " / " << mother.ReadValue(4) << std::endl;
+		std::cout << mother.ReadOutput(3) << " / " << mother.ReadOutput(4) << std::endl;
 	}
 	return 0;
 }

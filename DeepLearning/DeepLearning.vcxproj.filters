@@ -80,5 +80,8 @@
     <ClInclude Include="Include\JLib\VectorUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\gnuplot-iostream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

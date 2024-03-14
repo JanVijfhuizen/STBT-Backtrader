@@ -143,6 +143,7 @@
     <ClCompile Include="Src\Arena.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\gnuplot-iostream.h" />
     <ClInclude Include="Include\JLib\Arena.h" />
     <ClInclude Include="Include\JLib\Array.h" />
     <ClInclude Include="Include\JLib\ArrayUtils.h" />

@@ -135,7 +135,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Src\DeepMother.cpp" />
     <ClCompile Include="Src\DeepLearning.cpp" />
     <ClCompile Include="Src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -144,12 +143,9 @@
     <ClCompile Include="Src\Arena.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Include\DeepInstance.h" />
-    <ClInclude Include="Include\DeepMother.h" />
     <ClInclude Include="Include\JLib\Arena.h" />
     <ClInclude Include="Include\JLib\Array.h" />
     <ClInclude Include="Include\JLib\ArrayUtils.h" />
-    <ClInclude Include="Include\Connection.h" />
     <ClInclude Include="Include\JLib\Heap.h" />
     <ClInclude Include="Include\JLib\HeapUtils.h" />
     <ClInclude Include="Include\JLib\Iterator.h" />
@@ -164,7 +160,6 @@
     <ClInclude Include="Include\JLib\QueueUtils.h" />
     <ClInclude Include="Include\JLib\Vector.h" />
     <ClInclude Include="Include\JLib\VectorUtils.h" />
-    <ClInclude Include="Include\Neuron.h" />
     <ClInclude Include="Include\pch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

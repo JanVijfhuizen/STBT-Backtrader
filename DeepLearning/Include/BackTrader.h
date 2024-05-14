@@ -1,11 +1,12 @@
 ﻿#pragma once
 
-class Quote;
-
 namespace jv
 {
 	struct Arena;
+}
 
+namespace jv::bt
+{
 	struct Date
 	{
 		time_t value;
@@ -15,7 +16,7 @@ namespace jv
 		void Adjust(int32_t days);
 		[[nodiscard]] const char* ToStr(Arena& arena) const;
 	};
-	
+
 	struct TimelineIterator final
 	{
 		struct Timeline const* timeline = nullptr;
@@ -40,22 +41,32 @@ namespace jv
 
 	struct Timeline final
 	{
+		friend TimelineIterator;
+
 		[[nodiscard]] double& operator[](uint32_t i) const;
 
-		double* ptr;
-		uint32_t length;
-		uint32_t count = 0;
-		uint32_t start = 0;
-		Date endDate;
-
 		void Next(double value);
-		bool Next(Arena& tempArena, Quote* quote);
-		void Fill(Arena& tempArena, Date date, Quote* quote);
+		bool Next(Arena& tempArena, uint32_t quote);
+		void Fill(Arena& tempArena, Date date, uint32_t quote);
+		void Draw();
 
 		[[nodiscard]] TimelineIterator begin() const;
 		[[nodiscard]] TimelineIterator end() const;
+
+		[[nodiscard]] static Timeline Create(Arena& arena, uint32_t length);
+		static void Destroy(Arena& arena, const Timeline& timeline);
+
+	private:
+		double* _ptr;
+		uint32_t _length;
+		uint32_t _count = 0;
+		uint32_t _start = 0;
+		Date _endDate;
 	};
 
-	[[nodiscard]] Timeline CreateTimeline(Arena& arena, uint32_t length);
-	void DestroyTimeline(Arena& arena, const Timeline& timeline);
+	void Init();
+	void Shutdown();
+
+	[[nodiscard]] uint32_t AddQuote(const char* str);
+	void Explore(uint32_t quote, Date startDate, uint32_t days);
 }

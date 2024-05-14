@@ -1,12 +1,6 @@
 #include "pch.h"
-
-#include <numeric>
 #include <random>
-
-#include <quote.hpp>
-#include <ctime>
-
-#include "Timeline.h"
+#include "BackTrader.h"
 #include "JLib/Arena.h"
 
 void* Alloc(const uint32_t size)
@@ -33,41 +27,30 @@ int main()
 
 	// Do testing frame based (which is why the queueing is important)
 	// simd?
-
-	Gnuplot gp("\"C:\\Program Files\\gnuplot\\bin\\gnuplot.exe\"");
-	Quote* snp500 = new Quote("^GSPC");
-
+	
 	jv::ArenaCreateInfo arenaCreateInfo{};
 	arenaCreateInfo.alloc = Alloc;
 	arenaCreateInfo.free = Free;
 	auto arena = jv::Arena::Create(arenaCreateInfo);
 	auto tempArena = jv::Arena::Create(arenaCreateInfo);
 
-	jv::Date date{};
+	jv::bt::Date date{};
 	date.SetToToday();
 	date.Adjust(-120);
 
-	snp500->getHistoricalSpots("2023-01-01", "2024-05-14", "1d");
-
-	auto timeline = CreateTimeline(arena, 40);
-	timeline.Fill(tempArena, date, snp500);
-	for (int i = 0; i < 20; ++i)
-		timeline.Next(tempArena, snp500);
-
-	std::vector<double> v;
-	for (auto d : timeline)
-	{
-		v.push_back(d);
-	}
+	jv::bt::Init();
+	const auto gspc = jv::bt::AddQuote("^GSPC");
+	Explore(gspc, date, 120);
 	
-	gp << "set title 'SNP 500'\n";
-	gp << "plot '-' with lines title 'v'\n";
-	//gp.send(v);
-	gp.send(v);
+	auto timeline = jv::bt::Timeline::Create(arena, 40);
+	timeline.Fill(tempArena, date, gspc);
+	for (int i = 0; i < 20; ++i)
+		timeline.Next(tempArena, gspc);
+
+	timeline.Draw();
 
 	std::cin.get();
 
-	// Free memory
-	delete snp500;
+	jv::bt::Shutdown();
 	return 0;
 }

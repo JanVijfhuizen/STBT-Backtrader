@@ -24,7 +24,7 @@
     <ClCompile Include="Src\Arena.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Timeline.cpp">
+    <ClCompile Include="Src\BackTrader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,7 +86,7 @@
     <ClInclude Include="Include\gnuplot-iostream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Timeline.h">
+    <ClInclude Include="Include\BackTrader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

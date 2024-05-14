@@ -6,10 +6,49 @@
 #include <quote.hpp>
 #include <ctime>
 
+#include "Timeline.h"
+#include "JLib/Arena.h"
+
+void* Alloc(const uint32_t size)
+{
+	return malloc(size);
+}
+void Free(void* ptr)
+{
+	return free(ptr);
+}
+
 int main()
 {
+	// BACK TRADER
+
+	// Goal: Make a training ground where you can test various algorithms, including ET-RNNs.
+	// Also has to be able to be both used for training, testing and practical
+
+	// start out by basic helper functions, like getting a timeseries for a single stock.
+	// Timeseries object, returns everything vectorized (but only things that were requested, enum bitwise). Append to add new data queue wise.
+
+	// Use queues a lot to implement continuious profiling.
+	// Basically update old timeseries with new spot
+
+	// Do testing frame based (which is why the queueing is important)
+	// simd?
+
 	Gnuplot gp("\"C:\\Program Files\\gnuplot\\bin\\gnuplot.exe\"");
 	Quote* snp500 = new Quote("^GSPC");
+
+	jv::ArenaCreateInfo arenaCreateInfo{};
+	arenaCreateInfo.alloc = Alloc;
+	arenaCreateInfo.free = Free;
+	auto arena = jv::Arena::Create(arenaCreateInfo);
+	auto tempArena = jv::Arena::Create(arenaCreateInfo);
+
+	jv::Date date{};
+	date.SetToToday();
+	date.Adjust(-30);
+
+	auto timeline = CreateTimeline(arena, 30);
+	timeline.Fill(tempArena, date, snp500);
 
 	std::vector<double> v;
 

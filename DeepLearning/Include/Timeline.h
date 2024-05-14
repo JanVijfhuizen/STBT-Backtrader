@@ -46,9 +46,10 @@ namespace jv
 		uint32_t length;
 		uint32_t count = 0;
 		uint32_t start = 0;
-		Date startDate;
+		Date endDate;
 
-		void Enqueue(double value);
+		void Next(double value);
+		bool Next(Arena& tempArena, Quote* quote);
 		void Fill(Arena& tempArena, Date date, Quote* quote);
 
 		[[nodiscard]] TimelineIterator begin() const;

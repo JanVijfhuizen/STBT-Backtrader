@@ -49,8 +49,10 @@ int main()
 
 	snp500->getHistoricalSpots("2023-01-01", "2024-05-14", "1d");
 
-	auto timeline = CreateTimeline(arena, 120);
+	auto timeline = CreateTimeline(arena, 40);
 	timeline.Fill(tempArena, date, snp500);
+	for (int i = 0; i < 20; ++i)
+		timeline.Next(tempArena, snp500);
 
 	std::vector<double> v;
 	for (auto d : timeline)

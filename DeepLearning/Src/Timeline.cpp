@@ -70,23 +70,39 @@ double& jv::Timeline::operator[](const uint32_t i) const
 	return ptr[(start + i) % length];
 }
 
-void jv::Timeline::Enqueue(const double value)
+void jv::Timeline::Next(const double value)
 {
-	if(count < length)
+	endDate.Adjust(1);
+	if (count < length)
 	{
 		ptr[count++] = value;
 		return;
 	}
 
-	startDate.Adjust(1);
 	++start;
 	start %= length;
 	ptr[(start - 1) % length] = value;
 }
 
+bool jv::Timeline::Next(Arena& tempArena, Quote* quote)
+{
+	Date d = endDate;
+	std::cout << d.ToStr(tempArena) << std::endl;
+	d.Adjust(1);
+
+	try {
+		const auto value = quote->getSpot(d.ToStr(tempArena)).getClose();
+		Next(value);
+		return true;
+	}
+	catch (const std::exception& e) {
+		endDate.Adjust(1);
+		return false;
+	}
+}
+
 void jv::Timeline::Fill(Arena& tempArena, const Date date, Quote* quote)
 {
-	startDate = date;
 	count = 0;
 	start = 0;
 
@@ -103,10 +119,9 @@ void jv::Timeline::Fill(Arena& tempArena, const Date date, Quote* quote)
 			auto spot = quote->getSpot(str);
 			ptr[count++] = spot.getClose();
 		}
-		catch (const std::exception& e) {
-			std::cerr << e.what() << std::endl;
-		}
+		catch (const std::exception& e){}
 
+		endDate = iDate;
 		tempArena.DestroyScope(s);
 	}
 }

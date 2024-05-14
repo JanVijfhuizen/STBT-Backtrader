@@ -222,4 +222,27 @@ namespace jv::bt
 		quoteInstance->getHistoricalSpots(start, end, "1d");
 		trader.tempArena.DestroyScope(scope);
 	}
+
+	double GetPortfolioLiquidity(const Stock* portfolio, const uint32_t length, const Date date)
+	{
+		double value = 0;
+		for (int i = 0; i < length; ++i)
+		{
+			auto& stock = portfolio[i];
+			Explore(stock.quote, date, 1);
+			auto q = trader.quotes[stock.quote];
+
+			try {
+				const auto scope = trader.tempArena.CreateScope();
+				const auto spot = q->getSpot(date.ToStr(trader.tempArena)).getClose();
+				value += spot * stock.count;
+				trader.tempArena.DestroyScope(scope);
+			}
+			catch (const std::exception& e)
+			{
+				return -1;
+			}
+		}
+		return value;
+	}
 }

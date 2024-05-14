@@ -27,6 +27,8 @@ int main()
 
 	// Do testing frame based (which is why the queueing is important)
 	// simd?
+
+	// include portfolio management
 	
 	jv::ArenaCreateInfo arenaCreateInfo{};
 	arenaCreateInfo.alloc = Alloc;

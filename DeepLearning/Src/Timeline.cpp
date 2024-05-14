@@ -28,29 +28,60 @@ const char* jv::Date::ToStr(Arena& arena) const
 {
 	tm tm{};
 	localtime_s(&tm, &value);
+	
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%Y-%m-%d");
+	const auto str = oss.str();
 
-	char* c = static_cast<char*>(arena.Alloc(sizeof(char) * 11));
-	snprintf(c, sizeof c, "date: %d-%d-%d", tm.tm_year, tm.tm_mon, tm.tm_mday);
+	char* c = static_cast<char*>(arena.Alloc(sizeof str.length()));
+	memcpy(c, str.c_str(), str.length());
 	return c;
 }
 
-double jv::Timeline::operator[](const uint32_t i) const
+double& jv::TimelineIterator::operator*() const
 {
-	return values[(start + i) % length];
+	assert(timeline);
+	assert(index <= timeline->length);
+	return (*timeline)[index];
+}
+
+double& jv::TimelineIterator::operator->() const
+{
+	assert(timeline);
+	assert(index <= timeline->length);
+	return (*timeline)[index];
+}
+
+const jv::TimelineIterator& jv::TimelineIterator::operator++()
+{
+	++index;
+	return *this;
+}
+
+jv::TimelineIterator jv::TimelineIterator::operator++(int)
+{
+	const TimelineIterator temp{ timeline, index };
+	++index;
+	return temp;
+}
+
+double& jv::Timeline::operator[](const uint32_t i) const
+{
+	return ptr[(start + i) % length];
 }
 
 void jv::Timeline::Enqueue(const double value)
 {
 	if(count < length)
 	{
-		values[count++] = value;
+		ptr[count++] = value;
 		return;
 	}
 
 	startDate.Adjust(1);
 	++start;
 	start %= length;
-	values[(start - 1) % length] = value;
+	ptr[(start - 1) % length] = value;
 }
 
 void jv::Timeline::Fill(Arena& tempArena, const Date date, Quote* quote)
@@ -70,7 +101,7 @@ void jv::Timeline::Fill(Arena& tempArena, const Date date, Quote* quote)
 
 		try {
 			auto spot = quote->getSpot(str);
-			values[count++] = spot.getClose();
+			ptr[count++] = spot.getClose();
 		}
 		catch (const std::exception& e) {
 			std::cerr << e.what() << std::endl;
@@ -80,15 +111,32 @@ void jv::Timeline::Fill(Arena& tempArena, const Date date, Quote* quote)
 	}
 }
 
+jv::TimelineIterator jv::Timeline::begin() const
+{
+	assert(ptr || length == 0);
+	TimelineIterator it{};
+	it.timeline = this;
+	return it;
+}
+
+jv::TimelineIterator jv::Timeline::end() const
+{
+	assert(ptr || length == 0);
+	TimelineIterator it{};
+	it.timeline = this;
+	it.index = count;
+	return it;
+}
+
 jv::Timeline jv::CreateTimeline(Arena& arena, const uint32_t length)
 {
 	Timeline timeline{};
-	timeline.values = static_cast<double*>(arena.Alloc(sizeof(double) * length));
+	timeline.ptr = static_cast<double*>(arena.Alloc(sizeof(double) * length));
 	timeline.length = length;
 	return timeline;
 }
 
 void jv::DestroyTimeline(Arena& arena, const Timeline& timeline)
 {
-	arena.Free(timeline.values);
+	arena.Free(timeline.ptr);
 }

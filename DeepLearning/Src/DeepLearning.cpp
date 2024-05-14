@@ -45,37 +45,24 @@ int main()
 
 	jv::Date date{};
 	date.SetToToday();
-	date.Adjust(-30);
+	date.Adjust(-120);
 
-	auto timeline = CreateTimeline(arena, 30);
+	snp500->getHistoricalSpots("2023-01-01", "2024-05-14", "1d");
+
+	auto timeline = CreateTimeline(arena, 120);
 	timeline.Fill(tempArena, date, snp500);
 
 	std::vector<double> v;
-
-	snp500->getHistoricalSpots("2024-01-01", "2024-03-19", "1d");
-
-	for (int i = 0; i < 100; ++i)
+	for (auto d : timeline)
 	{
-		tm tm;
-		time_t now = time(0) - (24 * 60 * 60) * (101 - i);
-		localtime_s(&tm, &now);
-
-		std::ostringstream oss;
-		oss << std::put_time(&tm, "%Y-%m-%d");
-		const auto str = oss.str();
-
-		try {
-			auto spot = snp500->getSpot(str);
-			v.push_back(spot.getClose());
-		}
-		catch (const std::exception& e) {
-			std::cerr << e.what() << std::endl;
-		}
+		v.push_back(d);
 	}
 	
 	gp << "set title 'SNP 500'\n";
 	gp << "plot '-' with lines title 'v'\n";
+	//gp.send(v);
 	gp.send(v);
+
 	std::cin.get();
 
 	// Free memory

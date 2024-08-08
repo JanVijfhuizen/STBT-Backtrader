@@ -39,14 +39,13 @@ int main()
 	auto tempArena = jv::Arena::Create(arenaCreateInfo);
 
 	{
-		jv::bt::Date date{};
-		date.SetToToday();
-		date.Adjust(-120);
-
 		jv::bt::WebSocket webSocket{};
 		webSocket.Init();
 
-		std::cout << webSocket.GetData(tempArena, "AAPL", date) << std::endl;
+		const auto str = webSocket.GetData(tempArena, "AAPL");
+		const auto points = webSocket.ConvertDataToPoints(arena, str);
+		for (auto& point : points)
+			std::cout << point.open << std::endl;
 		return 0;
 	}
 

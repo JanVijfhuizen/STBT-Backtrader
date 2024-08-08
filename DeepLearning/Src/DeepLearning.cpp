@@ -2,8 +2,8 @@
 
 #include <random>
 #include "BackTrader.h"
+#include "WebSocket.h"
 #include "JLib/Arena.h"
-#include "curl/curl.h"
 
 void* Alloc(const uint32_t size)
 {
@@ -13,55 +13,6 @@ void Free(void* ptr)
 {
 	return free(ptr);
 }
-
-
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
-{
-	((std::string*)userp)->append((char*)contents, size * nmemb);
-	return size * nmemb;
-}
-
-struct WebSocket final
-{
-	void Init()
-	{
-		_curl = curl_easy_init();
-		assert(_curl);
-	}
-
-	[[nodiscard]] std::string GetData(jv::Arena& tempArena, const char* symbol, const jv::bt::Date date)
-	{
-		const auto url = CreateUrl(tempArena, symbol, date);
-		curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
-		curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &_readBuffer);
-		const auto res = curl_easy_perform(_curl);
-		assert(res == 0);
-		curl_easy_cleanup(_curl);
-		return _readBuffer;
-	}
-
-private:
-	CURL* _curl;
-	CURLcode _res;
-	std::string _readBuffer;
-
-	[[nodiscard]] static std::string CreateUrl(jv::Arena& tempArena, const char* symbol, const jv::bt::Date date)
-	{
-		const char* key = "7HIFX74MVML11CUF";
-
-		const auto scope = tempArena.CreateScope();
-
-		std::string str = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=";
-		str.append(symbol);
-		str.append("&date=");
-		str.append(date.ToStr(tempArena));
-		str.append("&apikey=");
-		str.append(key);
-		tempArena.DestroyScope(scope);
-		return str;
-	}
-};
 
 int main()
 {
@@ -92,7 +43,7 @@ int main()
 		date.SetToToday();
 		date.Adjust(-120);
 
-		WebSocket webSocket{};
+		jv::bt::WebSocket webSocket{};
 		webSocket.Init();
 
 		std::cout << webSocket.GetData(tempArena, "AAPL", date) << std::endl;

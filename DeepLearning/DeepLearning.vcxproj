@@ -138,6 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Src\WebSocket.cpp" />
     <ClCompile Include="Src\BackTrader.cpp" />
     <ClCompile Include="Src\DeepLearning.cpp" />
     <ClCompile Include="Src\pch.cpp">
@@ -167,6 +168,7 @@
     <ClInclude Include="Include\JLib\Vector.h" />
     <ClInclude Include="Include\JLib\VectorUtils.h" />
     <ClInclude Include="Include\pch.h" />
+    <ClInclude Include="Include\WebSocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

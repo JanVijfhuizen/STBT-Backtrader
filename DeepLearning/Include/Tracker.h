@@ -1,9 +1,7 @@
 ﻿#pragma once
 #include <curl/curl.h>
 
-#include "BackTrader.h"
-#include "Point.h"
-#include "JLib/Array.h"
+#include "TimeSeries.h"
 
 namespace jv
 {
@@ -12,12 +10,14 @@ namespace jv
 
 namespace jv::bt
 {
-	struct WebSocket final
+	struct Tracker final
 	{
 		void Init();
 
 		[[nodiscard]] std::string GetData(Arena& tempArena, const char* symbol);
-		[[nodiscard]] Array<Point> ConvertDataToPoints(Arena& arena, std::string str) const;
+		[[nodiscard]] TimeSeries ConvertDataToTimeSeries(Arena& arena, std::string str) const;
+		[[nodiscard]] static TimeSeries GetTimeSeriesSubSet(Arena& arena, const TimeSeries& timeSeries, uint32_t depth, uint32_t length);
+		static void Draw(const TimeSeries& timeSeries);
 
 	private:
 		CURL* _curl = nullptr;

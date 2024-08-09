@@ -138,8 +138,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Src\WebSocket.cpp" />
-    <ClCompile Include="Src\BackTrader.cpp" />
+    <ClCompile Include="Src\TimeSeries.cpp" />
+    <ClCompile Include="Src\Tracker.cpp" />
     <ClCompile Include="Src\DeepLearning.cpp" />
     <ClCompile Include="Src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -148,7 +148,6 @@
     <ClCompile Include="Src\Arena.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Include\BackTrader.h" />
     <ClInclude Include="Include\gnuplot-iostream.h" />
     <ClInclude Include="Include\JLib\Arena.h" />
     <ClInclude Include="Include\JLib\Array.h" />
@@ -168,8 +167,8 @@
     <ClInclude Include="Include\JLib\Vector.h" />
     <ClInclude Include="Include\JLib\VectorUtils.h" />
     <ClInclude Include="Include\pch.h" />
-    <ClInclude Include="Include\Point.h" />
-    <ClInclude Include="Include\WebSocket.h" />
+    <ClInclude Include="Include\TimeSeries.h" />
+    <ClInclude Include="Include\Tracker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

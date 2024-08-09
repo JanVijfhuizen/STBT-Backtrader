@@ -1,8 +1,7 @@
 #include "pch.h"
 
 #include <random>
-#include "BackTrader.h"
-#include "WebSocket.h"
+#include "Tracker.h"
 #include "JLib/Arena.h"
 
 void* Alloc(const uint32_t size)
@@ -38,34 +37,12 @@ int main()
 	auto arena = jv::Arena::Create(arenaCreateInfo);
 	auto tempArena = jv::Arena::Create(arenaCreateInfo);
 
-	{
-		jv::bt::WebSocket webSocket{};
-		webSocket.Init();
+	jv::bt::Tracker tracker{};
+	tracker.Init();
 
-		const auto str = webSocket.GetData(tempArena, "AAPL");
-		const auto points = webSocket.ConvertDataToPoints(arena, str);
-		for (auto& point : points)
-			std::cout << point.open << std::endl;
-		return 0;
-	}
-
-	jv::bt::Date date{};
-	date.SetToToday();
-	date.Adjust(-120);
-
-	jv::bt::Init();
-	const auto gspc = jv::bt::AddQuote("^GSPC");
-	Explore(gspc, date, 120);
-	
-	auto timeline = jv::bt::Timeline::Create(arena, 40);
-	timeline.Fill(tempArena, date, gspc);
-	for (int i = 0; i < 20; ++i)
-		timeline.Next(tempArena, gspc);
-
-	timeline.Draw();
-
-	std::cin.get();
-
-	jv::bt::Shutdown();
+	const auto str = tracker.GetData(tempArena, "AAPL");
+	const auto timeSeries = tracker.ConvertDataToTimeSeries(arena, str);
+	const auto subSeries = jv::bt::Tracker::GetTimeSeriesSubSet(arena, timeSeries, 120, 96);
+	jv::bt::Tracker::Draw(subSeries);
 	return 0;
 }

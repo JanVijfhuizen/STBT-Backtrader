@@ -24,10 +24,10 @@
     <ClCompile Include="Src\Arena.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\BackTrader.cpp">
+    <ClCompile Include="Src\Tracker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\WebSocket.cpp">
+    <ClCompile Include="Src\TimeSeries.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,13 +89,10 @@
     <ClInclude Include="Include\gnuplot-iostream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\BackTrader.h">
+    <ClInclude Include="Include\Tracker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\WebSocket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Point.h">
+    <ClInclude Include="Include\TimeSeries.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

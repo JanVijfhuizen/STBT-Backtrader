@@ -13,6 +13,12 @@ void Free(void* ptr)
 	return free(ptr);
 }
 
+void StockAlgorithm(const jv::bt::World& world, const jv::bt::Portfolio& portfolio,
+	jv::Vector<jv::bt::Call>& calls, const uint32_t offset, void* userPtr)
+{
+	
+}
+
 int main()
 {
 	// BACK TRADER
@@ -49,10 +55,21 @@ int main()
 
 	auto portfolio = CreatePortfolio(arena, backTrader);
 	portfolio.liquidity = 2000;
+	portfolio.stocks[0] = 16;
+	portfolio.stocks[1] = 6;
+	portfolio.stocks[2] = 33;
+	portfolio.stocks[3] = 9;
 
 	SavePortfolio("jan", portfolio);
 	portfolio = LoadPortfolio(arena, backTrader, "jan");
-	assert(portfolio.liquidity > 1500);
+
+	jv::bt::RunInfo runInfo{};
+	runInfo.offset = 30;
+	runInfo.length = 30;
+	runInfo.func = StockAlgorithm;
+	jv::bt::Log log;
+	const auto endPortfolio = backTrader.Run(arena, tempArena, portfolio, log, runInfo);
+	std::cout << backTrader.GetLiquidity(endPortfolio, 0) - backTrader.GetLiquidity(portfolio, 30);
 
 	return 0;
 }

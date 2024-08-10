@@ -3,9 +3,46 @@
 
 #include "JLib/Arena.h"
 #include "JLib/ArrayUtils.h"
+#include "JLib/VectorUtils.h"
 
 namespace jv::bt
 {
+	void Portfolio::Copy(const Portfolio& other)
+	{
+		liquidity = other.liquidity;
+		memcpy(stocks.ptr, other.stocks.ptr, sizeof(uint32_t) * stocks.length);
+	}
+
+	Portfolio BackTrader::Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Array<Array<Call>>& outLog, const RunInfo& runInfo) const
+	{
+		auto cpyPortfolio = CreatePortfolio(arena, *this);
+		cpyPortfolio.Copy(portfolio);
+
+		auto calls = CreateVector<Call>(tempArena, portfolio.stocks.length);
+		outLog = CreateArray<Array<Call>>(arena, runInfo.length);
+
+		for (uint32_t i = 0; i < runInfo.length; ++i)
+		{
+			const uint32_t index = runInfo.offset - i;
+			calls.Clear();
+			runInfo.func(world, cpyPortfolio, calls, index, runInfo.userPtr);
+			const auto arr = CreateArray<Call>(arena, calls.count);
+			memcpy(arr.ptr, calls.ptr, sizeof(Call) * calls.count);
+			outLog[i] = arr;
+		}
+		
+		return cpyPortfolio;
+	}
+
+	float BackTrader::GetLiquidity(const Portfolio& portfolio, const uint32_t offset) const
+	{
+		float liquidity = portfolio.liquidity;
+		for (uint32_t i = 0; i < portfolio.stocks.length; ++i)
+			if(portfolio.stocks[i] > 0)
+				liquidity += world.timeSeries[i].close[offset] * portfolio.stocks[i];
+		return liquidity;
+	}
+
 	Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader)
 	{
 		Portfolio portfolio{};

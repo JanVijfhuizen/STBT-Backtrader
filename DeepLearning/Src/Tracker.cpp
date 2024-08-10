@@ -57,10 +57,10 @@ namespace jv::bt
 			assert(_curl);
 			const auto url = CreateUrl(tempArena, symbol);
 			curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
-			const auto res = curl_easy_perform(_curl);
 			curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 			_readBuffer = {};
 			curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &_readBuffer);
+			const auto res = curl_easy_perform(_curl);
 			assert(res == 0);
 			curl_easy_cleanup(_curl);
 

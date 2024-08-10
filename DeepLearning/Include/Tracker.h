@@ -17,6 +17,7 @@ namespace jv::bt
 		[[nodiscard]] TimeSeries ConvertDataToTimeSeries(Arena& arena, std::string str) const;
 		[[nodiscard]] static TimeSeries GetTimeSeriesSubSet(Arena& arena, const TimeSeries& timeSeries, uint32_t depth, uint32_t length);
 		static void Draw(const TimeSeries& timeSeries);
+		static void Debug(const std::vector<double>& v);
 
 	private:
 		CURL* _curl = nullptr;

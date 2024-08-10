@@ -21,6 +21,8 @@ namespace jv::bt
 		auto calls = CreateVector<Call>(tempArena, portfolio.stocks.length);
 		outLog = CreateArray<Array<Call>>(arena, runInfo.length);
 
+		std::vector<double> closeDebug{};
+
 		for (uint32_t i = 0; i < runInfo.length; ++i)
 		{
 			const uint32_t index = runInfo.offset - i;
@@ -29,8 +31,39 @@ namespace jv::bt
 			const auto arr = CreateArray<Call>(arena, calls.count);
 			memcpy(arr.ptr, calls.ptr, sizeof(Call) * calls.count);
 			outLog[i] = arr;
+
+			for (const auto& call : arr)
+			{
+				const auto open = world.timeSeries[call.symbolId].open[index];
+				auto& stock = cpyPortfolio.stocks[call.symbolId];
+				assert(world.timeSeries[call.symbolId].length > index);
+
+				cpyPortfolio.liquidity -= call.amount * open * world.fee;
+				assert(cpyPortfolio.liquidity > -1e-5f);
+
+				switch (call.type)
+				{
+					case CallType::Buy: 
+						stock += call.amount;
+						cpyPortfolio.liquidity -= open * call.amount;
+						break;
+					case CallType::Sell:
+						assert(stock >= call.amount);
+						stock -= call.amount;
+						cpyPortfolio.liquidity += open * call.amount;
+						break;
+					default: 
+						;
+				}
+				
+				assert(cpyPortfolio.liquidity > -1e-5f);
+			}
+
+			closeDebug.push_back(GetLiquidity(cpyPortfolio, index));
 		}
-		
+
+		if(runInfo.debug)
+			Tracker::Debug(closeDebug);
 		return cpyPortfolio;
 	}
 

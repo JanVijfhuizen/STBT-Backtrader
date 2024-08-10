@@ -16,11 +16,41 @@ void Free(void* ptr)
 void StockAlgorithm(const jv::bt::World& world, const jv::bt::Portfolio& portfolio,
 	jv::Vector<jv::bt::Call>& calls, const uint32_t offset, void* userPtr)
 {
-	
+	const auto c = rand() % 2;
+	const auto d = rand() % world.timeSeries.length;
+
+	jv::bt::Call call{};
+
+	const auto& stock = world.timeSeries[d];
+
+	// buy
+	if(c == 0)
+	{
+		if(portfolio.liquidity + 10 > stock.open[offset])
+		{
+			call.amount = 1;
+			call.type = jv::bt::CallType::Buy;
+			call.symbolId = d;
+			calls.Add() = call;
+		}
+	}
+	// sell
+	else
+	{
+		if (portfolio.liquidity > 10 && portfolio.stocks[d] > 0)
+		{
+			call.amount = 1;
+			call.type = jv::bt::CallType::Sell;
+			call.symbolId = d;
+			calls.Add() = call;
+		}
+	}
 }
 
 int main()
 {
+	srand(time(nullptr));
+
 	// BACK TRADER
 
 	// Goal: Make a training ground where you can test various algorithms, including ET-RNNs.
@@ -55,10 +85,10 @@ int main()
 
 	auto portfolio = CreatePortfolio(arena, backTrader);
 	portfolio.liquidity = 2000;
-	portfolio.stocks[0] = 16;
-	portfolio.stocks[1] = 6;
-	portfolio.stocks[2] = 33;
-	portfolio.stocks[3] = 9;
+	portfolio.stocks[0] = 0;
+	portfolio.stocks[1] = 0;
+	portfolio.stocks[2] = 0;
+	portfolio.stocks[3] = 0;
 
 	SavePortfolio("jan", portfolio);
 	portfolio = LoadPortfolio(arena, backTrader, "jan");
@@ -67,6 +97,7 @@ int main()
 	runInfo.offset = 30;
 	runInfo.length = 30;
 	runInfo.func = StockAlgorithm;
+	runInfo.debug = true;
 	jv::bt::Log log;
 	const auto endPortfolio = backTrader.Run(arena, tempArena, portfolio, log, runInfo);
 	std::cout << backTrader.GetLiquidity(endPortfolio, 0) - backTrader.GetLiquidity(portfolio, 30);

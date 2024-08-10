@@ -137,6 +137,11 @@ namespace jv::bt
 		std::vector<double> v{};
 		for (uint32_t i = 0; i < timeSeries.length; ++i)
 			v.push_back(timeSeries.close[i]);
+		Debug(v);
+	}
+
+	void Tracker::Debug(const std::vector<double>& v)
+	{
 		gp << "set title 'timeline'\n";
 		gp << "plot '-' with lines title 'v'\n";
 		gp.send(v);

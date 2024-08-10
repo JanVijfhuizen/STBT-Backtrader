@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include <random>
-#include "Tracker.h"
+#include "BackTrader.h"
 #include "JLib/Arena.h"
+#include "JLib/ArrayUtils.h"
 
 void* Alloc(const uint32_t size)
 {
@@ -40,9 +40,13 @@ int main()
 	jv::bt::Tracker tracker{};
 	tracker.Init();
 
-	const auto str = tracker.GetData(tempArena, "AAPL");
-	const auto timeSeries = tracker.ConvertDataToTimeSeries(arena, str);
-	const auto subSeries = jv::bt::Tracker::GetTimeSeriesSubSet(arena, timeSeries, 120, 96);
-	jv::bt::Tracker::Draw(subSeries);
+	const auto symbols = jv::CreateArray<const char*>(arena, 4);
+	symbols[0] = "AAPL";
+	symbols[1] = "AMZN";
+	symbols[2] = "TSLA";
+	symbols[3] = "EA";
+
+	auto backTrader = jv::bt::CreateBackTrader(arena, tempArena, symbols, .01f);
+
 	return 0;
 }

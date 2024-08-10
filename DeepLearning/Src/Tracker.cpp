@@ -13,15 +13,19 @@ namespace jv::bt
 		assert(_curl);
 	}
 
+	void Tracker::Destroy() const
+	{
+		curl_easy_cleanup(_curl);
+	}
+
 	std::string Tracker::GetData(Arena& tempArena, const char* symbol)
 	{
 		const auto url = CreateUrl(tempArena, symbol);
 		curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
+		const auto res = curl_easy_perform(_curl);
 		curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &_readBuffer);
-		const auto res = curl_easy_perform(_curl);
 		assert(res == 0);
-		curl_easy_cleanup(_curl);
 		return _readBuffer;
 	}
 
@@ -33,7 +37,7 @@ namespace jv::bt
 		auto lineCount = std::count(str.begin(), str.end(), '\n');
 		lineCount += !str.empty() && str.back() != '\n';
 
-		auto timeSeries = CreateTimeSeries(arena, lineCount - 1);
+		const auto timeSeries = CreateTimeSeries(arena, lineCount - 1);
 
 		// Remove first line with meta info.
 		std::getline(f, line);

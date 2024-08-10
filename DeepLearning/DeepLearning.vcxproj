@@ -138,6 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Src\BackTrader.cpp" />
     <ClCompile Include="Src\TimeSeries.cpp" />
     <ClCompile Include="Src\Tracker.cpp" />
     <ClCompile Include="Src\DeepLearning.cpp" />
@@ -148,6 +149,7 @@
     <ClCompile Include="Src\Arena.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\BackTrader.h" />
     <ClInclude Include="Include\gnuplot-iostream.h" />
     <ClInclude Include="Include\JLib\Arena.h" />
     <ClInclude Include="Include\JLib\Array.h" />

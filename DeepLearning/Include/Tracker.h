@@ -10,9 +10,11 @@ namespace jv
 
 namespace jv::bt
 {
-	struct Tracker final
+	class Tracker final
 	{
+	public:
 		void Init();
+		void Destroy() const;
 
 		[[nodiscard]] std::string GetData(Arena& tempArena, const char* symbol);
 		[[nodiscard]] TimeSeries ConvertDataToTimeSeries(Arena& arena, std::string str) const;

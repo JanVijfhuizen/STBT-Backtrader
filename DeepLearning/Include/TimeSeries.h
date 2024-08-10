@@ -20,5 +20,6 @@ namespace jv
 		};
 
 		TimeSeries CreateTimeSeries(Arena& arena, uint32_t length);
+		void DestroyTimeSeries(const TimeSeries& timeSeries, Arena& arena);
 	}
 }

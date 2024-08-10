@@ -17,4 +17,9 @@ namespace jv::bt
 		timeSeries.volume = static_cast<uint32_t*>(arena.Alloc(sizeof(uint32_t) * timeSeries.length));
 		return timeSeries;
 	}
+
+	void DestroyTimeSeries(const TimeSeries& timeSeries, Arena& arena)
+	{
+		arena.DestroyScope(timeSeries.scope);
+	}
 }

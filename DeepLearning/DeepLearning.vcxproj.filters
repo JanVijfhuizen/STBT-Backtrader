@@ -30,6 +30,9 @@
     <ClCompile Include="Src\TimeSeries.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Src\BackTrader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\pch.h">
@@ -93,6 +96,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\TimeSeries.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\BackTrader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

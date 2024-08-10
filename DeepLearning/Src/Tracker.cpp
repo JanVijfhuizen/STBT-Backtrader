@@ -59,6 +59,7 @@ namespace jv::bt
 			curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
 			const auto res = curl_easy_perform(_curl);
 			curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+			_readBuffer = {};
 			curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &_readBuffer);
 			assert(res == 0);
 			curl_easy_cleanup(_curl);

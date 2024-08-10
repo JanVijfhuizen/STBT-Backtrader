@@ -7,25 +7,72 @@ namespace jv::bt
 {
 	Gnuplot gp("\"C:\\Program Files\\gnuplot\\bin\\gnuplot.exe\"");
 
-	void Tracker::Init()
-	{
-		_curl = curl_easy_init();
-		assert(_curl);
-	}
-
-	void Tracker::Destroy() const
-	{
-		curl_easy_cleanup(_curl);
-	}
-
 	std::string Tracker::GetData(Arena& tempArena, const char* symbol)
 	{
-		const auto url = CreateUrl(tempArena, symbol);
-		curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
-		const auto res = curl_easy_perform(_curl);
-		curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &_readBuffer);
-		assert(res == 0);
+		// If validity is untested.
+		bool validSymData = false;
+		if(_valid == 0)
+		{
+			typedef std::chrono::system_clock Clock;
+			auto now = Clock::now();
+
+			std::ifstream fin("date.sym");
+			std::string line;
+
+			std::time_t now_c = Clock::to_time_t(now);
+			tm* parts = std::localtime(&now_c);
+			uint32_t year = 1900 + parts->tm_year;
+			uint32_t month = 1 + parts->tm_mon;
+			uint32_t day = parts->tm_mday;
+
+			if (fin.good())
+			{
+				validSymData = true;
+				getline(fin, line);
+				validSymData = validSymData && year == std::stoi(line);
+				getline(fin, line);
+				validSymData = validSymData && month == std::stoi(line);
+				getline(fin, line);
+				validSymData = validSymData && day == std::stoi(line);
+			}
+			if (!validSymData)
+			{
+				std::ofstream fout("date.sym");
+				fout << year << std::endl;
+				fout << month << std::endl;
+				fout << day << std::endl;
+			}
+			_valid = 1 + validSymData;
+		}
+		validSymData = _valid - 1;
+
+		const std::string symbolName = symbol;
+		const std::string extension = ".sym";
+		const auto fileName = symbolName + extension;
+		std::ifstream f(fileName);
+
+		if (!f.good() || !validSymData)
+		{
+			_curl = curl_easy_init();
+			assert(_curl);
+			const auto url = CreateUrl(tempArena, symbol);
+			curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
+			const auto res = curl_easy_perform(_curl);
+			curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+			curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &_readBuffer);
+			assert(res == 0);
+			curl_easy_cleanup(_curl);
+
+			std::ofstream outFile(fileName);
+			outFile << _readBuffer;
+		}
+		else
+		{
+			std::ostringstream buf;
+			buf << f.rdbuf();
+			_readBuffer = buf.str();
+		}
+		
 		return _readBuffer;
 	}
 
@@ -109,7 +156,7 @@ namespace jv::bt
 		return str;
 	}
 
-	size_t Tracker::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
+	size_t Tracker::WriteCallback(void* contents, const size_t size, const size_t nmemb, void* userp)
 	{
 		((std::string*)userp)->append((char*)contents, size * nmemb);
 		return size * nmemb;

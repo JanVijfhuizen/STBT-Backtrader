@@ -1,4 +1,5 @@
-﻿#include <cstdint>
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include <cstdint>
 #include <cassert>
 #include <exception>
 #include <new.h>

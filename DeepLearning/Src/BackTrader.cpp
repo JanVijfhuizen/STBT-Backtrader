@@ -14,7 +14,6 @@ namespace jv::bt
 		backTrader.world.timeSeries = CreateArray<TimeSeries>(arena, symbols.length);
 		backTrader.world.fee = fee;
 		backTrader.tracker = {};
-		backTrader.tracker.Init();
 
 		auto& tracker = backTrader.tracker;
 

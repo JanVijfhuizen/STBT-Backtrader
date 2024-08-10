@@ -38,7 +38,6 @@ int main()
 	auto tempArena = jv::Arena::Create(arenaCreateInfo);
 
 	jv::bt::Tracker tracker{};
-	tracker.Init();
 
 	const auto symbols = jv::CreateArray<const char*>(arena, 4);
 	symbols[0] = "AAPL";

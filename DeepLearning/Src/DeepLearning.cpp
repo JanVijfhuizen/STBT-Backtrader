@@ -45,7 +45,14 @@ int main()
 	symbols[2] = "TSLA";
 	symbols[3] = "EA";
 
-	auto backTrader = jv::bt::CreateBackTrader(arena, tempArena, symbols, .01f);
+	const auto backTrader = jv::bt::CreateBackTrader(arena, tempArena, symbols, .01f);
+
+	auto portfolio = CreatePortfolio(arena, backTrader);
+	portfolio.liquidity = 2000;
+
+	SavePortfolio("jan", portfolio);
+	portfolio = LoadPortfolio(arena, backTrader, "jan");
+	assert(portfolio.liquidity > 1500);
 
 	return 0;
 }

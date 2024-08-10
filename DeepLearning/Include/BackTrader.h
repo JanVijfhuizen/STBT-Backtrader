@@ -24,6 +24,11 @@ namespace jv::bt
 		Tracker tracker;
 	};
 
+	[[nodiscard]] Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader);
+	[[nodiscard]] Portfolio LoadPortfolio(Arena& arena, const BackTrader& backTrader, const char* name);
+	void DestroyPortfolio(Arena& arena, const Portfolio& portfolio);
+	void SavePortfolio(const char* name, const Portfolio& portfolio);
+
 	[[nodiscard]] BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, Array<const char*> symbols, float fee);
 	void DestroyBackTrader(const BackTrader& backTrader, Arena& arena);
 }

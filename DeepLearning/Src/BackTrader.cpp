@@ -3,6 +3,7 @@
 
 #include "JLib/Arena.h"
 #include "JLib/ArrayUtils.h"
+#include "JLib/Math.h"
 #include "JLib/VectorUtils.h"
 
 namespace jv::bt
@@ -11,6 +12,34 @@ namespace jv::bt
 	{
 		liquidity = other.liquidity;
 		memcpy(stocks.ptr, other.stocks.ptr, sizeof(uint32_t) * stocks.length);
+	}
+
+	float BackTrader::RunTestEpochs(Arena& arena, Arena& tempArena, const TestInfo& testInfo) const
+	{
+		RunInfo runInfo{};
+		runInfo.bot = testInfo.bot;
+		runInfo.userPtr = testInfo.userPtr;
+		Log log;
+
+		float average = 0;
+
+		for (uint32_t i = 0; i < testInfo.epochs; ++i)
+		{
+			const auto scope = arena.CreateScope();
+			const auto tempScope = tempArena.CreateScope();
+			auto portfolio = CreatePortfolio(arena, *this);
+			
+			portfolio.liquidity = testInfo.liquidity;
+			runInfo.offset = testInfo.length + rand() % testInfo.maxOffset;
+			runInfo.length = testInfo.length;
+
+			const auto endPortfolio = Run(arena, tempArena, portfolio, log, runInfo);
+			average += GetLiquidity(endPortfolio, runInfo.offset - runInfo.length) - GetLiquidity(portfolio, runInfo.offset);
+			tempArena.DestroyScope(tempScope);
+			arena.DestroyScope(scope);
+		}
+
+		return average / testInfo.epochs;
 	}
 
 	Portfolio BackTrader::Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Array<Array<Call>>& outLog, const RunInfo& runInfo) const
@@ -27,7 +56,7 @@ namespace jv::bt
 		{
 			const uint32_t index = runInfo.offset - i;
 			calls.Clear();
-			runInfo.func(world, cpyPortfolio, calls, index, runInfo.userPtr);
+			runInfo.bot(world, cpyPortfolio, calls, index, runInfo.userPtr);
 			const auto arr = CreateArray<Call>(arena, calls.count);
 			memcpy(arr.ptr, calls.ptr, sizeof(Call) * calls.count);
 			outLog[i] = arr;
@@ -38,7 +67,8 @@ namespace jv::bt
 				auto& stock = cpyPortfolio.stocks[call.symbolId];
 				assert(world.timeSeries[call.symbolId].length > index);
 
-				cpyPortfolio.liquidity -= call.amount * open * world.fee;
+				const float fee = world.fee * open * call.amount;
+				cpyPortfolio.liquidity -= fee;
 				assert(cpyPortfolio.liquidity > -1e-5f);
 
 				switch (call.type)

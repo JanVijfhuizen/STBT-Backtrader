@@ -35,13 +35,25 @@ namespace jv::bt
 		float fee;
 	};
 
+	typedef void(*Bot)(const World& world, const Portfolio& portfolio, Vector<Call>& calls, uint32_t offset, void* userPtr);
+
 	struct RunInfo final
 	{
-		void(*func)(const World& world, const Portfolio& portfolio, Vector<Call>& calls, uint32_t offset, void* userPtr);
+		Bot bot;
 		void* userPtr = nullptr;
 		uint32_t offset = 0;
 		uint32_t length = 1;
 		bool debug = false;
+	};
+
+	struct TestInfo final
+	{
+		Bot bot;
+		void* userPtr = nullptr;
+		uint32_t epochs = 1000;
+		uint32_t length = 30;
+		uint32_t maxOffset = 2000;
+		float liquidity = 1000;
 	};
 
 	struct BackTrader final
@@ -50,6 +62,7 @@ namespace jv::bt
 		World world;
 		Tracker tracker;
 
+		[[nodiscard]] float RunTestEpochs(Arena& arena, Arena& tempArena, const TestInfo& testInfo) const;
 		[[nodiscard]] Portfolio Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Log& outLog, const RunInfo& runInfo) const;
 		[[modiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
 	};

@@ -65,6 +65,8 @@ namespace jv::bt
 		[[nodiscard]] float RunTestEpochs(Arena& arena, Arena& tempArena, const TestInfo& testInfo) const;
 		[[nodiscard]] Portfolio Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Log& outLog, const RunInfo& runInfo) const;
 		[[modiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
+
+		void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const Array<const char*>& symbols, const char* portfolioName, bool apply) const;
 	};
 
 	[[nodiscard]] Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader);
@@ -72,6 +74,6 @@ namespace jv::bt
 	void DestroyPortfolio(Arena& arena, const Portfolio& portfolio);
 	void SavePortfolio(const char* name, const Portfolio& portfolio);
 
-	[[nodiscard]] BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, Array<const char*> symbols, float fee);
+	[[nodiscard]] BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, const Array<const char*>& symbols, float fee);
 	void DestroyBackTrader(const BackTrader& backTrader, Arena& arena);
 }

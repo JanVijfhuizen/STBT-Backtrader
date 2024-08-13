@@ -70,5 +70,7 @@ int main()
 	
 	const auto ret = backTrader.RunTestEpochs(arena, tempArena, testInfo);
 	std::cout << ret << std::endl;
+
+	backTrader.PrintAdvice(arena, tempArena, StockAlgorithm, symbols, "jan", true);
 	return 0;
 }

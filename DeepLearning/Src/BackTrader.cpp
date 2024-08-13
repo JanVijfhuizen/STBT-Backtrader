@@ -106,6 +106,31 @@ namespace jv::bt
 		return liquidity;
 	}
 
+	void BackTrader::PrintAdvice(Arena& arena, Arena& tempArena, const Bot bot, const Array<const char*>& symbols, const char* portfolioName, bool apply) const
+	{
+		const auto portfolio = LoadPortfolio(arena, *this, portfolioName);
+		RunInfo runInfo{};
+		runInfo.bot = bot;
+		Log log;
+		const auto newPortfolio = Run(arena, tempArena, portfolio, log, runInfo);
+
+		uint32_t i = 0;
+		for (auto& calls : log)
+		{
+			std::cout << "day " << i++ << ":" << std::endl;
+			for (const auto& call : calls)
+			{
+				if (call.type == CallType::Buy)
+					std::cout << "buy " << symbols[call.symbolId] << " x " << call.amount << std::endl;
+				else if(call.type == CallType::Sell)
+					std::cout << "sell " << symbols[call.symbolId] << " x " << call.amount << std::endl;
+			}
+		}
+
+		if (apply)
+			SavePortfolio(portfolioName, newPortfolio);
+	}
+
 	Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader)
 	{
 		Portfolio portfolio{};
@@ -153,7 +178,7 @@ namespace jv::bt
 			fout << stock << std::endl;
 	}
 
-	BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, const Array<const char*> symbols, const float fee)
+	BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, const Array<const char*>& symbols, const float fee)
 	{
 		BackTrader backTrader{};
 		backTrader.scope = arena.CreateScope();

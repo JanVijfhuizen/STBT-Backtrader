@@ -36,8 +36,8 @@ namespace jv::bt
 		float fee;
 	};
 
-	typedef void(*Bot)(const World& world, const Portfolio& portfolio, Vector<Call>& calls, uint32_t offset, void* userPtr);
-	typedef void(*PreProcessBot)(const World& world, uint32_t offset, void* userPtr);
+	typedef void(*Bot)(Arena& tempArena, const World& world, const Portfolio& portfolio, Vector<Call>& calls, uint32_t offset, void* userPtr);
+	typedef void(*PreProcessBot)(Arena& tempArena, const World& world, uint32_t offset, uint32_t length, void* userPtr);
 
 	struct RunInfo final
 	{
@@ -69,7 +69,7 @@ namespace jv::bt
 
 		[[nodiscard]] float RunTestEpochs(Arena& arena, Arena& tempArena, const TestInfo& testInfo) const;
 		[[nodiscard]] Portfolio Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Log& outLog, const RunInfo& runInfo) const;
-		[[modiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
+		[[nodiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
 
 		void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const char* portfolioName, bool apply) const;
 	};

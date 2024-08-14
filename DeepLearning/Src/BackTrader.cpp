@@ -53,6 +53,8 @@ namespace jv::bt
 
 	Portfolio BackTrader::Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Array<Array<Call>>& outLog, const RunInfo& runInfo) const
 	{
+		const auto tempScope = tempArena.CreateScope();
+
 		auto cpyPortfolio = CreatePortfolio(arena, *this);
 		cpyPortfolio.Copy(portfolio);
 
@@ -62,24 +64,24 @@ namespace jv::bt
 		std::vector<double> closeDebug{};
 
 		if (runInfo.preProcessBot)
-			runInfo.preProcessBot(world, runInfo.offset, runInfo.userPtr);
+			runInfo.preProcessBot(tempArena, world, runInfo.offset, runInfo.length, runInfo.userPtr);
 
 		for (uint32_t i = 0; i < runInfo.length; ++i)
 		{
 			const uint32_t index = runInfo.offset - i;
 			calls.Clear();
-			runInfo.bot(world, cpyPortfolio, calls, index, runInfo.userPtr);
+			runInfo.bot(tempArena, world, cpyPortfolio, calls, index, runInfo.userPtr);
 			const auto arr = CreateArray<Call>(arena, calls.count);
 			memcpy(arr.ptr, calls.ptr, sizeof(Call) * calls.count);
 			outLog[i] = arr;
 
 			for (const auto& call : arr)
 			{
-				const auto open = world.timeSeries[call.symbolId].open[index];
+				const auto close = world.timeSeries[call.symbolId].close[index];
 				auto& stock = cpyPortfolio.stocks[call.symbolId];
 				assert(world.timeSeries[call.symbolId].length > index);
 
-				const float fee = world.fee * open * call.amount;
+				const float fee = world.fee * close * call.amount;
 				cpyPortfolio.liquidity -= fee;
 				assert(cpyPortfolio.liquidity > -1e-5f);
 
@@ -87,12 +89,12 @@ namespace jv::bt
 				{
 					case CallType::Buy: 
 						stock += call.amount;
-						cpyPortfolio.liquidity -= open * call.amount;
+						cpyPortfolio.liquidity -= close * call.amount;
 						break;
 					case CallType::Sell:
 						assert(stock >= call.amount);
 						stock -= call.amount;
-						cpyPortfolio.liquidity += open * call.amount;
+						cpyPortfolio.liquidity += close * call.amount;
 						break;
 					default: 
 						;
@@ -106,6 +108,7 @@ namespace jv::bt
 
 		if(runInfo.debug)
 			Tracker::Debug(closeDebug);
+		tempArena.DestroyScope(tempScope);
 		return cpyPortfolio;
 	}
 

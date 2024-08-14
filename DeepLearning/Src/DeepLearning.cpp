@@ -3,7 +3,7 @@
 #include "BackTrader.h"
 #include "JLib/ArrayUtils.h"
 
-void StockAlgorithm(const jv::bt::World& world, const jv::bt::Portfolio& portfolio,
+void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::bt::Portfolio& portfolio,
 	jv::Vector<jv::bt::Call>& calls, const uint32_t offset, void* userPtr)
 {
 	const auto c = rand() % 2;
@@ -16,7 +16,7 @@ void StockAlgorithm(const jv::bt::World& world, const jv::bt::Portfolio& portfol
 	// buy
 	if(c == 0)
 	{
-		if(portfolio.liquidity - 10 > stock.open[offset])
+		if(portfolio.liquidity - 10 > stock.close[offset])
 		{
 			call.amount = 1;
 			call.type = jv::bt::CallType::Buy;

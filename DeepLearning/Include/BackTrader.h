@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "TimeSeries.h"
 #include "Tracker.h"
+#include "JLib/Arena.h"
 #include "JLib/Array.h"
 #include "JLib/Vector.h"
 
@@ -36,10 +37,12 @@ namespace jv::bt
 	};
 
 	typedef void(*Bot)(const World& world, const Portfolio& portfolio, Vector<Call>& calls, uint32_t offset, void* userPtr);
+	typedef void(*PreProcessBot)(const World& world, uint32_t offset, void* userPtr);
 
 	struct RunInfo final
 	{
 		Bot bot;
+		PreProcessBot preProcessBot = nullptr;
 		void* userPtr = nullptr;
 		uint32_t offset = 0;
 		uint32_t length = 1;
@@ -49,6 +52,7 @@ namespace jv::bt
 	struct TestInfo final
 	{
 		Bot bot;
+		PreProcessBot preProcessBot = nullptr;
 		void* userPtr = nullptr;
 		uint32_t epochs = 1000;
 		uint32_t length = 30;
@@ -61,12 +65,20 @@ namespace jv::bt
 		uint64_t scope;
 		World world;
 		Tracker tracker;
+		Array<const char*> symbols;
 
 		[[nodiscard]] float RunTestEpochs(Arena& arena, Arena& tempArena, const TestInfo& testInfo) const;
 		[[nodiscard]] Portfolio Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Log& outLog, const RunInfo& runInfo) const;
 		[[modiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
 
-		void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const Array<const char*>& symbols, const char* portfolioName, bool apply) const;
+		void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const char* portfolioName, bool apply) const;
+	};
+
+	struct BackTraderEnvironment final
+	{
+		Arena arena;
+		Arena tempArena;
+		BackTrader backTrader;
 	};
 
 	[[nodiscard]] Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader);
@@ -76,4 +88,7 @@ namespace jv::bt
 
 	[[nodiscard]] BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, const Array<const char*>& symbols, float fee);
 	void DestroyBackTrader(const BackTrader& backTrader, Arena& arena);
+
+	[[nodiscard]] BackTraderEnvironment CreateBTE(const char** symbols, uint32_t symbolsLength, float fee);
+	void DestroyBTE(const BackTraderEnvironment& bte);
 }

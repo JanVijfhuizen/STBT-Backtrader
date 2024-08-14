@@ -3,11 +3,19 @@
 
 #include "JLib/Arena.h"
 #include "JLib/ArrayUtils.h"
-#include "JLib/Math.h"
 #include "JLib/VectorUtils.h"
 
 namespace jv::bt
 {
+	void* Alloc(const uint32_t size)
+	{
+		return malloc(size);
+	}
+	void Free(void* ptr)
+	{
+		return free(ptr);
+	}
+
 	void Portfolio::Copy(const Portfolio& other)
 	{
 		liquidity = other.liquidity;
@@ -18,6 +26,7 @@ namespace jv::bt
 	{
 		RunInfo runInfo{};
 		runInfo.bot = testInfo.bot;
+		runInfo.preProcessBot = testInfo.preProcessBot;
 		runInfo.userPtr = testInfo.userPtr;
 		Log log;
 
@@ -51,6 +60,9 @@ namespace jv::bt
 		outLog = CreateArray<Array<Call>>(arena, runInfo.length);
 
 		std::vector<double> closeDebug{};
+
+		if (runInfo.preProcessBot)
+			runInfo.preProcessBot(world, runInfo.offset, runInfo.userPtr);
 
 		for (uint32_t i = 0; i < runInfo.length; ++i)
 		{
@@ -106,7 +118,7 @@ namespace jv::bt
 		return liquidity;
 	}
 
-	void BackTrader::PrintAdvice(Arena& arena, Arena& tempArena, const Bot bot, const Array<const char*>& symbols, const char* portfolioName, bool apply) const
+	void BackTrader::PrintAdvice(Arena& arena, Arena& tempArena, const Bot bot, const char* portfolioName, const bool apply) const
 	{
 		const auto portfolio = LoadPortfolio(arena, *this, portfolioName);
 		RunInfo runInfo{};
@@ -117,7 +129,7 @@ namespace jv::bt
 		uint32_t i = 0;
 		for (auto& calls : log)
 		{
-			std::cout << "day " << i++ << ":" << std::endl;
+			std::cout << "day " << ++i << ":" << std::endl;
 			for (const auto& call : calls)
 			{
 				if (call.type == CallType::Buy)
@@ -186,6 +198,8 @@ namespace jv::bt
 		backTrader.world.timeSeries = CreateArray<TimeSeries>(arena, symbols.length);
 		backTrader.world.fee = fee;
 		backTrader.tracker = {};
+		backTrader.symbols = CreateArray<const char*>(arena, symbols.length);
+		memcpy(backTrader.symbols.ptr, symbols.ptr, sizeof(const char*) * symbols.length);
 
 		auto& tracker = backTrader.tracker;
 
@@ -204,5 +218,28 @@ namespace jv::bt
 	void DestroyBackTrader(const BackTrader& backTrader, Arena& arena)
 	{
 		arena.DestroyScope(backTrader.scope);
+	}
+
+	BackTraderEnvironment CreateBTE(const char** symbols, const uint32_t symbolsLength, float fee)
+	{
+		BackTraderEnvironment bte{};
+
+		Array<const char*> symbolsCpy{};
+		symbolsCpy.ptr = symbols;
+		symbolsCpy.length = symbolsLength;
+
+		ArenaCreateInfo arenaCreateInfo{};
+		arenaCreateInfo.alloc = Alloc;
+		arenaCreateInfo.free = Free;
+		bte.arena = Arena::Create(arenaCreateInfo);
+		bte.tempArena = Arena::Create(arenaCreateInfo);
+		bte.backTrader = CreateBackTrader(bte.arena, bte.tempArena, symbolsCpy, fee);
+		return bte;
+	}
+
+	void DestroyBTE(const BackTraderEnvironment& bte)
+	{
+		Arena::Destroy(bte.tempArena);
+		Arena::Destroy(bte.arena);
 	}
 }

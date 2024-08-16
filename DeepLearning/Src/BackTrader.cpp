@@ -43,11 +43,15 @@ namespace jv::bt
 			runInfo.length = testInfo.length;
 
 			const auto endPortfolio = Run(arena, tempArena, portfolio, log, runInfo);
-			average += GetLiquidity(endPortfolio, runInfo.offset - runInfo.length) - GetLiquidity(portfolio, runInfo.offset);
+			const float startLiquidity = GetLiquidity(portfolio, runInfo.offset);
+			const float delta = GetLiquidity(endPortfolio, runInfo.offset - runInfo.length) - startLiquidity;
+			average += delta / startLiquidity;
+
 			tempArena.DestroyScope(tempScope);
 			arena.DestroyScope(scope);
 		}
 
+		// also debug volatility
 		return average / testInfo.epochs;
 	}
 
@@ -121,14 +125,16 @@ namespace jv::bt
 		return liquidity;
 	}
 
-	void BackTrader::PrintAdvice(Arena& arena, Arena& tempArena, const Bot bot, const char* portfolioName, const bool apply) const
+	void BackTrader::PrintAdvice(Arena& arena, Arena& tempArena, const Bot bot, 
+		const char* portfolioName, const bool apply, const PreProcessBot preProcessBot) const
 	{
 		const auto portfolio = LoadPortfolio(arena, *this, portfolioName);
 		RunInfo runInfo{};
 		runInfo.bot = bot;
+		runInfo.preProcessBot = preProcessBot;
 		Log log;
 		const auto newPortfolio = Run(arena, tempArena, portfolio, log, runInfo);
-
+		
 		uint32_t i = 0;
 		for (auto& calls : log)
 		{
@@ -144,6 +150,25 @@ namespace jv::bt
 
 		if (apply)
 			SavePortfolio(portfolioName, newPortfolio);
+	}
+
+	float GetMA(const float* data, const uint32_t index, const uint32_t length)
+	{
+		float ret = 0;
+		for (uint32_t i = 0; i < length; ++i)
+			ret += data[index + i];
+		return ret / static_cast<float>(length);
+	}
+
+	void Normalize(const float* src, float* dst, const uint32_t index, const uint32_t length)
+	{
+		float ret = 0;
+		for (uint32_t i = 0; i < length; ++i)
+			ret += src[index + i];
+		ret /= static_cast<float>(length);
+		memcpy(dst, &src[index], sizeof(float) * length);
+		for (uint32_t i = 0; i < length; ++i)
+			dst[i] /= ret;
 	}
 
 	Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader)

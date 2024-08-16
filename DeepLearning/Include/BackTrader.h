@@ -71,7 +71,8 @@ namespace jv::bt
 		[[nodiscard]] Portfolio Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Log& outLog, const RunInfo& runInfo) const;
 		[[nodiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
 
-		void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const char* portfolioName, bool apply) const;
+		void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const char* portfolioName, 
+			bool apply, PreProcessBot preProcessBot = nullptr) const;
 	};
 
 	struct BackTraderEnvironment final
@@ -80,6 +81,10 @@ namespace jv::bt
 		Arena tempArena;
 		BackTrader backTrader;
 	};
+
+	// Moving Average.
+	[[nodiscard]] float GetMA(const float* data, uint32_t index, uint32_t length);
+	[[nodiscard]] void Normalize(const float* src, float* dst, uint32_t index, uint32_t length);
 
 	[[nodiscard]] Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader);
 	[[nodiscard]] Portfolio LoadPortfolio(Arena& arena, const BackTrader& backTrader, const char* name);

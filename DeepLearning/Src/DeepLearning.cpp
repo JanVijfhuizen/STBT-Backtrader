@@ -2,36 +2,37 @@
 
 #include "BackTrader.h"
 #include "JLib/ArrayUtils.h"
+#include "JLib/Queue.h"
 
 void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::bt::Portfolio& portfolio,
 	jv::Vector<jv::bt::Call>& calls, const uint32_t offset, void* userPtr)
 {
-	const auto c = rand() % 2;
-	const auto d = rand() % world.timeSeries.length;
-
 	jv::bt::Call call{};
 
-	const auto& stock = world.timeSeries[d];
+	const auto& stock = world.timeSeries[0];
+
+	const float ma10 = jv::bt::GetMA(stock.close, offset, 10);
+	const float ma100 = jv::bt::GetMA(stock.close, offset, 100);
 
 	// buy
-	if(c == 0)
+	if(ma10 < ma100 * .98)
 	{
-		if(portfolio.liquidity - 10 > stock.close[offset])
+		if (portfolio.liquidity - 100 > stock.close[offset])
 		{
-			call.amount = 1;
+			call.amount = (portfolio.liquidity - 100) / stock.close[offset];
 			call.type = jv::bt::CallType::Buy;
-			call.symbolId = d;
+			call.symbolId = 0;
 			calls.Add() = call;
 		}
 	}
 	// sell
-	else
+	if (ma10 > ma100 * 1.02)
 	{
-		if (portfolio.liquidity > 10 && portfolio.stocks[d] > 0)
+		if (portfolio.liquidity > 10 && portfolio.stocks[0] > 0)
 		{
-			call.amount = 1;
+			call.amount = portfolio.stocks[0];
 			call.type = jv::bt::CallType::Sell;
-			call.symbolId = d;
+			call.symbolId = 0;
 			calls.Add() = call;
 		}
 	}
@@ -56,7 +57,7 @@ int main()
 	testInfo.bot = StockAlgorithm;
 	
 	const auto ret = bte.backTrader.RunTestEpochs(bte.arena, bte.tempArena, testInfo);
-	std::cout << ret << std::endl;
+	std::cout << ret * 100 << "%" << std::endl;
 
 	bte.backTrader.PrintAdvice(bte.arena, bte.tempArena, StockAlgorithm, "jan", true);
 	return 0;

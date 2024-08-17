@@ -46,7 +46,6 @@ namespace jv::bt
 		void* userPtr = nullptr;
 		uint32_t offset = 0;
 		uint32_t length = 1;
-		bool debug = false;
 	};
 
 	struct TestInfo final

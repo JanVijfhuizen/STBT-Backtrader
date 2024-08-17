@@ -64,9 +64,7 @@ namespace jv::bt
 
 		auto calls = CreateVector<Call>(tempArena, portfolio.stocks.length);
 		outLog = CreateArray<Array<Call>>(arena, runInfo.length);
-
-		std::vector<double> closeDebug{};
-
+		
 		if (runInfo.preProcessBot)
 			runInfo.preProcessBot(tempArena, world, runInfo.offset, runInfo.length, runInfo.userPtr);
 
@@ -106,12 +104,8 @@ namespace jv::bt
 				
 				assert(cpyPortfolio.liquidity > -1e-5f);
 			}
-
-			closeDebug.push_back(GetLiquidity(cpyPortfolio, index));
 		}
 
-		if(runInfo.debug)
-			Tracker::Debug(closeDebug);
 		tempArena.DestroyScope(tempScope);
 		return cpyPortfolio;
 	}

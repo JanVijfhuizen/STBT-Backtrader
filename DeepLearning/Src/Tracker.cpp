@@ -132,20 +132,45 @@ namespace jv::bt
 		return subSet;
 	}
 
-	void Tracker::Draw(const TimeSeries& timeSeries)
+	void Tracker::Debug(const float* ptr, const uint32_t length, const bool reverse)
 	{
 		std::vector<double> v{};
-		for (uint32_t i = 0; i < timeSeries.length; ++i)
-			v.push_back(timeSeries.close[i]);
-		Debug(v);
-	}
-
-	void Tracker::Debug(const std::vector<double>& v)
-	{
+		for (uint32_t i = 0; i < length; ++i)
+			v.push_back(ptr[reverse ? length - 1 - i : i]);
 		gp << "set title 'timeline'\n";
 		gp << "plot '-' with lines title 'v'\n";
 		gp.send(v);
-		std::cin.get();
+		gp << "pause 1e9\n";
+	}
+
+	void Tracker::DebugCandles(const TimeSeries& timeSeries, const uint32_t offset, const uint32_t length)
+	{
+		{
+			std::ofstream fout("candles.dat");
+
+			for (uint32_t i = 0; i < length; ++i)
+			{
+				const uint32_t index = offset + length - 1 - i;
+				fout << i + 1 << " ";
+				fout << timeSeries.open[index] << " ";
+				fout << timeSeries.low[index] << " ";
+				fout << timeSeries.high[index] << " ";
+				fout << timeSeries.close[index] << std::endl;
+			}
+		}
+
+		gp << "set title 'candlesticks'\n";
+		gp << "set xrange [0:";
+		gp << length + 1;
+		gp << "]\n";
+		gp << "set boxwidth ";
+		gp << .8f;
+		gp << "\n";
+		gp << "set style fill solid\n";
+		gp << "set linetype 1 lc rgb 'red'\n";
+		gp << "set linetype 2 lc rgb 'green'\n";
+		gp << "plot 'candles.dat' using 1:2:3:4:5:($2 > $5 ? 1 : 2) linecolor variable with candlesticks title 'candlesticks'\n";
+		gp << "pause 1e9\n";
 	}
 
 	std::string Tracker::CreateUrl(Arena& tempArena, const char* symbol)

@@ -41,9 +41,11 @@ namespace jv::ai
 
 	// Reset the current value of all neurons to 0.
 	void Clean(NNet& nnet);
+	// Destroy all neurons and weights.
+	void Clear(NNet& nnet);
 	// Forward information through the network.
 	void Propagate(NNet& nnet, float* input, float* output);
 
 	void AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value);
-	void AddNeuron(NNet& nnet, float value, float decay, float threshold);
+	void AddNeuron(NNet& nnet, float decay, float threshold);
 }

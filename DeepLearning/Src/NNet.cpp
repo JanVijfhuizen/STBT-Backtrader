@@ -27,6 +27,12 @@ namespace jv::ai
 			nnet.neurons[i].value = 0;
 	}
 
+	void Clear(NNet& nnet)
+	{
+		nnet.neuronCount = 0;
+		nnet.weightCount = 0;
+	}
+
 	void Propagate(NNet& nnet, float* input, float* output)
 	{
 		for (uint32_t i = 0; i < nnet.createInfo.inputSize; i++)
@@ -67,8 +73,9 @@ namespace jv::ai
 		for (uint32_t i = 0; i < nnet.neuronCount; i++)
 		{
 			auto& neuron = nnet.neurons[i];
+			neuron.value = jv::Min<float>(neuron.value, 1);
 			neuron.value -= neuron.decay;
-			neuron.value = jv::Clamp<float>(neuron.value, 0, 1);
+			neuron.value = jv::Max<float>(neuron.value, 0);
 		}
 	}
 
@@ -89,12 +96,12 @@ namespace jv::ai
 		neuron.weightsId = nnet.weightCount++;
 	}
 
-	void AddNeuron(NNet& nnet, const float value, const float decay, const float threshold)
+	void AddNeuron(NNet& nnet, const float decay, const float threshold)
 	{
 		assert(nnet.neuronCount < nnet.createInfo.neuronCapacity);
 
 		Neuron& neuron = nnet.neurons[nnet.neuronCount++] = {};
-		neuron.value = value;
+		neuron.value = 0;
 		neuron.decay = decay;
 		neuron.threshold = threshold;
 	}

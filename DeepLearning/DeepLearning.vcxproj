@@ -141,6 +141,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Include\JLib\Math.cpp" />
+    <ClCompile Include="Src\NNetUtils.cpp" />
     <ClCompile Include="Src\NNet.cpp" />
     <ClCompile Include="Src\BackTrader.cpp" />
     <ClCompile Include="Src\TimeSeries.cpp" />
@@ -176,6 +178,7 @@
     <ClInclude Include="Include\TimeSeries.h" />
     <ClInclude Include="Include\Tracker.h" />
     <ClInclude Include="Include\NNet.h" />
+    <ClInclude Include="Include\NNetUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

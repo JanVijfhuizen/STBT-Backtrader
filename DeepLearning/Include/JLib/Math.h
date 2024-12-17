@@ -19,4 +19,6 @@ namespace jv
 	{
 		return Min(max, Max(t, min));
 	}
+
+	[[nodiscard]] float RandF(float min, float max);
 }

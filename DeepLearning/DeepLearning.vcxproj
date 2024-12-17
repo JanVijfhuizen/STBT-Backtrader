@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -138,7 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Src\GeneticAlgorithm.cpp" />
+    <ClCompile Include="Src\NNet.cpp" />
     <ClCompile Include="Src\BackTrader.cpp" />
     <ClCompile Include="Src\TimeSeries.cpp" />
     <ClCompile Include="Src\Tracker.cpp" />
@@ -151,7 +154,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\BackTrader.h" />
-    <ClInclude Include="Include\GeneticAlgorithm.h" />
     <ClInclude Include="Include\gnuplot-iostream.h" />
     <ClInclude Include="Include\JLib\Arena.h" />
     <ClInclude Include="Include\JLib\Array.h" />
@@ -173,6 +175,7 @@
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\TimeSeries.h" />
     <ClInclude Include="Include\Tracker.h" />
+    <ClInclude Include="Include\NNet.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

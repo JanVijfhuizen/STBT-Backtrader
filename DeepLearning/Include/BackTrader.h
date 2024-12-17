@@ -17,9 +17,11 @@ namespace jv::bt
 	{
 		CallType type;
 		uint32_t amount;
+		// Stock ID
 		uint32_t symbolId;
 	};
 
+	// Trade history
 	typedef Array<Array<Call>> Log;
 
 	struct Portfolio final
@@ -30,13 +32,16 @@ namespace jv::bt
 		void Copy(const Portfolio& other);
 	};
 
+	// Scope of a trade algorithm.
 	struct World final
 	{
 		Array<TimeSeries> timeSeries;
 		float fee;
 	};
 
+	// Stock trader bot.
 	typedef void(*Bot)(Arena& tempArena, const World& world, const Portfolio& portfolio, Vector<Call>& calls, uint32_t offset, void* userPtr);
+	// Data preprocessor for a stock trader.
 	typedef void(*PreProcessBot)(Arena& tempArena, const World& world, uint32_t offset, uint32_t length, void* userPtr);
 
 	struct RunInfo final
@@ -50,12 +55,17 @@ namespace jv::bt
 
 	struct TestInfo final
 	{
+		// Examined stock trainer bot.
 		Bot bot;
 		PreProcessBot preProcessBot = nullptr;
 		void* userPtr = nullptr;
+		// Number of train cycles.
 		uint32_t epochs = 1000;
+		// Days in a single cycle.
 		uint32_t length = 30;
+		// Offset from the current day.
 		uint32_t maxOffset = 2000;
+		// Starting cash.
 		float liquidity = 1000;
 	};
 

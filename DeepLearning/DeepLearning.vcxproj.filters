@@ -33,7 +33,7 @@
     <ClCompile Include="Src\BackTrader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\GeneticAlgorithm.cpp">
+    <ClCompile Include="Src\NNet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -104,7 +104,7 @@
     <ClInclude Include="Include\BackTrader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\GeneticAlgorithm.h">
+    <ClInclude Include="Include\NNet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -99,9 +99,31 @@ int main()
 	Connect(nnet, midLayer, midLayer2, jv::ai::InitType::random);
 	Connect(nnet, midLayer2, ioLayers.output, jv::ai::InitType::random);
 
-	float input[4]{ 1, 2, 3, 4 };
+	float input[4]{ .1, .2, .3, .4 };
 	float output[3]{0, 0, 0};
 	Propagate(nnet, input, output);
+
+	jv::ai::Mutation mutation{};
+	mutation.thresholdValueChance = .2;
+	mutation.weightValueChance = .2;
+	auto nnetCpy = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
+	float highestScore = 0;
+	for (size_t i = 0; i < 1000; i++)
+	{
+		Copy(nnet, nnetCpy);
+		Mutate(nnetCpy, mutation);
+		Propagate(nnetCpy, input, output);
+		float score = 0;
+		for(auto& f : output)
+			score += f;
+
+		if (score > highestScore)
+		{
+			highestScore = score;
+			Copy(nnetCpy, nnet);
+			std::cout << score << std::endl;
+		}
+	}
 
 	return 0;
 

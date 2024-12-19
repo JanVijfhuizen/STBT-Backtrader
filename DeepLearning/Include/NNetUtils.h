@@ -8,9 +8,16 @@ namespace jv::ai
 		uint32_t from = UINT32_MAX;
 		uint32_t to = UINT32_MAX;
 	};
+
 	struct IOLayers
 	{
 		Layer input, output;
+	};
+
+	struct Mutation final
+	{
+		float weightValueChance = .02;
+		float thresholdValueChance = .02;
 	};
 
 	enum class InitType 
@@ -30,7 +37,7 @@ namespace jv::ai
 	// Connect the input and output layers.
 	void ConnectIO(NNet& nnet, InitType initType);
 
-	// copy (with or without original capacity)
-	// clone
+	void Mutate(NNet& nnet, Mutation mutation);
+	void Copy(NNet& org, NNet& dst);
 }
 

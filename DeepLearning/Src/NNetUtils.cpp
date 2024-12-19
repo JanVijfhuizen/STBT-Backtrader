@@ -55,4 +55,44 @@ namespace jv::ai
 		const uint32_t outSize = nnet.createInfo.outputSize;
 		Connect(nnet, { 0, inSize }, { inSize, inSize + outSize }, initType);
 	}
+	Neuron* neurons;
+	Weight* weights;
+	uint32_t neuronCount;
+	uint32_t weightCount;
+
+	void Mutate(NNet& nnet, const Mutation mutation)
+	{
+		if (mutation.weightValueChance > 0)
+		{
+			for (size_t i = 0; i < nnet.weightCount; i++)
+			{
+				if (RandF(0, 1) > mutation.weightValueChance)
+					continue;
+
+				auto& weight = nnet.weights[i];
+				// Either adjust the value percentage wise or replace it with a new one.
+				bool pctWise = rand() % 2;
+				weight.value = pctWise ? weight.value * RandF(0, 2) : RandF(-1, 1);
+			}
+		}
+		if (mutation.thresholdValueChance > 0)
+		{
+			for (size_t i = 0; i < nnet.neuronCount; i++)
+			{
+				if (RandF(0, 1) > mutation.thresholdValueChance)
+					continue;
+
+				auto& neuron = nnet.neurons[i];
+				neuron.threshold = RandF(0, 1);
+			}
+		}
+	}
+
+	void Copy(NNet& org, NNet& dst)
+	{
+		dst.neuronCount = org.neuronCount;
+		dst.weightCount = org.weightCount;
+		memcpy(dst.neurons, org.neurons, sizeof(Neuron) * org.neuronCount);
+		memcpy(dst.weights, org.weights, sizeof(Weight) * org.weightCount);
+	}
 }

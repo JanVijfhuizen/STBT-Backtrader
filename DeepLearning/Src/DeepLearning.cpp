@@ -103,15 +103,15 @@ int main()
 	float output[3]{0, 0, 0};
 	Propagate(nnet, input, output);
 
-	jv::ai::Mutation mutation{};
-	mutation.thresholdValueChance = .2;
-	mutation.weightValueChance = .2;
+	jv::ai::Mutations mutations{};
+	mutations.threshold.chance = .2;
+	mutations.weight.chance = .2;
 	auto nnetCpy = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
 	float highestScore = 0;
 	for (size_t i = 0; i < 1000; i++)
 	{
 		Copy(nnet, nnetCpy);
-		Mutate(nnetCpy, mutation);
+		Mutate(nnetCpy, mutations);
 		Propagate(nnetCpy, input, output);
 		float score = 0;
 		for(auto& f : output)

@@ -16,8 +16,16 @@ namespace jv::ai
 
 	struct Mutation final
 	{
-		float weightValueChance = .02;
-		float thresholdValueChance = .02;
+		float chance = 0;
+		float linAlpha = 1;
+		float pctAlpha = 1;
+	};
+
+	struct Mutations final
+	{
+		Mutation weight{};
+		Mutation threshold{};
+		Mutation decay{};
 	};
 
 	enum class InitType 
@@ -37,7 +45,7 @@ namespace jv::ai
 	// Connect the input and output layers.
 	void ConnectIO(NNet& nnet, InitType initType);
 
-	void Mutate(NNet& nnet, Mutation mutation);
+	void Mutate(NNet& nnet, Mutations mutations);
 	void Copy(NNet& org, NNet& dst);
 }
 

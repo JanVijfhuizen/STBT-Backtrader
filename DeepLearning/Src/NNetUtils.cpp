@@ -60,30 +60,57 @@ namespace jv::ai
 	uint32_t neuronCount;
 	uint32_t weightCount;
 
-	void Mutate(NNet& nnet, const Mutation mutation)
+	void Mutate(NNet& nnet, const Mutations mutations)
 	{
-		if (mutation.weightValueChance > 0)
+		auto& weightMut = mutations.weight;
+		if (weightMut.chance > 0)
 		{
 			for (size_t i = 0; i < nnet.weightCount; i++)
 			{
-				if (RandF(0, 1) > mutation.weightValueChance)
+				if (RandF(0, 1) > weightMut.chance)
 					continue;
 
 				auto& weight = nnet.weights[i];
-				// Either adjust the value percentage wise or replace it with a new one.
-				bool pctWise = rand() % 2;
-				weight.value = pctWise ? weight.value * RandF(0, 2) : RandF(-1, 1);
+				// 1 = new value, 2 = percent wise, 3 = linear addition/subtraction.
+				uint32_t type = rand() % 3;
+				weight.value = type != 0 ? weight.value : RandF(-1, 1);
+				weight.value = type != 1 ? weight.value : weight.value * 
+					RandF(1.f - weightMut.pctAlpha, 1.f + weightMut.pctAlpha);
+				weight.value = type != 2 ? weight.value : weight.value + RandF(-1, 1) * weightMut.linAlpha;
 			}
 		}
-		if (mutation.thresholdValueChance > 0)
+		auto& thresholdMut = mutations.threshold;
+		if (thresholdMut.chance > 0)
 		{
 			for (size_t i = 0; i < nnet.neuronCount; i++)
 			{
-				if (RandF(0, 1) > mutation.thresholdValueChance)
+				if (RandF(0, 1) > thresholdMut.chance)
 					continue;
 
 				auto& neuron = nnet.neurons[i];
-				neuron.threshold = RandF(0, 1);
+				uint32_t type = rand() % 3;
+				neuron.threshold = type != 0 ? neuron.threshold : RandF(0, 1);
+				neuron.threshold = type != 1 ? neuron.threshold : neuron.threshold *
+					RandF(1.f - thresholdMut.pctAlpha, 1.f + thresholdMut.pctAlpha);
+				neuron.threshold = type != 2 ? neuron.threshold : neuron.threshold + RandF(-1, 1) * thresholdMut.linAlpha;
+				neuron.threshold = Max<float>(neuron.threshold, 0);
+			}
+		}
+		auto& decayMut = mutations.decay;
+		if (decayMut.chance > 0)
+		{
+			for (size_t i = 0; i < nnet.neuronCount; i++)
+			{
+				if (RandF(0, 1) > decayMut.chance)
+					continue;
+
+				auto& neuron = nnet.neurons[i];
+				uint32_t type = rand() % 3;
+				neuron.decay = type != 0 ? neuron.decay : RandF(0, 1);
+				neuron.decay = type != 1 ? neuron.decay : neuron.decay *
+					RandF(1.f - decayMut.pctAlpha, 1.f + decayMut.pctAlpha);
+				neuron.decay = type != 2 ? neuron.decay : neuron.decay + RandF(-1, 1) * decayMut.linAlpha;
+				neuron.decay = Max<float>(neuron.decay, 0);
 			}
 		}
 	}

@@ -88,7 +88,7 @@ int main()
 
 	jv::ai::NNetCreateInfo nnetCreateInfo{};
 	nnetCreateInfo.inputSize = 4;
-	nnetCreateInfo.neuronCapacity = 7 + 6 + 4;
+	nnetCreateInfo.neuronCapacity = 512;
 	nnetCreateInfo.weightCapacity = 512;
 	nnetCreateInfo.outputSize = 3;
 	auto nnet = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
@@ -106,6 +106,8 @@ int main()
 	jv::ai::Mutations mutations{};
 	mutations.threshold.chance = .2;
 	mutations.weight.chance = .2;
+	mutations.newNodeChance = .05;
+	mutations.newWeightChance = .05;
 	auto nnetCpy = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
 	float highestScore = 0;
 	for (size_t i = 0; i < 1000; i++)

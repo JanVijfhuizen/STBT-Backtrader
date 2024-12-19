@@ -79,13 +79,15 @@ namespace jv::ai
 		}
 	}
 
-	void AddWeight(NNet& nnet, const uint32_t from, const uint32_t to, const float value)
+	bool AddWeight(NNet& nnet, const uint32_t from, const uint32_t to, const float value)
 	{
-		assert(nnet.weightCount < nnet.createInfo.weightCapacity);
+		if (nnet.weightCount >= nnet.createInfo.weightCapacity)
+			return false;
+		assert(from < nnet.neuronCount);
+		assert(to < nnet.neuronCount);
 
-		// Not allowed to add a weight with an input node as a destination, or an output node as an origin.
+		// Not allowed to add a weight with an input node as a destination.
 		assert(to >= nnet.createInfo.inputSize);
-		assert(from < nnet.createInfo.inputSize || from >= (nnet.createInfo.inputSize + nnet.createInfo.outputSize));
 		Neuron& neuron = nnet.neurons[from];
 		Weight& weight = nnet.weights[nnet.weightCount] = {};
 		weight.from = from;
@@ -93,15 +95,18 @@ namespace jv::ai
 		weight.value = value;
 		weight.next = neuron.weightsId;
 		neuron.weightsId = nnet.weightCount++;
+		return true;
 	}
 
-	void AddNeuron(NNet& nnet, const float decay, const float threshold)
+	bool AddNeuron(NNet& nnet, const float decay, const float threshold)
 	{
-		assert(nnet.neuronCount < nnet.createInfo.neuronCapacity);
+		if (nnet.neuronCount >= nnet.createInfo.neuronCapacity)
+			return false;
 
 		Neuron& neuron = nnet.neurons[nnet.neuronCount++] = {};
 		neuron.value = 0;
 		neuron.decay = decay;
 		neuron.threshold = threshold;
+		return true;
 	}
 }

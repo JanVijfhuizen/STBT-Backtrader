@@ -14,18 +14,22 @@ namespace jv::ai
 	Layer AddLayer(NNet& nnet, const uint32_t length, InitType initType)
 	{
 		for (uint32_t i = 0; i < length; i++)
+		{
+			bool valid = true;
 			switch (initType)
 			{
 			case InitType::flat:
-				AddNeuron(nnet, 1, 0);
+				valid = AddNeuron(nnet, 1, 0);
 				break;
 			case InitType::random:
-				AddNeuron(nnet, jv::RandF(0, 1), jv::RandF(0, 1));
+				valid = AddNeuron(nnet, jv::RandF(0, 1), jv::RandF(0, 1));
 				break;
 			default:
 				break;
 			}
-
+			assert(valid);
+		}
+			
 		return { nnet.neuronCount - length, nnet.neuronCount };
 	}
 
@@ -36,17 +40,21 @@ namespace jv::ai
 
 		for (uint32_t i = 0; i < inSize; i++)
 			for (uint32_t j = 0; j < outSize; j++)
+			{
+				bool valid = true;
 				switch (initType)
 				{
 				case InitType::flat:
-					AddWeight(nnet, from.from + i, to.from + j, 1);
+					valid = AddWeight(nnet, from.from + i, to.from + j, 1);
 					break;
 				case InitType::random:
-					AddWeight(nnet, from.from + i, to.from + j, jv::RandF(-1, 1));
+					valid = AddWeight(nnet, from.from + i, to.from + j, jv::RandF(-1, 1));
 					break;
 				default:
 					break;
 				}
+				assert(valid);
+			}	
 	}
 
 	void ConnectIO(NNet& nnet, const InitType initType)
@@ -113,6 +121,21 @@ namespace jv::ai
 				neuron.decay = Max<float>(neuron.decay, 0);
 			}
 		}
+		if (RandF(0, 1) < mutations.newNodeChance && nnet.weightCount < nnet.createInfo.weightCapacity)
+		{
+			bool valid = AddNeuron(nnet, RandF(0, 1), RandF(0, 1));
+			if (valid)
+			{
+				const uint32_t weightId = rand() % nnet.weightCount;
+				auto& weight = nnet.weights[weightId];
+				const uint32_t to = weight.to;
+				weight.to = nnet.neuronCount - 1;
+				AddWeight(nnet, nnet.neuronCount - 1, to, 1);
+			}
+		}
+		if (RandF(0, 1) < mutations.newWeightChance)
+			AddWeight(nnet, rand() % nnet.neuronCount, nnet.createInfo.inputSize + rand() % 
+				(nnet.neuronCount - nnet.createInfo.inputSize), RandF(-1, 1));
 	}
 
 	void Copy(NNet& org, NNet& dst)

@@ -26,6 +26,8 @@ namespace jv::ai
 		Mutation weight{};
 		Mutation threshold{};
 		Mutation decay{};
+		float newNodeChance = 0;
+		float newWeightChance = 0;
 	};
 
 	enum class InitType 

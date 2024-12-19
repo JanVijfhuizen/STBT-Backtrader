@@ -46,6 +46,6 @@ namespace jv::ai
 	// Forward information through the network.
 	void Propagate(NNet& nnet, float* input, float* output);
 
-	void AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value);
-	void AddNeuron(NNet& nnet, float decay, float threshold);
+	bool AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value);
+	bool AddNeuron(NNet& nnet, float decay, float threshold);
 }

@@ -4,10 +4,16 @@
 
 namespace jv::ai
 {
-	void Init(NNet& nnet, const InitType initType)
+	IOLayers Init(NNet& nnet, const InitType initType)
 	{
-		const uint32_t c = nnet.createInfo.inputSize + nnet.createInfo.outputSize;
-		for (uint32_t i = 0; i < c; i++)
+		auto inputLayer = AddLayer(nnet, nnet.createInfo.inputSize, initType);
+		auto outputLayer = AddLayer(nnet, nnet.createInfo.outputSize, initType);
+		return { inputLayer, outputLayer };
+	}
+
+	Layer AddLayer(NNet& nnet, const uint32_t length, InitType initType)
+	{
+		for (uint32_t i = 0; i < length; i++)
 			switch (initType)
 			{
 			case InitType::flat:
@@ -19,25 +25,34 @@ namespace jv::ai
 			default:
 				break;
 			}
+
+		return { nnet.neuronCount - length, nnet.neuronCount };
 	}
 
-	void ConnectIOLayers(NNet& nnet, const InitType initType)
+	void Connect(NNet& nnet, Layer from, Layer to, InitType initType)
 	{
-		const uint32_t inSize = nnet.createInfo.inputSize;
-		const uint32_t outSize = nnet.createInfo.outputSize;
+		const uint32_t inSize = from.to - from.from;
+		const uint32_t outSize = to.to - to.from;
 
 		for (uint32_t i = 0; i < inSize; i++)
 			for (uint32_t j = 0; j < outSize; j++)
 				switch (initType)
 				{
 				case InitType::flat:
-					AddWeight(nnet, i, inSize + j, 1);
+					AddWeight(nnet, from.from + i, to.from + j, 1);
 					break;
 				case InitType::random:
-					AddWeight(nnet, i, inSize + j, jv::RandF(-1, 1));
+					AddWeight(nnet, from.from + i, to.from + j, jv::RandF(-1, 1));
 					break;
 				default:
 					break;
 				}
+	}
+
+	void ConnectIO(NNet& nnet, const InitType initType)
+	{
+		const uint32_t inSize = nnet.createInfo.inputSize;
+		const uint32_t outSize = nnet.createInfo.outputSize;
+		Connect(nnet, { 0, inSize }, { inSize, inSize + outSize }, initType);
 	}
 }

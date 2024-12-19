@@ -88,18 +88,23 @@ int main()
 
 	jv::ai::NNetCreateInfo nnetCreateInfo{};
 	nnetCreateInfo.inputSize = 4;
-	nnetCreateInfo.neuronCapacity = 7;
-	nnetCreateInfo.weightCapacity = 4 * 3;
+	nnetCreateInfo.neuronCapacity = 7 + 6 + 4;
+	nnetCreateInfo.weightCapacity = 512;
 	nnetCreateInfo.outputSize = 3;
 	auto nnet = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
-	Init(nnet, jv::ai::InitType::flat);
-	ConnectIOLayers(nnet, jv::ai::InitType::flat);
+	auto ioLayers = Init(nnet, jv::ai::InitType::random);
+	auto midLayer = AddLayer(nnet, 6, jv::ai::InitType::random);
+	auto midLayer2 = AddLayer(nnet, 4, jv::ai::InitType::random);
+	Connect(nnet, ioLayers.input, midLayer, jv::ai::InitType::random);
+	Connect(nnet, midLayer, midLayer2, jv::ai::InitType::random);
+	Connect(nnet, midLayer2, ioLayers.output, jv::ai::InitType::random);
 
 	float input[4]{ 1, 2, 3, 4 };
 	float output[3]{0, 0, 0};
 	Propagate(nnet, input, output);
 
-	return;
+	return 0;
+
 	jv::bt::TimeSeries timeSeries = bte.backTrader.world.timeSeries[0];
 	//jv::bt::Tracker::Debug(timeSeries.close, 30, true);
 	//jv::bt::Tracker::DebugCandles(timeSeries, 0, 400);

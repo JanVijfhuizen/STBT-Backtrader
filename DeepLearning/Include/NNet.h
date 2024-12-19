@@ -43,7 +43,10 @@ namespace jv::ai
 	void Clean(NNet& nnet);
 	// Destroy all neurons and weights.
 	void Clear(NNet& nnet);
-	// Forward information through the network.
+	/* 
+	Forward information through the network.
+	Does not reset the value of output, only adds to it.
+	*/
 	void Propagate(NNet& nnet, float* input, float* output);
 
 	void AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value);

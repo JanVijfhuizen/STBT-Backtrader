@@ -45,7 +45,7 @@ namespace jv::ai
 			float remainder = neuron.value - neuron.threshold;
 
 			// Makes sure you don't get extreme values if the nnet becomes very deep.
-			remainder = Max<float>(remainder, 1);
+			remainder = Min<float>(remainder, 1);
 			
 			if (remainder > 0)
 			{
@@ -86,7 +86,6 @@ namespace jv::ai
 		// Not allowed to add a weight with an input node as a destination, or an output node as an origin.
 		assert(to >= nnet.createInfo.inputSize);
 		assert(from < nnet.createInfo.inputSize || from >= (nnet.createInfo.inputSize + nnet.createInfo.outputSize));
-
 		Neuron& neuron = nnet.neurons[from];
 		Weight& weight = nnet.weights[nnet.weightCount] = {};
 		weight.from = from;

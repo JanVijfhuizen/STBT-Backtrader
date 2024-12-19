@@ -4,6 +4,8 @@
 #include "JLib/ArrayUtils.h"
 #include "JLib/Math.h"
 #include "JLib/Queue.h"
+#include "NNet.h"
+#include <NNetUtils.h>
 
 [[nodiscard]] float GetMAValue(const jv::bt::TimeSeries& stock, const uint32_t offset, void* userPtr)
 {
@@ -84,6 +86,20 @@ int main()
 		bte = jv::bt::CreateBTE(symbols, 4, 1e-3);
 	}
 
+	jv::ai::NNetCreateInfo nnetCreateInfo{};
+	nnetCreateInfo.inputSize = 4;
+	nnetCreateInfo.neuronCapacity = 7;
+	nnetCreateInfo.weightCapacity = 4 * 3;
+	nnetCreateInfo.outputSize = 3;
+	auto nnet = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
+	Init(nnet, jv::ai::InitType::flat);
+	ConnectIOLayers(nnet, jv::ai::InitType::flat);
+
+	float input[4]{ 1, 2, 3, 4 };
+	float output[3]{0, 0, 0};
+	Propagate(nnet, input, output);
+
+	return;
 	jv::bt::TimeSeries timeSeries = bte.backTrader.world.timeSeries[0];
 	//jv::bt::Tracker::Debug(timeSeries.close, 30, true);
 	//jv::bt::Tracker::DebugCandles(timeSeries, 0, 400);

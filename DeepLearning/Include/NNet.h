@@ -8,14 +8,14 @@ namespace jv::ai
 		float value;
 		float decay;
 		float threshold;
-		uint32_t weightsId = -1;
+		uint32_t weightsId = UINT32_MAX;
 	};
 
 	struct Weight final
 	{
 		float value;
 		uint32_t from, to;
-		uint32_t next = -1;
+		uint32_t next = UINT32_MAX;
 	};
 
 	struct NNetCreateInfo final 

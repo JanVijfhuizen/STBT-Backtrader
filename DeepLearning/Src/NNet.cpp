@@ -8,7 +8,7 @@ namespace jv::ai
 	{
 		NNet nnet{};
 		nnet.createInfo = info;
-		nnet.neuronCount = info.inputSize + info.outputSize;
+		nnet.neuronCount = 0;
 		nnet.weightCount = 0;
 		nnet.scope = arena.CreateScope();
 		nnet.neurons = arena.New<Neuron>(info.neuronCapacity);

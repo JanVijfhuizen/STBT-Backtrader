@@ -3,8 +3,14 @@
 
 namespace jv::ai 
 {
-	void InitFlat(NNet& nnet);
-	void InitRandom(NNet& nnet);
+	enum class InitType 
+	{
+		flat,
+		random
+	};
+
+	void Init(NNet& nnet, InitType initType);
+	void ConnectIOLayers(NNet& nnet, InitType initType);
 
 	// copy (with or without original capacity)
 	// clone

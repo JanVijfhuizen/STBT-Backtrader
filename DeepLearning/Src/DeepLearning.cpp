@@ -49,7 +49,20 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 	const float momentum = GetMomentumValue(stock, offset, userPtr);
 	const float trend = GetTrendValue(stock, offset, userPtr);
 
-	if(ma + momentum + trend > 0)
+	auto nnet = reinterpret_cast<jv::ai::NNet*>(userPtr);
+	float input[3]{ ma, momentum, trend };
+	float output[3];
+	Clean(*nnet);
+	Propagate(*nnet, input, output);
+
+	uint32_t result = 0;
+	result = output[1] > output[0] ? 1 : result;
+	result = output[2] > output[1] ? 2 : result;
+
+	if (result == 0)
+		return;
+
+	if(result == 1)
 	{
 		if (portfolio.liquidity - 100 > stock.close[offset])
 		{
@@ -59,7 +72,7 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 			calls.Add() = call;
 		}
 	}
-	else
+	else if(result == 2)
 	{
 		if (portfolio.liquidity > 10 && portfolio.stocks[0] > 0)
 		{
@@ -99,46 +112,36 @@ int main()
 	Connect(nnet, midLayer, midLayer2, jv::ai::InitType::random);
 	Connect(nnet, midLayer2, ioLayers.output, jv::ai::InitType::random);
 
-	float input[4]{ .1, .2, .3, .4 };
-	float output[3]{0, 0, 0};
-	Propagate(nnet, input, output);
-
-	jv::ai::Mutations mutations{};
-	mutations.threshold.chance = .2;
-	mutations.weight.chance = .2;
-	mutations.newNodeChance = .05;
-	mutations.newWeightChance = .05;
-	auto nnetCpy = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
-	float highestScore = 0;
-	for (size_t i = 0; i < 1000; i++)
-	{
-		Copy(nnet, nnetCpy);
-		Mutate(nnetCpy, mutations);
-		Propagate(nnetCpy, input, output);
-		float score = 0;
-		for(auto& f : output)
-			score += f;
-
-		if (score > highestScore)
-		{
-			highestScore = score;
-			Copy(nnetCpy, nnet);
-			std::cout << score << std::endl;
-		}
-	}
-
-	return 0;
-
 	jv::bt::TimeSeries timeSeries = bte.backTrader.world.timeSeries[0];
 	//jv::bt::Tracker::Debug(timeSeries.close, 30, true);
 	//jv::bt::Tracker::DebugCandles(timeSeries, 0, 400);
 	
 	jv::bt::TestInfo testInfo{};
 	testInfo.bot = StockAlgorithm;
-	
-	const auto ret = bte.backTrader.RunTestEpochs(bte.arena, bte.tempArena, testInfo);
-	std::cout << ret * 100 << "%" << std::endl;
+	testInfo.userPtr = &nnet;
 
-	bte.backTrader.PrintAdvice(bte.arena, bte.tempArena, StockAlgorithm, "jan", true);
+	jv::ai::Mutations mutations{};
+	mutations.threshold.chance = .2;
+	mutations.weight.chance = .2;
+	//mutations.newNodeChance = .05;
+	//mutations.newWeightChance = .05;
+	auto nnetCpy = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
+	float highestScore = 0;
+	for (size_t i = 0; i < 1000; i++)
+	{
+		Copy(nnet, nnetCpy);
+		Mutate(nnetCpy, mutations);
+		const auto ret = bte.backTrader.RunTestEpochs(bte.arena, bte.tempArena, testInfo);
+
+		std::cout << "e" << i << ".";
+		if (ret > highestScore)
+		{
+			highestScore = ret;
+			Copy(nnetCpy, nnet);
+			std::cout << std::endl << std::endl << highestScore * 100 << "%" << std::endl << std::endl;
+		}
+	}
+
+	bte.backTrader.PrintAdvice(bte.arena, bte.tempArena, StockAlgorithm, "jan", true, &nnet);
 	return 0;
 }

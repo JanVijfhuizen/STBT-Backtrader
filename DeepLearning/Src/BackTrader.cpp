@@ -73,6 +73,9 @@ namespace jv::bt
 			const uint32_t index = runInfo.offset - i;
 			calls.Clear();
 			runInfo.bot(tempArena, world, cpyPortfolio, calls, index, runInfo.userPtr);
+			if (calls.count == 0)
+				continue;
+
 			const auto arr = CreateArray<Call>(arena, calls.count);
 			memcpy(arr.ptr, calls.ptr, sizeof(Call) * calls.count);
 			outLog[i] = arr;
@@ -120,12 +123,13 @@ namespace jv::bt
 	}
 
 	void BackTrader::PrintAdvice(Arena& arena, Arena& tempArena, const Bot bot, 
-		const char* portfolioName, const bool apply, const PreProcessBot preProcessBot) const
+		const char* portfolioName, const bool apply, void* userPtr, const PreProcessBot preProcessBot) const
 	{
 		const auto portfolio = LoadPortfolio(arena, *this, portfolioName);
 		RunInfo runInfo{};
 		runInfo.bot = bot;
 		runInfo.preProcessBot = preProcessBot;
+		runInfo.userPtr = userPtr;
 		Log log;
 		const auto newPortfolio = Run(arena, tempArena, portfolio, log, runInfo);
 		

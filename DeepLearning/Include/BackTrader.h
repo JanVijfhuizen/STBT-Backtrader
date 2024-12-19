@@ -81,7 +81,7 @@ namespace jv::bt
 		[[nodiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
 
 		void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const char* portfolioName, 
-			bool apply, PreProcessBot preProcessBot = nullptr) const;
+			bool apply, void* userPtr, PreProcessBot preProcessBot = nullptr) const;
 	};
 
 	struct BackTraderEnvironment final

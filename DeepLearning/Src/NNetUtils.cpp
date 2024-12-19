@@ -101,7 +101,6 @@ namespace jv::ai
 				neuron.threshold = type != 1 ? neuron.threshold : neuron.threshold *
 					RandF(1.f - thresholdMut.pctAlpha, 1.f + thresholdMut.pctAlpha);
 				neuron.threshold = type != 2 ? neuron.threshold : neuron.threshold + RandF(-1, 1) * thresholdMut.linAlpha;
-				neuron.threshold = Max<float>(neuron.threshold, 0);
 			}
 		}
 		auto& decayMut = mutations.decay;

@@ -51,6 +51,7 @@ namespace jv::bt
 		void* userPtr = nullptr;
 		uint32_t offset = 0;
 		uint32_t length = 1;
+		uint32_t warmup = 0;
 	};
 
 	struct TestInfo final
@@ -67,6 +68,7 @@ namespace jv::bt
 		uint32_t maxOffset = 2000;
 		// Starting cash.
 		float liquidity = 1000;
+		bool warmup = 0;
 	};
 
 	struct BackTrader final

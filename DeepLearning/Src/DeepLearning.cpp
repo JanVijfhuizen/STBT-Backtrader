@@ -116,6 +116,7 @@ int main()
 	jv::bt::TestInfo testInfo{};
 	testInfo.bot = StockAlgorithm;
 	testInfo.userPtr = &nnetCpy;
+	testInfo.warmup = 100;
 
 	jv::ai::Mutations mutations{};
 	mutations.threshold.chance = .2;

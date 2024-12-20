@@ -28,6 +28,7 @@ namespace jv::bt
 		runInfo.bot = testInfo.bot;
 		runInfo.preProcessBot = testInfo.preProcessBot;
 		runInfo.userPtr = testInfo.userPtr;
+		runInfo.warmup = testInfo.warmup;
 		Log log;
 
 		float average = 0;
@@ -66,7 +67,15 @@ namespace jv::bt
 		outLog = CreateArray<Array<Call>>(arena, runInfo.length);
 		
 		if (runInfo.preProcessBot)
-			runInfo.preProcessBot(tempArena, world, runInfo.offset, runInfo.length, runInfo.userPtr);
+			runInfo.preProcessBot(tempArena, world, runInfo.offset + runInfo.warmup, runInfo.length, runInfo.userPtr);
+
+		// Make sure the algorithm, if temporal, gets a warming up.
+		for (uint32_t i = 0; i < runInfo.warmup; i++)
+		{
+			const uint32_t index = runInfo.offset - i - runInfo.warmup;
+			calls.Clear();
+			runInfo.bot(tempArena, world, cpyPortfolio, calls, index, runInfo.userPtr);
+		}
 
 		for (uint32_t i = 0; i < runInfo.length; ++i)
 		{

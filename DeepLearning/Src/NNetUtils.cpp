@@ -134,8 +134,9 @@ namespace jv::ai
 			}
 		}
 		if (RandF(0, 1) < mutations.newWeightChance)
+			// Minimize the impact this weight has on the network itself, making it mostly a topology based evolution.
 			AddWeight(nnet, rand() % nnet.neuronCount, nnet.createInfo.inputSize + rand() % 
-				(nnet.neuronCount - nnet.createInfo.inputSize), RandF(-1, 1));
+				(nnet.neuronCount - nnet.createInfo.inputSize), RandF(-.1, .1));
 	}
 
 	void Copy(NNet& org, NNet& dst)

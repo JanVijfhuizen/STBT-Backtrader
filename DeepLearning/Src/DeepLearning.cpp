@@ -50,7 +50,7 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 	const float trend = GetTrendValue(stock, offset, userPtr);
 
 	auto nnet = reinterpret_cast<jv::ai::NNet*>(userPtr);
-	float input[3]{ ma, momentum, trend };
+	float input[3]{ ma, momentum / 10, trend };
 	float output[3];
 	Clean(*nnet);
 	Propagate(*nnet, input, output);
@@ -106,11 +106,9 @@ int main()
 	nnetCreateInfo.outputSize = 3;
 	auto nnet = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
 	auto ioLayers = Init(nnet, jv::ai::InitType::random);
-	auto midLayer = AddLayer(nnet, 6, jv::ai::InitType::random);
-	auto midLayer2 = AddLayer(nnet, 4, jv::ai::InitType::random);
-	Connect(nnet, ioLayers.input, midLayer, jv::ai::InitType::random);
-	Connect(nnet, midLayer, midLayer2, jv::ai::InitType::random);
-	Connect(nnet, midLayer2, ioLayers.output, jv::ai::InitType::random);
+	ConnectIO(nnet, jv::ai::InitType::random);
+
+	auto nnetCpy = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
 
 	jv::bt::TimeSeries timeSeries = bte.backTrader.world.timeSeries[0];
 	//jv::bt::Tracker::Debug(timeSeries.close, 30, true);
@@ -118,14 +116,14 @@ int main()
 	
 	jv::bt::TestInfo testInfo{};
 	testInfo.bot = StockAlgorithm;
-	testInfo.userPtr = &nnet;
+	testInfo.userPtr = &nnetCpy;
 
 	jv::ai::Mutations mutations{};
 	mutations.threshold.chance = .2;
 	mutations.weight.chance = .2;
-	//mutations.newNodeChance = .05;
-	//mutations.newWeightChance = .05;
-	auto nnetCpy = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
+	mutations.newNodeChance = .5;
+	mutations.newWeightChance = .5;
+	
 	float highestScore = 0;
 	for (size_t i = 0; i < 1000; i++)
 	{
@@ -142,6 +140,6 @@ int main()
 		}
 	}
 
-	bte.backTrader.PrintAdvice(bte.arena, bte.tempArena, StockAlgorithm, "jan", true, &nnet);
+	//bte.backTrader.PrintAdvice(bte.arena, bte.tempArena, StockAlgorithm, "jan", true, &nnet);
 	return 0;
 }

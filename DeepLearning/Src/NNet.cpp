@@ -43,6 +43,7 @@ namespace jv::ai
 			auto& neuron = nnet.neurons[i];
 			uint32_t weightId = neuron.weightsId;
 			float remainder = neuron.value - neuron.threshold;
+			neuron.value = Max<float>(neuron.value, 0);
 
 			// Makes sure you don't get extreme values if the nnet becomes very deep.
 			remainder = Min<float>(remainder, 1);
@@ -55,10 +56,11 @@ namespace jv::ai
 					auto& nextNeuron = nnet.neurons[weight.to];
 
 					// Multiply origin neuron value by weight value if above threshold.
-					float value = remainder * weight.value;
+					float value = weight.value;
 					nextNeuron.value += value;
 					weightId = weight.next;
 				}
+				neuron.value = 0;
 			}
 		}
 
@@ -69,13 +71,11 @@ namespace jv::ai
 			output[i] = jv::Clamp<float>(output[i], 0, 1);
 		}
 
-		// Clamp values and subtract decay.
+		// Clamp values and apply decay.
 		for (uint32_t i = 0; i < nnet.neuronCount; i++)
 		{
 			auto& neuron = nnet.neurons[i];
-			neuron.value = jv::Min<float>(neuron.value, 1);
-			neuron.value -= neuron.decay;
-			neuron.value = jv::Max<float>(neuron.value, 0);
+			neuron.value *= neuron.decay;
 		}
 	}
 

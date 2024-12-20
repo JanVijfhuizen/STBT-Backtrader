@@ -52,7 +52,6 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 	auto nnet = reinterpret_cast<jv::ai::NNet*>(userPtr);
 	float input[3]{ ma, momentum / 10, trend };
 	float output[3];
-	Clean(*nnet);
 	Propagate(*nnet, input, output);
 
 	uint32_t result = 0;
@@ -129,6 +128,7 @@ int main()
 	{
 		Copy(nnet, nnetCpy);
 		Mutate(nnetCpy, mutations);
+		Clean(nnetCpy);
 		const auto ret = bte.backTrader.RunTestEpochs(bte.arena, bte.tempArena, testInfo);
 
 		std::cout << "e" << i << ".";

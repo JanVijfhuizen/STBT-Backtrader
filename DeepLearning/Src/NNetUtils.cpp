@@ -101,6 +101,7 @@ namespace jv::ai
 				neuron.threshold = type != 1 ? neuron.threshold : neuron.threshold *
 					RandF(1.f - thresholdMut.pctAlpha, 1.f + thresholdMut.pctAlpha);
 				neuron.threshold = type != 2 ? neuron.threshold : neuron.threshold + RandF(-1, 1) * thresholdMut.linAlpha;
+				neuron.threshold = Max<float>(neuron.threshold, .1);
 			}
 		}
 		auto& decayMut = mutations.decay;
@@ -117,7 +118,7 @@ namespace jv::ai
 				neuron.decay = type != 1 ? neuron.decay : neuron.decay *
 					RandF(1.f - decayMut.pctAlpha, 1.f + decayMut.pctAlpha);
 				neuron.decay = type != 2 ? neuron.decay : neuron.decay + RandF(-1, 1) * decayMut.linAlpha;
-				neuron.decay = Max<float>(neuron.decay, 0);
+				neuron.decay = Clamp<float>(neuron.decay, 0, .9);
 			}
 		}
 		if (RandF(0, 1) < mutations.newNodeChance && nnet.weightCount < nnet.createInfo.weightCapacity)

@@ -51,17 +51,10 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 
 	auto nnet = reinterpret_cast<jv::ai::NNet*>(userPtr);
 	float input[3]{ ma, momentum / 10, trend };
-	float output[3];
+	bool output[2];
 	Propagate(*nnet, input, output);
 
-	uint32_t result = 0;
-	result = output[1] > output[0] ? 1 : result;
-	result = output[2] > output[1] ? 2 : result;
-
-	if (result == 0)
-		return;
-
-	if(result == 1)
+	if(output[0])
 	{
 		if (portfolio.liquidity - 100 > stock.close[offset])
 		{
@@ -71,7 +64,7 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 			calls.Add() = call;
 		}
 	}
-	else if(result == 2)
+	else if(output[1])
 	{
 		if (portfolio.liquidity > 10 && portfolio.stocks[0] > 0)
 		{
@@ -102,7 +95,7 @@ int main()
 	nnetCreateInfo.inputSize = 4;
 	nnetCreateInfo.neuronCapacity = 512;
 	nnetCreateInfo.weightCapacity = 512;
-	nnetCreateInfo.outputSize = 3;
+	nnetCreateInfo.outputSize = 2;
 	auto nnet = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
 	auto ioLayers = Init(nnet, jv::ai::InitType::random);
 	ConnectIO(nnet, jv::ai::InitType::random);

@@ -34,6 +34,9 @@ namespace jv::ai
 		Weight* weights;
 		uint32_t neuronCount;
 		uint32_t weightCount;
+
+		// Applies to which weights are (in)active.
+		bool* dna;
 	};
 
 	[[nodiscard]] NNet CreateNNet(NNetCreateInfo& info, Arena& arena);
@@ -45,6 +48,7 @@ namespace jv::ai
 	void Clear(NNet& nnet);
 	// Forward information through the network.
 	void Propagate(NNet& nnet, float* input, bool* output);
+	void ApplyDNA(NNet& nnet, bool* dna);
 
 	bool AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value);
 	bool AddNeuron(NNet& nnet, float decay, float threshold);

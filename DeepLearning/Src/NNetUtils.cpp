@@ -145,5 +145,6 @@ namespace jv::ai
 		dst.weightCount = org.weightCount;
 		memcpy(dst.neurons, org.neurons, sizeof(Neuron) * org.neuronCount);
 		memcpy(dst.weights, org.weights, sizeof(Weight) * org.weightCount);
+		memcpy(dst.dna, org.dna, sizeof(bool) * org.weightCount);
 	}
 }

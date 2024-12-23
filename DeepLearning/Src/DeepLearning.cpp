@@ -124,12 +124,6 @@ int main()
 		Copy(nnet, nnetCpy);
 		Mutate(nnetCpy, mutations, globalInnovationId);
 		
-		// test.
-		if (GetCompability(nnet, nnetCpy) < 1.f)
-		{
-			auto child = Breed(nnet, nnetCpy, bte.arena, bte.tempArena);
-		}
-
 		Clean(nnetCpy);
 		const auto ret = bte.backTrader.RunTestEpochs(bte.arena, bte.tempArena, testInfo);
 

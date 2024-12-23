@@ -196,9 +196,47 @@ namespace jv::ai
 		}
 
 		// Now change the neuron weight starts AND the weight from/to's, as well as the nexts.
+		for (uint32_t i = 0; i < tempNNet.neuronCount; i++)
+			tempNNet.neurons[i].weightsId = UINT32_MAX;
+
+		for (int32_t i = tempNNet.weightCount - 1; i >= 0; i--)
+		{
+			auto& weight = tempNNet.weights[i];
+
+			// Connect to neurons.
+			for (uint32_t j = 0; j < tempNNet.neuronCount; j++)
+			{
+				auto& neuron = tempNNet.neurons[j];
+				if (neuron.innovationId == weight.from)
+				{
+					weight.from = j;
+					neuron.weightsId = i;
+				}
+			}
+
+			// Connect all weights.
+			if (weight.next == UINT32_MAX)
+				continue;
+
+			for (int32_t j = i - 1; j >= 0; j--)
+			{
+				auto& oWeight = tempNNet.weights[j];
+				if (oWeight.innovationId == weight.next)
+				{
+					weight.next = j;
+					break;
+				}
+			}
+		}
+
+		// Copy and optimize size, but still make sure it can mutate once.
+		createInfo.neuronCapacity = tempNNet.neuronCount + 1;
+		createInfo.weightCapacity = tempNNet.weightCount + 3;
+		auto childNNet = CreateNNet(createInfo, arena);
+		Copy(tempNNet, childNNet);
 
 		tempArena.DestroyScope(tempScope);
-		return {};
+		return childNNet;
 	}
 
 	void Mutate(NNet& nnet, const Mutations mutations, uint32_t& gId)

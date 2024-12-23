@@ -47,6 +47,8 @@ namespace jv::ai
 	// Connect the input and output layers.
 	void ConnectIO(NNet& nnet, InitType initType);
 
+	[[nodiscard]] float GetCompability(NNet& a, NNet& b);
+
 	void Mutate(NNet& nnet, Mutations mutations);
 	void Copy(NNet& org, NNet& dst);
 }

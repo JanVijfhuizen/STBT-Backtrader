@@ -13,7 +13,7 @@ namespace jv::ai
 		nnet.scope = arena.CreateScope();
 		nnet.neurons = arena.New<Neuron>(info.neuronCapacity);
 		nnet.weights = arena.New<Weight>(info.weightCapacity);
-		nnet.dna = arena.New<bool>(info.weightCapacity);
+		nnet.globalInnovationId = 0;
 		return nnet;
 	}
 
@@ -51,8 +51,7 @@ namespace jv::ai
 				{
 					auto& weight = nnet.weights[weightId];
 					auto& nextNeuron = nnet.neurons[weight.to];
-					// Doesn't propagate when dna instance is inactive.
-					float value = weight.value * static_cast<float>(nnet.dna[weightId]);
+					float value = weight.value * weight.enabled;
 					nextNeuron.value += value;
 					weightId = weight.next;
 				}
@@ -75,11 +74,6 @@ namespace jv::ai
 		}
 	}
 
-	void ApplyDNA(NNet& nnet, bool* dna)
-	{
-		memcpy(nnet.dna, dna, sizeof(bool) * nnet.weightCount);
-	}
-
 	bool AddWeight(NNet& nnet, const uint32_t from, const uint32_t to, const float value)
 	{
 		if (nnet.weightCount >= nnet.createInfo.weightCapacity)
@@ -91,12 +85,12 @@ namespace jv::ai
 		assert(to >= nnet.createInfo.inputSize);
 		Neuron& neuron = nnet.neurons[from];
 		Weight& weight = nnet.weights[nnet.weightCount] = {};
+		weight.innovationId = nnet.globalInnovationId++;
 		weight.from = from;
 		weight.to = to;
 		weight.value = value;
 		weight.next = neuron.weightsId;
-		neuron.weightsId = nnet.weightCount;
-		nnet.dna[nnet.weightCount++] = true;
+		neuron.weightsId = nnet.weightCount++;
 		return true;
 	}
 

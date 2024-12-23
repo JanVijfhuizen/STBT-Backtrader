@@ -63,6 +63,29 @@ namespace jv::ai
 		const uint32_t outSize = nnet.createInfo.outputSize;
 		Connect(nnet, { 0, inSize }, { inSize, inSize + outSize }, initType);
 	}
+	float GetCompability(NNet& a, NNet& b)
+	{
+		uint32_t outliers = 0;
+		uint32_t j = 0;
+		for (uint32_t i = 0; i < a.weightCount; i++)
+		{
+			const auto& aW = a.weights[i];
+			const uint32_t gId = aW.innovationId;
+			for (; j < b.weightCount; j++)
+			{
+				const auto& bW = b.weights[j];
+				const uint32_t gIdb = bW.innovationId;
+				if (gIdb == gId)
+				{
+					outliers += j - i + aW.enabled != bW.enabled;
+					++j;
+					break;
+				}
+			}
+		}
+		outliers += j - a.weightCount;
+		return 1.f - static_cast<float>(outliers) / Max<float>(a.weightCount, b.weightCount);
+	}
 	Neuron* neurons;
 	Weight* weights;
 	uint32_t neuronCount;
@@ -128,9 +151,9 @@ namespace jv::ai
 			{
 				const uint32_t weightId = rand() % nnet.weightCount;
 				auto& weight = nnet.weights[weightId];
-				const uint32_t to = weight.to;
-				weight.to = nnet.neuronCount - 1;
-				AddWeight(nnet, nnet.neuronCount - 1, to, 1);
+				weight.enabled = false;
+				AddWeight(nnet, weight.from, nnet.neuronCount - 1, weight.value);
+				AddWeight(nnet, nnet.neuronCount - 1, weight.to, 1);
 			}
 		}
 		if (RandF(0, 1) < mutations.newWeightChance)
@@ -145,6 +168,5 @@ namespace jv::ai
 		dst.weightCount = org.weightCount;
 		memcpy(dst.neurons, org.neurons, sizeof(Neuron) * org.neuronCount);
 		memcpy(dst.weights, org.weights, sizeof(Weight) * org.weightCount);
-		memcpy(dst.dna, org.dna, sizeof(bool) * org.weightCount);
 	}
 }

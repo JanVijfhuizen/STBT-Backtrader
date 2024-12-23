@@ -91,14 +91,15 @@ int main()
 		bte = jv::bt::CreateBTE(symbols, 4, 1e-3);
 	}
 
+	uint32_t globalInnovationId = 0;
 	jv::ai::NNetCreateInfo nnetCreateInfo{};
 	nnetCreateInfo.inputSize = 4;
 	nnetCreateInfo.neuronCapacity = 512;
 	nnetCreateInfo.weightCapacity = 512;
 	nnetCreateInfo.outputSize = 2;
 	auto nnet = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
-	auto ioLayers = Init(nnet, jv::ai::InitType::random);
-	ConnectIO(nnet, jv::ai::InitType::random);
+	auto ioLayers = Init(nnet, jv::ai::InitType::random, globalInnovationId);
+	ConnectIO(nnet, jv::ai::InitType::random, globalInnovationId);
 
 	auto nnetCpy = jv::ai::CreateNNet(nnetCreateInfo, bte.arena);
 
@@ -121,8 +122,14 @@ int main()
 	for (size_t i = 0; i < 1000; i++)
 	{
 		Copy(nnet, nnetCpy);
-		Mutate(nnetCpy, mutations);
-		std::cout << GetCompability(nnet, nnetCpy) << std::endl;
+		Mutate(nnetCpy, mutations, globalInnovationId);
+		
+		// test.
+		if (GetCompability(nnet, nnetCpy) < 1.f)
+		{
+			auto child = Breed(nnet, nnetCpy, bte.arena, bte.tempArena);
+		}
+
 		Clean(nnetCpy);
 		const auto ret = bte.backTrader.RunTestEpochs(bte.arena, bte.tempArena, testInfo);
 

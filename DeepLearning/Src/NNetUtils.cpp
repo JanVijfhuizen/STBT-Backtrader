@@ -4,14 +4,14 @@
 
 namespace jv::ai
 {
-	IOLayers Init(NNet& nnet, const InitType initType)
+	IOLayers Init(NNet& nnet, const InitType initType, uint32_t& gId)
 	{
-		auto inputLayer = AddLayer(nnet, nnet.createInfo.inputSize, initType);
-		auto outputLayer = AddLayer(nnet, nnet.createInfo.outputSize, initType);
+		auto inputLayer = AddLayer(nnet, nnet.createInfo.inputSize, initType, gId);
+		auto outputLayer = AddLayer(nnet, nnet.createInfo.outputSize, initType, gId);
 		return { inputLayer, outputLayer };
 	}
 
-	Layer AddLayer(NNet& nnet, const uint32_t length, InitType initType)
+	Layer AddLayer(NNet& nnet, const uint32_t length, InitType initType, uint32_t& gId)
 	{
 		for (uint32_t i = 0; i < length; i++)
 		{
@@ -19,10 +19,10 @@ namespace jv::ai
 			switch (initType)
 			{
 			case InitType::flat:
-				valid = AddNeuron(nnet, 1, 0);
+				valid = AddNeuron(nnet, 1, 0, gId);
 				break;
 			case InitType::random:
-				valid = AddNeuron(nnet, jv::RandF(0, 1), jv::RandF(0, 1));
+				valid = AddNeuron(nnet, jv::RandF(0, 1), jv::RandF(0, 1), gId);
 				break;
 			default:
 				break;
@@ -33,7 +33,7 @@ namespace jv::ai
 		return { nnet.neuronCount - length, nnet.neuronCount };
 	}
 
-	void Connect(NNet& nnet, Layer from, Layer to, InitType initType)
+	void Connect(NNet& nnet, Layer from, Layer to, InitType initType, uint32_t& gId)
 	{
 		const uint32_t inSize = from.to - from.from;
 		const uint32_t outSize = to.to - to.from;
@@ -45,10 +45,10 @@ namespace jv::ai
 				switch (initType)
 				{
 				case InitType::flat:
-					valid = AddWeight(nnet, from.from + i, to.from + j, 1);
+					valid = AddWeight(nnet, from.from + i, to.from + j, 1, gId);
 					break;
 				case InitType::random:
-					valid = AddWeight(nnet, from.from + i, to.from + j, jv::RandF(-1, 1));
+					valid = AddWeight(nnet, from.from + i, to.from + j, jv::RandF(-1, 1), gId);
 					break;
 				default:
 					break;
@@ -57,11 +57,11 @@ namespace jv::ai
 			}	
 	}
 
-	void ConnectIO(NNet& nnet, const InitType initType)
+	void ConnectIO(NNet& nnet, const InitType initType, uint32_t& gId)
 	{
 		const uint32_t inSize = nnet.createInfo.inputSize;
 		const uint32_t outSize = nnet.createInfo.outputSize;
-		Connect(nnet, { 0, inSize }, { inSize, inSize + outSize }, initType);
+		Connect(nnet, { 0, inSize }, { inSize, inSize + outSize }, initType, gId);
 	}
 	float GetCompability(NNet& a, NNet& b)
 	{
@@ -97,21 +97,22 @@ namespace jv::ai
 		uint32_t bC = 0;
 		uint32_t nC = 0;
 
-		// Ordered double insert.
+		// Ordered double insert for neurons.
 		while (aC < a.neuronCount && bC < b.neuronCount)
 		{
 			auto& aN = a.neurons[aC];
 			auto& bN = b.neurons[bC];
 
 			const bool eq = aN.innovationId == bN.innovationId;
+			auto& n = tempNNet.neurons[tempNNet.neuronCount++];
 
 			// Either add neuron from a, b or random.
 			if (aN.innovationId < bN.innovationId)
-				tempNNet.neurons[tempNNet.neuronCount++] = aN;
+				n = aN;
 			if (aN.innovationId == bN.innovationId)
-				tempNNet.neurons[tempNNet.neuronCount++] = rand() % 2 ? aN : bN;
+				n = rand() % 2 ? aN : bN;
 			if (aN.innovationId > bN.innovationId)
-				tempNNet.neurons[tempNNet.neuronCount++] = bN;
+				n = bN;
 
 			aC += aN.innovationId < bN.innovationId || eq;
 			bC += bN.innovationId < aN.innovationId || eq;
@@ -121,12 +122,81 @@ namespace jv::ai
 			tempNNet.neurons[tempNNet.neuronCount++] = a.neurons[aC++];
 		while (bC < b.neuronCount)
 			tempNNet.neurons[tempNNet.neuronCount++] = b.neurons[bC++];
+		
+		// Ordered double insert for weights.
+		// With the change that from/to will be replaced by the neuron's innovation id, so that it can be tracked
+		// despite the changed topology.
+		aC = bC = nC = 0;
+		while (aC < a.weightCount && bC < b.weightCount)
+		{
+			auto& aW = a.weights[aC];
+			auto& bW = b.weights[bC];
+
+			if (!aW.enabled)
+			{
+				++aC;
+				continue;
+			}
+			if (!bW.enabled)
+			{
+				++bC;
+				continue;
+			}
+
+			const bool eq = aW.innovationId == bW.innovationId;
+			auto& w = tempNNet.weights[tempNNet.weightCount++];
+
+			// Either add neuron from a, b or random.
+			if (aW.innovationId < bW.innovationId)
+			{
+				w = aW;
+				w.from = a.neurons[w.from].innovationId;
+				w.to = a.neurons[w.to].innovationId;
+			}
+				
+			if (aW.innovationId == bW.innovationId)
+			{
+				const uint32_t r = rand() % 2;
+				w = r ? aW : bW;
+				w.from = r ? a.neurons[w.from].innovationId : b.neurons[w.from].innovationId;
+				w.to = r ? a.neurons[w.to].innovationId : b.neurons[w.to].innovationId;
+			}
+			if (aW.innovationId > bW.innovationId)
+			{
+				w = bW;
+				w.from = b.neurons[w.from].innovationId;
+				w.to = b.neurons[w.to].innovationId;
+			}
+
+			aC += aW.innovationId < bW.innovationId || eq;
+			bC += bW.innovationId < aW.innovationId || eq;
+			++nC;
+		}
+		while (aC < a.weightCount)
+		{
+			auto& w = tempNNet.weights[tempNNet.weightCount++];
+			auto& aW = a.weights[aC++];
+			w = aW;
+			w.from = a.neurons[aW.from].innovationId;
+			w.to = a.neurons[aW.to].innovationId;
+		}
+			
+		while (bC < b.weightCount)
+		{
+			auto& w = tempNNet.weights[tempNNet.weightCount++];
+			auto& bW = b.weights[bC++];
+			w = bW;
+			w.from = a.neurons[bW.from].innovationId;
+			w.to = a.neurons[bW.to].innovationId;
+		}
+
+		// Now change the neuron weight starts AND the weight from/to's.
 
 		tempArena.DestroyScope(tempScope);
 		return {};
 	}
 
-	void Mutate(NNet& nnet, const Mutations mutations)
+	void Mutate(NNet& nnet, const Mutations mutations, uint32_t& gId)
 	{
 		auto& weightMut = mutations.weight;
 		if (weightMut.chance > 0)
@@ -181,20 +251,20 @@ namespace jv::ai
 		}
 		if (RandF(0, 1) < mutations.newNodeChance && nnet.weightCount < nnet.createInfo.weightCapacity)
 		{
-			bool valid = AddNeuron(nnet, RandF(0, 1), RandF(0, 1));
+			bool valid = AddNeuron(nnet, RandF(0, 1), RandF(0, 1), gId);
 			if (valid)
 			{
 				const uint32_t weightId = rand() % nnet.weightCount;
 				auto& weight = nnet.weights[weightId];
 				weight.enabled = false;
-				AddWeight(nnet, weight.from, nnet.neuronCount - 1, weight.value);
-				AddWeight(nnet, nnet.neuronCount - 1, weight.to, 1);
+				AddWeight(nnet, weight.from, nnet.neuronCount - 1, weight.value, gId);
+				AddWeight(nnet, nnet.neuronCount - 1, weight.to, 1, gId);
 			}
 		}
 		if (RandF(0, 1) < mutations.newWeightChance)
 			// Minimize the impact this weight has on the network itself, making it mostly a topology based evolution.
 			AddWeight(nnet, rand() % nnet.neuronCount, nnet.createInfo.inputSize + rand() % 
-				(nnet.neuronCount - nnet.createInfo.inputSize), RandF(-.1, .1));
+				(nnet.neuronCount - nnet.createInfo.inputSize), RandF(-.1, .1), gId);
 	}
 
 	void Copy(NNet& org, NNet& dst)

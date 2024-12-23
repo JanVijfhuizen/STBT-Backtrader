@@ -13,7 +13,6 @@ namespace jv::ai
 		nnet.scope = arena.CreateScope();
 		nnet.neurons = arena.New<Neuron>(info.neuronCapacity);
 		nnet.weights = arena.New<Weight>(info.weightCapacity);
-		nnet.globalInnovationId = 0;
 		return nnet;
 	}
 
@@ -74,7 +73,7 @@ namespace jv::ai
 		}
 	}
 
-	bool AddWeight(NNet& nnet, const uint32_t from, const uint32_t to, const float value)
+	bool AddWeight(NNet& nnet, const uint32_t from, const uint32_t to, const float value, uint32_t& gId)
 	{
 		if (nnet.weightCount >= nnet.createInfo.weightCapacity)
 			return false;
@@ -85,7 +84,7 @@ namespace jv::ai
 		assert(to >= nnet.createInfo.inputSize);
 		Neuron& neuron = nnet.neurons[from];
 		Weight& weight = nnet.weights[nnet.weightCount] = {};
-		weight.innovationId = nnet.globalInnovationId++;
+		weight.innovationId = gId++;
 		weight.from = from;
 		weight.to = to;
 		weight.value = value;
@@ -94,7 +93,7 @@ namespace jv::ai
 		return true;
 	}
 
-	bool AddNeuron(NNet& nnet, const float decay, const float threshold)
+	bool AddNeuron(NNet& nnet, const float decay, const float threshold, uint32_t& gId)
 	{
 		if (nnet.neuronCount >= nnet.createInfo.neuronCapacity)
 			return false;
@@ -103,7 +102,7 @@ namespace jv::ai
 		neuron.value = 0;
 		neuron.decay = decay;
 		neuron.threshold = threshold;
-		neuron.innovationId = nnet.globalInnovationId++;
+		neuron.innovationId = gId++;
 		return true;
 	}
 }

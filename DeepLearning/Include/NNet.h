@@ -37,7 +37,6 @@ namespace jv::ai
 		Weight* weights;
 		uint32_t neuronCount;
 		uint32_t weightCount;
-		uint32_t globalInnovationId;
 	};
 
 	[[nodiscard]] NNet CreateNNet(NNetCreateInfo& info, Arena& arena);
@@ -50,6 +49,6 @@ namespace jv::ai
 	// Forward information through the network.
 	void Propagate(NNet& nnet, float* input, bool* output);
 
-	bool AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value);
-	bool AddNeuron(NNet& nnet, float decay, float threshold);
+	bool AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value, uint32_t& gId);
+	bool AddNeuron(NNet& nnet, float decay, float threshold, uint32_t& gId);
 }

@@ -40,17 +40,17 @@ namespace jv::ai
 	Initialize neural network with default input / output layers.
 	Returns the input layer.
 	*/
-	IOLayers Init(NNet& nnet, InitType initType);
+	IOLayers Init(NNet& nnet, InitType initType, uint32_t& gId);
 	// Adds a new layer of neurons.
-	Layer AddLayer(NNet& nnet, uint32_t length, InitType initType);
-	void Connect(NNet& nnet, Layer from, Layer to, InitType initType);
+	Layer AddLayer(NNet& nnet, uint32_t length, InitType initType, uint32_t& gId);
+	void Connect(NNet& nnet, Layer from, Layer to, InitType initType, uint32_t& gId);
 	// Connect the input and output layers.
-	void ConnectIO(NNet& nnet, InitType initType);
+	void ConnectIO(NNet& nnet, InitType initType, uint32_t& gId);
 
 	[[nodiscard]] float GetCompability(NNet& a, NNet& b);
 	[[nodiscard]] NNet Breed(NNet& a, NNet& b, Arena& arena, Arena& tempArena);
 
-	void Mutate(NNet& nnet, Mutations mutations);
+	void Mutate(NNet& nnet, Mutations mutations, uint32_t& gId);
 	void Copy(NNet& org, NNet& dst);
 }
 

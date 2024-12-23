@@ -65,10 +65,10 @@ namespace jv::ai
 	}
 	float GetCompability(NNet& a, NNet& b)
 	{
-		uint32_t nC = 0;
 		uint32_t errorCount = 0;
 		uint32_t aC = 0;
 		uint32_t bC = 0;
+		uint32_t wC = 0;
 
 		while (aC < a.weightCount && bC < b.weightCount)
 		{
@@ -80,13 +80,49 @@ namespace jv::ai
 				++errorCount;
 			aC += aW.innovationId < bW.innovationId || eq;
 			bC += bW.innovationId < aW.innovationId || eq;
-			++nC;
+			++wC;
 		}
 		errorCount += a.weightCount - aC + b.weightCount - bC;
-		return 1.f - static_cast<float>(errorCount) / static_cast<float>(nC);
+		return 1.f - static_cast<float>(errorCount) / static_cast<float>(wC);
 	}
-	NNet Breed(NNet& a, NNet& b, Arena& arena)
+	NNet Breed(NNet& a, NNet& b, Arena& arena, Arena& tempArena)
 	{
+		const auto tempScope = tempArena.CreateScope();
+		NNetCreateInfo createInfo = a.createInfo;
+		createInfo.neuronCapacity += b.createInfo.neuronCapacity;
+		createInfo.weightCapacity += b.createInfo.weightCapacity;
+		auto tempNNet = CreateNNet(createInfo, tempArena);
+
+		uint32_t aC = 0;
+		uint32_t bC = 0;
+		uint32_t nC = 0;
+
+		// Ordered double insert.
+		while (aC < a.neuronCount && bC < b.neuronCount)
+		{
+			auto& aN = a.neurons[aC];
+			auto& bN = b.neurons[bC];
+
+			const bool eq = aN.innovationId == bN.innovationId;
+
+			// Either add neuron from a, b or random.
+			if (aN.innovationId < bN.innovationId)
+				tempNNet.neurons[tempNNet.neuronCount++] = aN;
+			if (aN.innovationId == bN.innovationId)
+				tempNNet.neurons[tempNNet.neuronCount++] = rand() % 2 ? aN : bN;
+			if (aN.innovationId > bN.innovationId)
+				tempNNet.neurons[tempNNet.neuronCount++] = bN;
+
+			aC += aN.innovationId < bN.innovationId || eq;
+			bC += bN.innovationId < aN.innovationId || eq;
+			++nC;
+		}
+		while (aC < a.neuronCount)
+			tempNNet.neurons[tempNNet.neuronCount++] = a.neurons[aC++];
+		while (bC < b.neuronCount)
+			tempNNet.neurons[tempNNet.neuronCount++] = b.neurons[bC++];
+
+		tempArena.DestroyScope(tempScope);
 		return {};
 	}
 

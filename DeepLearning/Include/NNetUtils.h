@@ -48,7 +48,7 @@ namespace jv::ai
 	void ConnectIO(NNet& nnet, InitType initType);
 
 	[[nodiscard]] float GetCompability(NNet& a, NNet& b);
-	[[nodiscard]] NNet Breed(NNet& a, NNet& b, Arena& arena);
+	[[nodiscard]] NNet Breed(NNet& a, NNet& b, Arena& arena, Arena& tempArena);
 
 	void Mutate(NNet& nnet, Mutations mutations);
 	void Copy(NNet& org, NNet& dst);

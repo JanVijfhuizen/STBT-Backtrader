@@ -146,27 +146,30 @@ namespace jv::ai
 			const bool eq = aW.innovationId == bW.innovationId;
 			auto& w = tempNNet.weights[tempNNet.weightCount++];
 
+			NNet* n = nullptr;
+
 			// Either add neuron from a, b or random.
 			if (aW.innovationId < bW.innovationId)
 			{
+				n = &a;
 				w = aW;
-				w.from = a.neurons[w.from].innovationId;
-				w.to = a.neurons[w.to].innovationId;
 			}
 				
 			if (aW.innovationId == bW.innovationId)
 			{
 				const uint32_t r = rand() % 2;
+				n = r ? &a : &b;
 				w = r ? aW : bW;
-				w.from = r ? a.neurons[w.from].innovationId : b.neurons[w.from].innovationId;
-				w.to = r ? a.neurons[w.to].innovationId : b.neurons[w.to].innovationId;
 			}
 			if (aW.innovationId > bW.innovationId)
 			{
+				n = &b;
 				w = bW;
-				w.from = b.neurons[w.from].innovationId;
-				w.to = b.neurons[w.to].innovationId;
 			}
+
+			w.from = n->neurons[w.from].innovationId;
+			w.to = n->neurons[w.to].innovationId;
+			w.next = w.next == UINT32_MAX ? w.next : n->weights[w.next].innovationId;
 
 			aC += aW.innovationId < bW.innovationId || eq;
 			bC += bW.innovationId < aW.innovationId || eq;
@@ -179,6 +182,7 @@ namespace jv::ai
 			w = aW;
 			w.from = a.neurons[aW.from].innovationId;
 			w.to = a.neurons[aW.to].innovationId;
+			w.next = w.next == UINT32_MAX ? w.next : a.weights[w.next].innovationId;
 		}
 			
 		while (bC < b.weightCount)
@@ -188,9 +192,10 @@ namespace jv::ai
 			w = bW;
 			w.from = a.neurons[bW.from].innovationId;
 			w.to = a.neurons[bW.to].innovationId;
+			w.next = w.next == UINT32_MAX ? w.next : b.weights[w.next].innovationId;
 		}
 
-		// Now change the neuron weight starts AND the weight from/to's.
+		// Now change the neuron weight starts AND the weight from/to's, as well as the nexts.
 
 		tempArena.DestroyScope(tempScope);
 		return {};

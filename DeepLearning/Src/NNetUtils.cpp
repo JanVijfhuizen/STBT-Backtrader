@@ -71,40 +71,86 @@ namespace jv::ai
 		{
 			const auto& aW = a.weights[i];
 			const uint32_t gId = aW.innovationId;
+			if (!aW.enabled)
+				continue;
+
 			for (; j < b.weightCount; j++)
 			{
 				const auto& bW = b.weights[j];
 				const uint32_t gIdb = bW.innovationId;
-				if (gIdb == gId)
+				if (!bW.enabled)
+					continue;
+
+				if (gIdb >= gId)
 				{
-					outliers += j - i + aW.enabled != bW.enabled;
-					++j;
-					break;
-				}
-				if (gIdb > gId)
-				{
-					outliers += j - i - 1;
+					outliers += j - i;
 					++j;
 					break;
 				}
 			}
 		}
-		outliers += j - a.weightCount;
+		outliers += b.weightCount - j;
 		return 1.f - static_cast<float>(outliers) / Max<float>(a.weightCount, b.weightCount);
 	}
-	void Breed(NNet& a, NNet& b, NNet& c)
+	NNet Breed(NNet& a, NNet& b, Arena& arena)
 	{
+		uint32_t neuronCount = a.neuronCount;
+
+		uint32_t j = 0;
+		for (uint32_t i = 0; i < a.neuronCount; i++)
+		{
+			const auto& aN = a.neurons[i];
+			const uint32_t gId = aN.innovationId;
+			for (; j < b.neuronCount; j++)
+			{
+				const auto& bN = b.neurons[j];
+				const uint32_t gIdb = bN.innovationId;
+
+				if (gIdb >= gId)
+				{
+					neuronCount += j - i;
+					++j;
+					break;
+				}
+			}
+		}
+		neuronCount += b.weightCount - j;
+
+		uint32_t weightCount = a.weightCount;
+
 		uint32_t j = 0;
 		for (uint32_t i = 0; i < a.weightCount; i++)
 		{
 			const auto& aW = a.weights[i];
 			const uint32_t gId = aW.innovationId;
+			if (!aW.enabled)
+				continue;
+
 			for (; j < b.weightCount; j++)
 			{
 				const auto& bW = b.weights[j];
 				const uint32_t gIdb = bW.innovationId;
+				if (!bW.enabled)
+					continue;
+
+				if (gIdb >= gId)
+				{
+					weightCount += j - i;
+					++j;
+					break;
+				}
 			}
 		}
+		weightCount += b.weightCount - j;
+
+		NNetCreateInfo createInfo{};
+		createInfo = a.createInfo;
+		// Add extra space so that it may mutate once.
+		createInfo.neuronCapacity = neuronCount + 1;
+		createInfo.weightCapacity = weightCount + 3;
+		auto nnet = CreateNNet(createInfo, arena);
+
+		return nnet;
 	}
 
 	void Mutate(NNet& nnet, const Mutations mutations)

@@ -8,6 +8,7 @@ namespace jv::ai
 		float value;
 		float decay;
 		float threshold;
+		uint32_t innovationId;
 		uint32_t weightsId = UINT32_MAX;
 	};
 

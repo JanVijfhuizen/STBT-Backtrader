@@ -103,6 +103,7 @@ namespace jv::ai
 		neuron.value = 0;
 		neuron.decay = decay;
 		neuron.threshold = threshold;
+		neuron.innovationId = nnet.globalInnovationId++;
 		return true;
 	}
 }

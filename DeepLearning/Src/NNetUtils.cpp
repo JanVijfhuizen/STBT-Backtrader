@@ -81,15 +81,31 @@ namespace jv::ai
 					++j;
 					break;
 				}
+				if (gIdb > gId)
+				{
+					outliers += j - i - 1;
+					++j;
+					break;
+				}
 			}
 		}
 		outliers += j - a.weightCount;
 		return 1.f - static_cast<float>(outliers) / Max<float>(a.weightCount, b.weightCount);
 	}
-	Neuron* neurons;
-	Weight* weights;
-	uint32_t neuronCount;
-	uint32_t weightCount;
+	void Breed(NNet& a, NNet& b, NNet& c)
+	{
+		uint32_t j = 0;
+		for (uint32_t i = 0; i < a.weightCount; i++)
+		{
+			const auto& aW = a.weights[i];
+			const uint32_t gId = aW.innovationId;
+			for (; j < b.weightCount; j++)
+			{
+				const auto& bW = b.weights[j];
+				const uint32_t gIdb = bW.innovationId;
+			}
+		}
+	}
 
 	void Mutate(NNet& nnet, const Mutations mutations)
 	{

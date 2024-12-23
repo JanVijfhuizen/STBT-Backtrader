@@ -122,15 +122,16 @@ int main()
 	{
 		Copy(nnet, nnetCpy);
 		Mutate(nnetCpy, mutations);
+		std::cout << GetCompability(nnet, nnetCpy) << std::endl;
 		Clean(nnetCpy);
 		const auto ret = bte.backTrader.RunTestEpochs(bte.arena, bte.tempArena, testInfo);
 
-		std::cout << "e" << i << ".";
+		//std::cout << "e" << i << ".";
 		if (ret > highestScore)
 		{
 			highestScore = ret;
 			Copy(nnetCpy, nnet);
-			std::cout << std::endl << std::endl << highestScore * 100 << "%" << std::endl << std::endl;
+			//std::cout << std::endl << std::endl << highestScore * 100 << "%" << std::endl << std::endl;
 		}
 	}
 

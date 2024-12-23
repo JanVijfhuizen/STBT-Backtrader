@@ -65,92 +65,29 @@ namespace jv::ai
 	}
 	float GetCompability(NNet& a, NNet& b)
 	{
-		uint32_t outliers = 0;
-		uint32_t j = 0;
-		for (uint32_t i = 0; i < a.weightCount; i++)
+		uint32_t nC = 0;
+		uint32_t errorCount = 0;
+		uint32_t aC = 0;
+		uint32_t bC = 0;
+
+		while (aC < a.weightCount && bC < b.weightCount)
 		{
-			const auto& aW = a.weights[i];
-			const uint32_t gId = aW.innovationId;
-			if (!aW.enabled)
-				continue;
-
-			for (; j < b.weightCount; j++)
-			{
-				const auto& bW = b.weights[j];
-				const uint32_t gIdb = bW.innovationId;
-				if (!bW.enabled)
-					continue;
-
-				if (gIdb >= gId)
-				{
-					outliers += j - i;
-					++j;
-					break;
-				}
-			}
+			auto& aW = a.weights[aC];
+			auto& bW = b.weights[bC];
+			
+			const bool eq = aW.innovationId == bW.innovationId;
+			if (!eq)
+				++errorCount;
+			aC += aW.innovationId < bW.innovationId || eq;
+			bC += bW.innovationId < aW.innovationId || eq;
+			++nC;
 		}
-		outliers += b.weightCount - j;
-		return 1.f - static_cast<float>(outliers) / Max<float>(a.weightCount, b.weightCount);
+		errorCount += a.weightCount - aC + b.weightCount - bC;
+		return 1.f - static_cast<float>(errorCount) / static_cast<float>(nC);
 	}
 	NNet Breed(NNet& a, NNet& b, Arena& arena)
 	{
-		uint32_t neuronCount = a.neuronCount;
-
-		uint32_t j = 0;
-		for (uint32_t i = 0; i < a.neuronCount; i++)
-		{
-			const auto& aN = a.neurons[i];
-			const uint32_t gId = aN.innovationId;
-			for (; j < b.neuronCount; j++)
-			{
-				const auto& bN = b.neurons[j];
-				const uint32_t gIdb = bN.innovationId;
-
-				if (gIdb >= gId)
-				{
-					neuronCount += j - i;
-					++j;
-					break;
-				}
-			}
-		}
-		neuronCount += b.weightCount - j;
-
-		uint32_t weightCount = a.weightCount;
-
-		uint32_t j = 0;
-		for (uint32_t i = 0; i < a.weightCount; i++)
-		{
-			const auto& aW = a.weights[i];
-			const uint32_t gId = aW.innovationId;
-			if (!aW.enabled)
-				continue;
-
-			for (; j < b.weightCount; j++)
-			{
-				const auto& bW = b.weights[j];
-				const uint32_t gIdb = bW.innovationId;
-				if (!bW.enabled)
-					continue;
-
-				if (gIdb >= gId)
-				{
-					weightCount += j - i;
-					++j;
-					break;
-				}
-			}
-		}
-		weightCount += b.weightCount - j;
-
-		NNetCreateInfo createInfo{};
-		createInfo = a.createInfo;
-		// Add extra space so that it may mutate once.
-		createInfo.neuronCapacity = neuronCount + 1;
-		createInfo.weightCapacity = weightCount + 3;
-		auto nnet = CreateNNet(createInfo, arena);
-
-		return nnet;
+		return {};
 	}
 
 	void Mutate(NNet& nnet, const Mutations mutations)

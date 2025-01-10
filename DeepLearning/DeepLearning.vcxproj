@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Src\GeneticAlgorithm.cpp" />
     <ClCompile Include="Include\JLib\Math.cpp" />
     <ClCompile Include="Src\NNetUtils.cpp" />
     <ClCompile Include="Src\NNet.cpp" />
@@ -155,6 +156,7 @@
     <ClCompile Include="Src\Arena.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\GeneticAlgorithm.h" />
     <ClInclude Include="Include\BackTrader.h" />
     <ClInclude Include="Include\gnuplot-iostream.h" />
     <ClInclude Include="Include\JLib\Arena.h" />

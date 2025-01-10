@@ -6,6 +6,12 @@
 #include "JLib/Queue.h"
 #include "NNet.h"
 #include <NNetUtils.h>
+#include "GeneticAlgorithm.h";
+
+[[nodiscard]] float RatingFunc(jv::ai::NNet& nnet, void* userPtr, jv::Arena& arena, jv::Arena& tempArena)
+{
+	return 0;
+}
 
 [[nodiscard]] float GetMAValue(const jv::bt::TimeSeries& stock, const uint32_t offset, void* userPtr)
 {
@@ -117,7 +123,13 @@ int main()
 	mutations.weight.chance = .2;
 	mutations.newNodeChance = .5;
 	mutations.newWeightChance = .5;
+
+	jv::ai::GeneticAlgorithmRunInfo runInfo{};
+	runInfo.userPtr = &bte;
+	runInfo.ratingFunc = RatingFunc;
+	const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
 	
+	/*
 	float highestScore = 0;
 	for (size_t i = 0; i < 1000; i++)
 	{
@@ -127,14 +139,15 @@ int main()
 		Clean(nnetCpy);
 		const auto ret = bte.backTrader.RunTestEpochs(bte.arena, bte.tempArena, testInfo);
 
-		//std::cout << "e" << i << ".";
+		std::cout << "e" << i << ".";
 		if (ret > highestScore)
 		{
 			highestScore = ret;
 			Copy(nnetCpy, nnet);
-			//std::cout << std::endl << std::endl << highestScore * 100 << "%" << std::endl << std::endl;
+			std::cout << std::endl << std::endl << highestScore * 100 << "%" << std::endl << std::endl;
 		}
 	}
+	*/
 
 	//bte.backTrader.PrintAdvice(bte.arena, bte.tempArena, StockAlgorithm, "jan", true, &nnet);
 	return 0;

@@ -134,10 +134,10 @@ int main()
 	runInfo.nnetCreateInfo = nnetCreateInfo;
 	runInfo.userPtr = &bte;
 	runInfo.ratingFunc = RatingFunc;
-	runInfo.width = 100;
-	runInfo.survivors = 10;
-	runInfo.arrivals = 10;
-	runInfo.epochs = 100;
+	//runInfo.width = 100;
+	//runInfo.survivors = 10;
+	//runInfo.arrivals = 10;
+	//runInfo.epochs = 100;
 	const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
 	
 	/*

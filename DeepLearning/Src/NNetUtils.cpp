@@ -63,6 +63,7 @@ namespace jv::ai
 		const uint32_t outSize = nnet.createInfo.outputSize;
 		Connect(nnet, { 0, inSize }, { inSize, inSize + outSize }, initType, gId);
 	}
+
 	float GetCompability(NNet& a, NNet& b)
 	{
 		uint32_t errorCount = 0;
@@ -132,6 +133,7 @@ namespace jv::ai
 			auto& aW = a.weights[aC];
 			auto& bW = b.weights[bC];
 
+			/*
 			if (!aW.enabled)
 			{
 				++aC;
@@ -142,6 +144,7 @@ namespace jv::ai
 				++bC;
 				continue;
 			}
+			*/
 
 			const bool eq = aW.innovationId == bW.innovationId;
 			auto& w = tempNNet.weights[tempNNet.weightCount++];

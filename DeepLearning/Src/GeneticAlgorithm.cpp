@@ -92,13 +92,24 @@ namespace jv::ai
 			const auto nGen = generations[nInd];
 			uint32_t breededCount = info.width - info.survivors - info.arrivals;
 
-			if (Comparer( ratings[indices[0]], bestNNetRating))
+			if (Comparer(ratings[indices[0]], bestNNetRating))
 			{
-				bestNNetRating = ratings[indices[0]];
-				arena.DestroyScope(retScope);
-				Copy(generations[nInd][0], bestNNet, &arena);
-				retScope = arena.CreateScope();
-				std::cout << std::endl << std::endl << bestNNetRating * 100 << "%" << std::endl << std::endl;
+				auto& nnet = generations[nInd][0];
+				float avr = 0;
+
+				const uint32_t VALIDATION_CHECK_AMOUNT = 10;
+				for (uint32_t i = 0; i < VALIDATION_CHECK_AMOUNT; i++)
+					avr += info.ratingFunc(nnet, info.userPtr, arena, tempArena);
+				avr /= VALIDATION_CHECK_AMOUNT;
+
+				if (Comparer(avr, bestNNetRating))
+				{
+					bestNNetRating = avr;
+					arena.DestroyScope(retScope);
+					Copy(nnet, bestNNet, &arena);
+					retScope = arena.CreateScope();
+					std::cout << std::endl << std::endl << bestNNetRating * 100 << "%" << std::endl << std::endl;
+				}
 			}
 
 			// Breed new generation.

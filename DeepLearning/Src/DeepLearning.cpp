@@ -8,11 +8,6 @@
 #include <NNetUtils.h>
 #include "GeneticAlgorithm.h";
 
-[[nodiscard]] float RatingFunc(jv::ai::NNet& nnet, void* userPtr, jv::Arena& arena, jv::Arena& tempArena)
-{
-	return 0;
-}
-
 [[nodiscard]] float GetMAValue(const jv::bt::TimeSeries& stock, const uint32_t offset, void* userPtr)
 {
 	const float maShort = jv::bt::GetMA(stock.close, offset, 10);
@@ -82,6 +77,17 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 	}
 }
 
+[[nodiscard]] float RatingFunc(jv::ai::NNet& nnet, void* userPtr, jv::Arena& arena, jv::Arena& tempArena)
+{
+	jv::bt::TestInfo testInfo{};
+	testInfo.bot = StockAlgorithm;
+	testInfo.userPtr = &nnet;
+	testInfo.warmup = 100;
+	auto bte = reinterpret_cast<jv::bt::BackTraderEnvironment*>(userPtr);
+	float rating = bte->backTrader.RunTestEpochs(arena, tempArena, testInfo);
+	return rating;
+}
+
 int main()
 {
 	srand(time(nullptr));
@@ -125,8 +131,13 @@ int main()
 	mutations.newWeightChance = .5;
 
 	jv::ai::GeneticAlgorithmRunInfo runInfo{};
+	runInfo.nnetCreateInfo = nnetCreateInfo;
 	runInfo.userPtr = &bte;
 	runInfo.ratingFunc = RatingFunc;
+	runInfo.width = 100;
+	runInfo.survivors = 10;
+	runInfo.arrivals = 10;
+	runInfo.epochs = 100;
 	const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
 	
 	/*

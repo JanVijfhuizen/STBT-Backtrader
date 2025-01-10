@@ -51,6 +51,6 @@ namespace jv::ai
 	[[nodiscard]] NNet Breed(NNet& a, NNet& b, Arena& arena, Arena& tempArena);
 
 	void Mutate(NNet& nnet, Mutations mutations, uint32_t& gId);
-	void Copy(NNet& org, NNet& dst);
+	void Copy(NNet& org, NNet& dst, Arena* arena = nullptr);
 }
 

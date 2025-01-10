@@ -292,7 +292,7 @@ namespace jv::ai
 				neuron.decay = Clamp<float>(neuron.decay, 0, .9);
 			}
 		}
-		if (RandF(0, 1) < mutations.newNodeChance && nnet.weightCount < nnet.createInfo.weightCapacity)
+		if (RandF(0, 1) < mutations.newNodeChance && nnet.weightCount < nnet.createInfo.weightCapacity && nnet.weightCount > 0)
 		{
 			bool valid = AddNeuron(nnet, RandF(0, 1), RandF(0, 1), gId);
 			if (valid)
@@ -310,8 +310,16 @@ namespace jv::ai
 				(nnet.neuronCount - nnet.createInfo.inputSize), RandF(-.1, .1), gId);
 	}
 
-	void Copy(NNet& org, NNet& dst)
+	void Copy(NNet& org, NNet& dst, Arena* arena)
 	{
+		if (arena)
+		{
+			dst.scope = arena->CreateScope();
+			dst.createInfo = org.createInfo;
+			dst.neurons = arena->New<Neuron>(org.neuronCount);
+			dst.weights = arena->New<Weight>(org.weightCount);
+		}
+
 		dst.neuronCount = org.neuronCount;
 		dst.weightCount = org.weightCount;
 		memcpy(dst.neurons, org.neurons, sizeof(Neuron) * org.neuronCount);

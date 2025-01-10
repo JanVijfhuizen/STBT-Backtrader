@@ -190,8 +190,8 @@ namespace jv::ai
 			auto& w = tempNNet.weights[tempNNet.weightCount++];
 			auto& bW = b.weights[bC++];
 			w = bW;
-			w.from = a.neurons[bW.from].innovationId;
-			w.to = a.neurons[bW.to].innovationId;
+			w.from = b.neurons[bW.from].innovationId;
+			w.to = b.neurons[bW.to].innovationId;
 			w.next = w.next == UINT32_MAX ? w.next : b.weights[w.next].innovationId;
 		}
 
@@ -212,6 +212,8 @@ namespace jv::ai
 					weight.from = j;
 					neuron.weightsId = i;
 				}
+				if (neuron.innovationId == weight.to)
+					weight.to = j;
 			}
 
 			// Connect all weights.
@@ -227,6 +229,15 @@ namespace jv::ai
 					break;
 				}
 			}
+		}
+
+		// temp
+		for (size_t i = 0; i < tempNNet.weightCount; i++)
+		{
+			auto& weight = tempNNet.weights[i];
+			assert(weight.from < tempNNet.neuronCount);
+			assert(weight.to < tempNNet.neuronCount);
+			assert(weight.next < tempNNet.weightCount || weight.next == UINT32_MAX);
 		}
 
 		// Copy and optimize size, but still make sure it can mutate once.

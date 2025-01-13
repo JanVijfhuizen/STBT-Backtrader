@@ -71,6 +71,8 @@ namespace jv::ai
 		// Scope used to store best nnet in.
 		auto retScope = arena.CreateScope();
 
+		uint32_t stagnateStreak = 0;
+
 		for (uint32_t i = 0; i < info.epochs; i++)
 		{
 			// Old/New generation index.
@@ -105,7 +107,11 @@ namespace jv::ai
 
 				const uint32_t VALIDATION_CHECK_AMOUNT = 10;
 				for (uint32_t i = 0; i < VALIDATION_CHECK_AMOUNT; i++)
+				{
+					Clean(nnet);
 					avr += info.ratingFunc(nnet, info.userPtr, arena, tempArena);
+				}
+					
 				avr /= VALIDATION_CHECK_AMOUNT;
 
 				if (Comparer(avr, bestNNetRating))
@@ -116,6 +122,7 @@ namespace jv::ai
 					retScope = arena.CreateScope();
 					if(info.debug)
 						std::cout << std::endl << std::endl << bestNNetRating << std::endl << std::endl;
+					stagnateStreak = 0;
 				}
 			}
 
@@ -138,9 +145,11 @@ namespace jv::ai
 			}
 
 			if(info.debug)
-				std::cout << "e" << i << ".";
+				std::cout << "e" << i << "." << bestNNet.neuronCount << "." << bestNNet.weightCount << ".";
 
 			if (bestNNetRating >= info.targetScore && info.targetScore > 0)
+				break;
+			if (stagnateStreak >= info.concedeAfter)
 				break;
 		}
 

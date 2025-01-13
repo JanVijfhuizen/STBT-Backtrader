@@ -100,7 +100,7 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 		input[1] = cos(static_cast<float>(i) / 10);
 		bool output;
 		Propagate(nnet, input, &output);
-		if(i > 100)
+		if(i > 500)
 			tester.AddResult(output, abs(input[0] - input[1]) < .1f);
 	}
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "JLib/Arena.h"
 #include "NNet.h"
+#include "NNetUtils.h"
 
 namespace jv::ai 
 {
@@ -15,11 +16,13 @@ namespace jv::ai
 		uint32_t survivors = 100;
 		// New instances added to each new generation.
 		uint32_t arrivals = 100;
+		Mutations mutations = {};
 		// Stagnate after x epochs without improvements. Will swap to a mode where values are changed in a diminishing way
 		// until success if found again.
-		uint32_t stagnateAfter = 10;
+		uint32_t stagnateAfter = 5;
 		// Mutation chances are multiplied by this every unsuccesfull epoch. Resets on success.
 		float stagnationMul = .99f;
+		float stagnationMaxPctChange = .1f;
 		// Memory reserved for the algorithm. 
 		// Will increase dynamically if there is no space, but will obviously fragment if that happens.
 		size_t initMemSize = 33554432;
@@ -28,7 +31,7 @@ namespace jv::ai
 		float targetScore = -1;
 		void* userPtr;
 		// Debug progress in command prompt.
-		bool debug = true;
+		bool debug = true; 
 	};
 
 	[[nodiscard]] NNet RunGeneticAlgorithm(GeneticAlgorithmRunInfo& info, Arena& arena, Arena& tempArena);

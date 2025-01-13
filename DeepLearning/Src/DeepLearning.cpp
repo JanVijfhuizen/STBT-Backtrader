@@ -124,12 +124,18 @@ int main()
 
 	// Sin test.
 	{
-		uint32_t globalInnovationId = 0;
+		jv::ai::Mutations mutations{};
+		mutations.threshold.chance = .2;
+		mutations.weight.chance = .2;
+		mutations.decay.chance = .2;
+		mutations.newNodeChance = .5;
+		mutations.newWeightChance = .5;
 
 		jv::ai::GeneticAlgorithmRunInfo runInfo{};
 		runInfo.inputSize = 2;
 		runInfo.outputSize = 1;
 		runInfo.ratingFunc = TestRatingFunc;
+		runInfo.mutations = mutations;
 		const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
 		return 0;
 	}
@@ -166,6 +172,7 @@ int main()
 	runInfo.outputSize = 2;
 	runInfo.userPtr = &bte;
 	runInfo.ratingFunc = RatingFunc;
+	runInfo.mutations = mutations;
 	//runInfo.width = 100;
 	//runInfo.survivors = 10;
 	//runInfo.arrivals = 10;

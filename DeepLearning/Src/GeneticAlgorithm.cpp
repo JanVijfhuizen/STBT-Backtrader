@@ -41,14 +41,7 @@ namespace jv::ai
 			arenas[1] = Arena::Create(createInfo);
 		}
 
-		jv::ai::Mutations mutations{};
-		mutations.threshold.chance = .2;
-		mutations.weight.chance = .2;
-		mutations.decay.chance = .2;
-		mutations.newNodeChance = .5;
-		mutations.newWeightChance = .5;
-
-		jv::ai::Mutations currentMutations = mutations;
+		jv::ai::Mutations currentMutations = info.mutations;
 
 		NNet* generations[2];
 		for (uint32_t i = 0; i < 2; i++)
@@ -179,9 +172,9 @@ namespace jv::ai
 			// If the algorithm is stuck, try micro adjusting the current networks to see if that works.
 			if (stagnateStreak == info.stagnateAfter)
 			{
-				currentMutations.decay.pctAlpha = .1f;
-				currentMutations.weight.pctAlpha = .1f;
-				currentMutations.threshold.pctAlpha = .1f;
+				currentMutations.decay.pctAlpha = info.stagnationMaxPctChange;
+				currentMutations.weight.pctAlpha = info.stagnationMaxPctChange;
+				currentMutations.threshold.pctAlpha = info.stagnationMaxPctChange;
 
 				currentMutations.decay.linAlpha = 0;
 				currentMutations.weight.linAlpha = 0;
@@ -200,7 +193,7 @@ namespace jv::ai
 				currentMutations.threshold.chance *= info.stagnationMul;
 			}
 			else
-				currentMutations = mutations;
+				currentMutations = info.mutations;
 		}
 
 		Arena::Destroy(arenas[1]);

@@ -7,6 +7,7 @@
 #include "NNet.h"
 #include <NNetUtils.h>
 #include "GeneticAlgorithm.h";
+#include "FPFNTester.h"
 
 [[nodiscard]] float GetMAValue(const jv::bt::TimeSeries& stock, const uint32_t offset, void* userPtr)
 {
@@ -90,20 +91,20 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 
 [[nodiscard]] float TestRatingFunc(jv::ai::NNet& nnet, void* userPtr, jv::Arena& arena, jv::Arena& tempArena)
 {
-	float correctness = 0;
+	jv::ai::FPFNTester tester{};
 
 	for (uint32_t i = 0; i < 1000; i++)
 	{
-		float input[3];
+		float input[2];
 		input[0] = sin(static_cast<float>(i) / 10);
 		input[1] = cos(static_cast<float>(i) / 10);
-		input[2] = cos(static_cast<float>(i) / 100);
 		bool output;
 		Propagate(nnet, input, &output);
-		correctness += abs(input[0] - input[1] - input[2]) < .1f == output;
+		if(i > 100)
+			tester.AddResult(output, abs(input[0] - input[1]) < .1f);
 	}
 
-	return correctness;
+	return tester.GetRating();
 }
 
 int main()
@@ -126,7 +127,7 @@ int main()
 		uint32_t globalInnovationId = 0;
 
 		jv::ai::GeneticAlgorithmRunInfo runInfo{};
-		runInfo.inputSize = 3;
+		runInfo.inputSize = 2;
 		runInfo.outputSize = 1;
 		runInfo.ratingFunc = TestRatingFunc;
 		const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);

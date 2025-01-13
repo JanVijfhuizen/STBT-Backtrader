@@ -18,6 +18,6 @@ namespace jv::ai
 		n /= positives;
 
 		// Pow2 to exponentially punish higher offsets.
-		return 1.f - abs(powf(p, 2) - powf(n, 2)) * .5;
+		return 1.f - (powf(p, 2) + powf(n, 2)) * .5;
 	}
 }

@@ -19,6 +19,7 @@ namespace jv::ai
 		float chance = 0;
 		float linAlpha = 1;
 		float pctAlpha = 1;
+		bool canRandomize = true;
 	};
 
 	struct Mutations final

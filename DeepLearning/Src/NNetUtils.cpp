@@ -264,7 +264,7 @@ namespace jv::ai
 				auto& weight = nnet.weights[i];
 				// 1 = new value, 2 = percent wise, 3 = linear addition/subtraction.
 				uint32_t type = rand() % 3;
-				weight.value = type != 0 ? weight.value : RandF(-1, 1);
+				weight.value = type != 0 || !mutations.weight.canRandomize ? weight.value : RandF(-1, 1);
 				weight.value = type != 1 ? weight.value : weight.value * 
 					RandF(1.f - weightMut.pctAlpha, 1.f + weightMut.pctAlpha);
 				weight.value = type != 2 ? weight.value : weight.value + RandF(-1, 1) * weightMut.linAlpha;
@@ -280,7 +280,7 @@ namespace jv::ai
 
 				auto& neuron = nnet.neurons[i];
 				uint32_t type = rand() % 3;
-				neuron.threshold = type != 0 ? neuron.threshold : RandF(0, 1);
+				neuron.threshold = type != 0 || !mutations.threshold.canRandomize ? neuron.threshold : RandF(0, 1);
 				neuron.threshold = type != 1 ? neuron.threshold : neuron.threshold *
 					RandF(1.f - thresholdMut.pctAlpha, 1.f + thresholdMut.pctAlpha);
 				neuron.threshold = type != 2 ? neuron.threshold : neuron.threshold + RandF(-1, 1) * thresholdMut.linAlpha;
@@ -297,7 +297,7 @@ namespace jv::ai
 
 				auto& neuron = nnet.neurons[i];
 				uint32_t type = rand() % 3;
-				neuron.decay = type != 0 ? neuron.decay : RandF(0, 1);
+				neuron.decay = type != 0 || !mutations.decay.canRandomize ? neuron.decay : RandF(0, 1);
 				neuron.decay = type != 1 ? neuron.decay : neuron.decay *
 					RandF(1.f - decayMut.pctAlpha, 1.f + decayMut.pctAlpha);
 				neuron.decay = type != 2 ? neuron.decay : neuron.decay + RandF(-1, 1) * decayMut.linAlpha;

@@ -15,8 +15,11 @@ namespace jv::ai
 		uint32_t survivors = 100;
 		// New instances added to each new generation.
 		uint32_t arrivals = 100;
-		// Give up after x epochs of no progress.
-		uint32_t concedeAfter = 50;
+		// Stagnate after x epochs without improvements. Will swap to a mode where values are changed in a diminishing way
+		// until success if found again.
+		uint32_t stagnateAfter = 10;
+		// Mutation chances are multiplied by this every unsuccesfull epoch. Resets on success.
+		float stagnationMul = .99f;
 		// Memory reserved for the algorithm. 
 		// Will increase dynamically if there is no space, but will obviously fragment if that happens.
 		size_t initMemSize = 33554432;

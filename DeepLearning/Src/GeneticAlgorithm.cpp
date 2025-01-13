@@ -44,8 +44,11 @@ namespace jv::ai
 		jv::ai::Mutations mutations{};
 		mutations.threshold.chance = .2;
 		mutations.weight.chance = .2;
+		mutations.decay.chance = .2;
 		mutations.newNodeChance = .5;
 		mutations.newWeightChance = .5;
+
+		jv::ai::Mutations currentMutations = mutations;
 
 		NNet* generations[2];
 		for (uint32_t i = 0; i < 2; i++)
@@ -72,9 +75,13 @@ namespace jv::ai
 		auto retScope = arena.CreateScope();
 
 		uint32_t stagnateStreak = 0;
+		float survivorRating = 0;
+		float previousSurvivorRating;
 
 		for (uint32_t i = 0; i < info.epochs; i++)
 		{
+			previousSurvivorRating = survivorRating;
+			survivorRating = 0;
 			++stagnateStreak;
 
 			// Old/New generation index.
@@ -94,7 +101,14 @@ namespace jv::ai
 			const uint32_t hw = info.width / 2;
 			// Copy best performing nnets to new generation.
 			for (uint32_t j = 0; j < info.survivors; j++)
+			{
 				Copy(generations[oInd][indices[j]], generations[nInd][j], &arenas[nInd]);
+				survivorRating += ratings[indices[j]];
+			}
+
+			survivorRating /= info.survivors;
+			if (survivorRating > previousSurvivorRating)
+				stagnateStreak = 0;
 
 			// Delete old generation by wiping the entire arena.
 			arenas[oInd].Clear();
@@ -102,7 +116,8 @@ namespace jv::ai
 			const auto nGen = generations[nInd];
 			uint32_t breededCount = info.width - info.survivors - info.arrivals;
 
-			if (Comparer(ratings[indices[0]], bestNNetRating))
+			float bestRating = ratings[indices[0]];
+			if (Comparer(bestRating, bestNNetRating))
 			{
 				auto& nnet = generations[nInd][0];
 				float avr = 0;
@@ -124,7 +139,6 @@ namespace jv::ai
 					retScope = arena.CreateScope();
 					if(info.debug)
 						std::cout << std::endl << std::endl << bestNNetRating << std::endl << std::endl;
-					stagnateStreak = 0;
 				}
 			}
 
@@ -138,13 +152,13 @@ namespace jv::ai
 				auto& a = nGen[rand() % info.survivors];
 				auto& b = nGen[rand() % info.survivors];
 				auto& c = nGen[info.survivors + j] = Breed(a, b, arenas[nInd], tempArena);
-				Mutate(c, mutations, mutationId);
+				Mutate(c, currentMutations, mutationId);
 				*/
 
 				auto& parent = nGen[rand() % info.survivors];
 				auto& child = nGen[info.survivors + j];
 				Copy(parent, child, &arenas[nInd]);
-				Mutate(child, mutations, mutationId);
+				Mutate(child, currentMutations, mutationId);
 			}
 
 			// Add new random arrivals.
@@ -157,12 +171,36 @@ namespace jv::ai
 			}
 
 			if(info.debug)
-				std::cout << "e" << i << "-" << bestNNet.neuronCount << "/" << bestNNet.weightCount << ".";
+				std::cout << "e" << i << "S_" << survivorRating << "_N" << bestNNet.neuronCount << "W" << bestNNet.weightCount << "...";
 
 			if (bestNNetRating >= info.targetScore && info.targetScore > 0)
 				break;
-			if (stagnateStreak >= info.concedeAfter)
-				break;
+
+			// If the algorithm is stuck, try micro adjusting the current networks to see if that works.
+			if (stagnateStreak == info.stagnateAfter)
+			{
+				currentMutations.decay.pctAlpha = .1f;
+				currentMutations.weight.pctAlpha = .1f;
+				currentMutations.threshold.pctAlpha = .1f;
+
+				currentMutations.decay.linAlpha = 0;
+				currentMutations.weight.linAlpha = 0;
+				currentMutations.threshold.linAlpha = 0;
+				currentMutations.decay.canRandomize = false;
+				currentMutations.weight.canRandomize = false;
+				currentMutations.threshold.canRandomize = false;
+				currentMutations.newNodeChance = 0;
+				currentMutations.newWeightChance = 0;
+			}
+			// Slowly stagnate if no success is found.
+			if (stagnateStreak >= info.stagnateAfter)
+			{
+				currentMutations.decay.chance *= info.stagnationMul;
+				currentMutations.weight.chance *= info.stagnationMul;
+				currentMutations.threshold.chance *= info.stagnationMul;
+			}
+			else
+				currentMutations = mutations;
 		}
 
 		Arena::Destroy(arenas[1]);

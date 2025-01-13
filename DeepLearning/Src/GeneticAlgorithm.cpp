@@ -53,11 +53,17 @@ namespace jv::ai
 
 		uint32_t mutationId = 0;
 
+		jv::ai::NNetCreateInfo nnetCreateInfo{};
+		nnetCreateInfo.inputSize = info.inputSize;
+		nnetCreateInfo.neuronCapacity = info.inputSize + info.outputSize + 1;
+		nnetCreateInfo.weightCapacity = info.inputSize * info.outputSize + 3;
+		nnetCreateInfo.outputSize = info.outputSize;
+
 		// Set up first generation of random instances.
 		for (uint32_t i = 0; i < info.width; i++)
 		{
 			NNet& nnet = generations[0][i];
-			nnet = CreateNNet(info.nnetCreateInfo, arenas[0]);
+			nnet = CreateNNet(nnetCreateInfo, arenas[0]);
 			Init(nnet, InitType::random, mutationId);
 			ConnectIO(nnet, jv::ai::InitType::random, mutationId);
 		}
@@ -108,7 +114,8 @@ namespace jv::ai
 					arena.DestroyScope(retScope);
 					Copy(nnet, bestNNet, &arena);
 					retScope = arena.CreateScope();
-					std::cout << std::endl << std::endl << bestNNetRating * 100 << "%" << std::endl << std::endl;
+					if(info.debug)
+						std::cout << std::endl << std::endl << bestNNetRating << std::endl << std::endl;
 				}
 			}
 
@@ -125,12 +132,16 @@ namespace jv::ai
 			for (uint32_t j = 0; j < info.arrivals; j++)
 			{
 				auto& nnet = generations[nInd][info.width - j - 1];
-				nnet = CreateNNet(info.nnetCreateInfo, arenas[nInd]);
+				nnet = CreateNNet(nnetCreateInfo, arenas[nInd]);
 				Init(nnet, InitType::random, mutationId);
 				ConnectIO(nnet, jv::ai::InitType::random, mutationId);
 			}
 
-			std::cout << "e" << i << ".";
+			if(info.debug)
+				std::cout << "e" << i << ".";
+
+			if (bestNNetRating >= info.targetScore && info.targetScore > 0)
+				break;
 		}
 
 		Arena::Destroy(arenas[1]);

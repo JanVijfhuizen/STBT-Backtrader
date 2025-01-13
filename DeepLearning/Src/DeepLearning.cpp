@@ -88,6 +88,24 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 	return rating;
 }
 
+[[nodiscard]] float TestRatingFunc(jv::ai::NNet& nnet, void* userPtr, jv::Arena& arena, jv::Arena& tempArena)
+{
+	float correctness = 0;
+
+	for (uint32_t i = 0; i < 1000; i++)
+	{
+		float input[3];
+		input[0] = sin(static_cast<float>(i) / 10);
+		input[1] = cos(static_cast<float>(i) / 10);
+		input[2] = cos(static_cast<float>(i) / 100);
+		bool output;
+		Propagate(nnet, input, &output);
+		correctness += abs(input[0] - input[1] - input[2]) < .1f == output;
+	}
+
+	return correctness;
+}
+
 int main()
 {
 	srand(time(nullptr));
@@ -101,6 +119,18 @@ int main()
 		symbols[2] = "TSLA";
 		symbols[3] = "EA";
 		bte = jv::bt::CreateBTE(symbols, 4, 1e-3);
+	}
+
+	// Sin test.
+	{
+		uint32_t globalInnovationId = 0;
+
+		jv::ai::GeneticAlgorithmRunInfo runInfo{};
+		runInfo.inputSize = 3;
+		runInfo.outputSize = 1;
+		runInfo.ratingFunc = TestRatingFunc;
+		const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
+		return 0;
 	}
 
 	uint32_t globalInnovationId = 0;
@@ -131,7 +161,8 @@ int main()
 	mutations.newWeightChance = .5;
 
 	jv::ai::GeneticAlgorithmRunInfo runInfo{};
-	runInfo.nnetCreateInfo = nnetCreateInfo;
+	runInfo.inputSize = 4;
+	runInfo.outputSize = 2;
 	runInfo.userPtr = &bte;
 	runInfo.ratingFunc = RatingFunc;
 	//runInfo.width = 100;

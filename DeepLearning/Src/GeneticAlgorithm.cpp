@@ -75,6 +75,8 @@ namespace jv::ai
 
 		for (uint32_t i = 0; i < info.epochs; i++)
 		{
+			++stagnateStreak;
+
 			// Old/New generation index.
 			uint32_t oInd = i % 2;
 			uint32_t nInd = 1 - oInd;

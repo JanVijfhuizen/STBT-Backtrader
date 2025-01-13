@@ -141,7 +141,7 @@ namespace jv::ai
 
 				auto& parent = nGen[rand() % info.survivors];
 				auto& child = nGen[info.survivors + j];
-				Copy(parent, child, &tempArena);
+				Copy(parent, child, &arenas[nInd]);
 				Mutate(child, mutations, mutationId);
 			}
 
@@ -155,7 +155,7 @@ namespace jv::ai
 			}
 
 			if(info.debug)
-				std::cout << "e" << i << "." << bestNNet.neuronCount << "." << bestNNet.weightCount << ".";
+				std::cout << "e" << i << "-" << bestNNet.neuronCount << "/" << bestNNet.weightCount << ".";
 
 			if (bestNNetRating >= info.targetScore && info.targetScore > 0)
 				break;

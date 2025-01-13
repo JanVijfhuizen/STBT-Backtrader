@@ -129,10 +129,20 @@ namespace jv::ai
 			// Breed new generation.
 			for (uint32_t j = 0; j < breededCount; j++)
 			{
+				// No two parents for now, just copy and mutate.
+				// The issue now is that they breed from two entirely different architectures, 
+				// effectively doubling the size every time, leaving no room for small improvements.
+				/*
 				auto& a = nGen[rand() % info.survivors];
 				auto& b = nGen[rand() % info.survivors];
 				auto& c = nGen[info.survivors + j] = Breed(a, b, arenas[nInd], tempArena);
 				Mutate(c, mutations, mutationId);
+				*/
+
+				auto& parent = nGen[rand() % info.survivors];
+				auto& child = nGen[info.survivors + j];
+				Copy(parent, child, &tempArena);
+				Mutate(child, mutations, mutationId);
 			}
 
 			// Add new random arrivals.

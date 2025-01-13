@@ -133,7 +133,6 @@ namespace jv::ai
 			auto& aW = a.weights[aC];
 			auto& bW = b.weights[bC];
 
-			/*
 			if (!aW.enabled)
 			{
 				++aC;
@@ -144,7 +143,6 @@ namespace jv::ai
 				++bC;
 				continue;
 			}
-			*/
 
 			const bool eq = aW.innovationId == bW.innovationId;
 			auto& w = tempNNet.weights[tempNNet.weightCount++];
@@ -314,6 +312,7 @@ namespace jv::ai
 				const uint32_t weightId = rand() % nnet.weightCount;
 				auto& weight = nnet.weights[weightId];
 				weight.enabled = false;
+				weight.next = UINT32_MAX;
 				AddWeight(nnet, weight.from, nnet.neuronCount - 1, weight.value, gId);
 				AddWeight(nnet, nnet.neuronCount - 1, weight.to, 1, gId);
 			}
@@ -330,8 +329,10 @@ namespace jv::ai
 		{
 			dst.scope = arena->CreateScope();
 			dst.createInfo = org.createInfo;
-			dst.neurons = arena->New<Neuron>(org.neuronCount);
-			dst.weights = arena->New<Weight>(org.weightCount);
+			dst.createInfo.neuronCapacity = org.neuronCount + 1;
+			dst.createInfo.weightCapacity = org.weightCount + 3;
+			dst.neurons = arena->New<Neuron>(dst.createInfo.neuronCapacity);
+			dst.weights = arena->New<Weight>(org.createInfo.weightCapacity);
 		}
 
 		dst.neuronCount = org.neuronCount;

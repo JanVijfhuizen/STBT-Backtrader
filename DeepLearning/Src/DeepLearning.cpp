@@ -96,12 +96,12 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 	for (uint32_t i = 0; i < 1000; i++)
 	{
 		float input[2];
-		input[0] = sin(static_cast<float>(i) / 10);
-		input[1] = cos(static_cast<float>(i) / 10);
+		input[0] = (sin(static_cast<float>(i) / 10) + 1) / 2;
+		input[1] = (cos(static_cast<float>(i) / 10) + 1) / 2;
 		bool output;
 		Propagate(nnet, input, &output);
 		if(i > 500)
-			tester.AddResult(output, abs(input[0] - input[1]) < .1f);
+			tester.AddResult(output, sin(static_cast<float>(i) / 10) < sin(static_cast<float>(i + 5) / 10));
 	}
 
 	return tester.GetRating();
@@ -136,8 +136,8 @@ int main()
 		runInfo.outputSize = 1;
 		runInfo.ratingFunc = TestRatingFunc;
 		runInfo.mutations = mutations;
-		//const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
-		//return 0;
+		const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
+		return 0;
 	}
 
 	uint32_t globalInnovationId = 0;

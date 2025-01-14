@@ -101,7 +101,8 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 		bool output;
 		Propagate(nnet, input, &output);
 		if(i > 500)
-			tester.AddResult(output, sin(static_cast<float>(i) / 10) < sin(static_cast<float>(i + 5) / 10));
+			tester.AddResult(output, input[0] < sin(static_cast<float>(i + 5) / 10) &&
+				input[0] > cos(static_cast<float>(i + 12) / 7));
 	}
 
 	return tester.GetRating();

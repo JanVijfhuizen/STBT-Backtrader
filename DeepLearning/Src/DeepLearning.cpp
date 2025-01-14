@@ -136,8 +136,8 @@ int main()
 		runInfo.outputSize = 1;
 		runInfo.ratingFunc = TestRatingFunc;
 		runInfo.mutations = mutations;
-		const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
-		return 0;
+		//const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
+		//return 0;
 	}
 
 	uint32_t globalInnovationId = 0;

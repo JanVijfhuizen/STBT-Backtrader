@@ -69,7 +69,6 @@ namespace jv::ai
 		uint32_t errorCount = 0;
 		uint32_t aC = 0;
 		uint32_t bC = 0;
-		uint32_t wC = 0;
 
 		while (aC < a.weightCount && bC < b.weightCount)
 		{
@@ -81,10 +80,10 @@ namespace jv::ai
 				++errorCount;
 			aC += aW.innovationId < bW.innovationId || eq;
 			bC += bW.innovationId < aW.innovationId || eq;
-			++wC;
 		}
 		errorCount += a.weightCount - aC + b.weightCount - bC;
-		return 1.f - static_cast<float>(errorCount) / static_cast<float>(wC);
+		const auto res = 1.f - static_cast<float>(errorCount) / static_cast<float>(a.weightCount + b.weightCount);
+		return res;
 	}
 	NNet Breed(NNet& a, NNet& b, Arena& arena, Arena& tempArena)
 	{

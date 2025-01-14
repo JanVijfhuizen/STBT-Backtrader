@@ -23,6 +23,7 @@ namespace jv::ai
 	{
 		const auto tempScope = tempArena.CreateScope();
 		float* ratings = tempArena.New<float>(info.width);
+		float* compabilities = tempArena.New<float>(info.width);
 		uint32_t* indices = tempArena.New<uint32_t>(info.width);
 		NNet bestNNet{};
 		float bestNNetRating = -1;
@@ -81,12 +82,41 @@ namespace jv::ai
 			uint32_t oInd = i % 2;
 			uint32_t nInd = 1 - oInd;
 
+			for (uint32_t j = 0; j < info.width; j++)
+				compabilities[j] = 0;
+
+			float bestRatingUnfiltered = -1;
+			uint32_t bestRatingUnfilteredIndex = -1;
+
 			// Rate every instance of the generation.
 			for (uint32_t j = 0; j < info.width; j++)
 			{
 				NNet& nnet = generations[oInd][j];
 				ratings[j] = info.ratingFunc(nnet, info.userPtr, arena, tempArena);
+
+				// Set best current rating if it's the best of this generation.
+				if (Comparer(ratings[j], bestRatingUnfiltered))
+				{
+					bestRatingUnfilteredIndex = j;
+					bestRatingUnfiltered = ratings[j];
+				}
+
+				for (uint32_t k = j + 1; k < info.width; k++)
+				{
+					NNet& oNNet = generations[oInd][k];
+					const float compability = GetCompability(nnet, oNNet);
+					compabilities[j] += compability;
+					compabilities[k] += compability;
+				}
+
+				auto c = compabilities[j];
+				c /= (info.width - 1);
+				c = 1.f - c;
+				ratings[j] *= c;
 			}
+
+			if (survivorRating > previousSurvivorRating)
+				stagnateStreak = 0;
 
 			CreateSortableIndices(indices, info.width);
 			ExtLinearSort(ratings, indices, info.width, Comparer);
@@ -100,8 +130,6 @@ namespace jv::ai
 			}
 
 			survivorRating /= info.survivors;
-			if (survivorRating > previousSurvivorRating)
-				stagnateStreak = 0;
 
 			// Delete old generation by wiping the entire arena.
 			arenas[oInd].Clear();
@@ -109,23 +137,22 @@ namespace jv::ai
 			const auto nGen = generations[nInd];
 			uint32_t breededCount = info.width - info.survivors - info.arrivals;
 
-			float bestRating = ratings[indices[0]];
-			if (Comparer(bestRating, bestNNetRating))
+			if (Comparer(bestRatingUnfiltered, bestNNetRating))
 			{
-				auto& nnet = generations[nInd][0];
+				auto& nnet = generations[nInd][bestRatingUnfilteredIndex];
 				float avr = 0;
 
-				const uint32_t VALIDATION_CHECK_AMOUNT = 10;
-				for (uint32_t i = 0; i < VALIDATION_CHECK_AMOUNT; i++)
+				for (uint32_t i = 0; i < info.validationCheckAmount; i++)
 				{
 					Clean(nnet);
 					avr += info.ratingFunc(nnet, info.userPtr, arena, tempArena);
 				}
 					
-				avr /= VALIDATION_CHECK_AMOUNT;
+				avr /= info.validationCheckAmount;
 
 				if (Comparer(avr, bestNNetRating))
 				{
+					stagnateStreak = 0;
 					bestNNetRating = avr;
 					arena.DestroyScope(retScope);
 					Copy(nnet, bestNNet, &arena);
@@ -164,7 +191,7 @@ namespace jv::ai
 			}
 
 			if(info.debug)
-				std::cout << "e" << i << "S_" << survivorRating << "_N" << bestNNet.neuronCount << "W" << bestNNet.weightCount << "...";
+				std::cout << "e" << i << "S_" << bestNNetRating << "_N" << bestNNet.neuronCount << "W" << bestNNet.weightCount << "...";
 
 			if (bestNNetRating >= info.targetScore && info.targetScore > 0)
 				break;

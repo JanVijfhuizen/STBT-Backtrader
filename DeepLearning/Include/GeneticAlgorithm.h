@@ -19,10 +19,12 @@ namespace jv::ai
 		Mutations mutations = {};
 		// Stagnate after x epochs without improvements. Will swap to a mode where values are changed in a diminishing way
 		// until success if found again.
-		uint32_t stagnateAfter = 5;
+		uint32_t stagnateAfter = 100;
 		// Mutation chances are multiplied by this every unsuccesfull epoch. Resets on success.
 		float stagnationMul = .99f;
 		float stagnationMaxPctChange = .1f;
+		// Amount of times the nnet result is checked extra if it's a new best result.
+		uint32_t validationCheckAmount = 10;
 		// Memory reserved for the algorithm. 
 		// Will increase dynamically if there is no space, but will obviously fragment if that happens.
 		size_t initMemSize = 33554432;

@@ -25,22 +25,20 @@ namespace jv::ai
 		float* ratings = tempArena.New<float>(info.width);
 		float* compabilities = tempArena.New<float>(info.width);
 		uint32_t* indices = tempArena.New<uint32_t>(info.width);
-		NNet bestNNet{};
+		
 		float bestNNetRating = -1;
-
+		NNet bestNNet{};
 		Arena arenas[2];
 
-		{
-			// Allocate memory from temp arena with predetermined minimal size.
-			ArenaCreateInfo createInfo{};
-			createInfo.alloc = Alloc;
-			createInfo.free = Free;
-			createInfo.memory = tempArena.Alloc(info.initMemSize / 2);
-			createInfo.memorySize = info.initMemSize / 2;
-			arenas[0] = Arena::Create(createInfo);
-			createInfo.memory = tempArena.Alloc(info.initMemSize / 2);
-			arenas[1] = Arena::Create(createInfo);
-		}
+		// Allocate memory from temp arena with predetermined minimal size.
+		ArenaCreateInfo arenaCreateInfo{};
+		arenaCreateInfo.alloc = Alloc;
+		arenaCreateInfo.free = Free;
+		arenaCreateInfo.memorySize = info.initMemSize / 2;
+		arenaCreateInfo.memory = tempArena.Alloc(info.initMemSize / 2);
+		arenas[0] = Arena::Create(arenaCreateInfo);
+		arenaCreateInfo.memory = tempArena.Alloc(info.initMemSize / 2);
+		arenas[1] = Arena::Create(arenaCreateInfo);
 
 		jv::ai::Mutations currentMutations = info.mutations;
 
@@ -131,18 +129,12 @@ namespace jv::ai
 
 			survivorRating /= info.survivors;
 
-			// Delete old generation by wiping the entire arena.
-			arenas[oInd].Clear();
-
-			const auto nGen = generations[nInd];
-			uint32_t breededCount = info.width - info.survivors - info.arrivals;
-
 			if (Comparer(bestRatingUnfiltered, bestNNetRating))
 			{
-				auto& nnet = generations[nInd][bestRatingUnfilteredIndex];
+				auto& nnet = generations[oInd][bestRatingUnfilteredIndex];
 				float avr = 0;
 
-				for (uint32_t i = 0; i < info.validationCheckAmount; i++)
+				for (uint32_t j = 0; j < info.validationCheckAmount; j++)
 				{
 					Clean(nnet);
 					avr += info.ratingFunc(nnet, info.userPtr, arena, tempArena);
@@ -155,12 +147,18 @@ namespace jv::ai
 					stagnateStreak = 0;
 					bestNNetRating = avr;
 					arena.DestroyScope(retScope);
-					Copy(nnet, bestNNet, &arena);
 					retScope = arena.CreateScope();
+					Copy(nnet, bestNNet, &arena);
 					if(info.debug)
 						std::cout << std::endl << std::endl << bestNNetRating << std::endl << std::endl;
 				}
 			}
+
+			// Delete old generation by wiping the entire arena.
+			arenas[oInd].Clear();
+
+			const auto nGen = generations[nInd];
+			uint32_t breededCount = info.width - info.survivors - info.arrivals;
 
 			// Breed new generation.
 			for (uint32_t j = 0; j < breededCount; j++)
@@ -226,6 +224,7 @@ namespace jv::ai
 		Arena::Destroy(arenas[1]);
 		Arena::Destroy(arenas[0]);
 		tempArena.DestroyScope(tempScope);
-		return bestNNet;
+
+		return {}; // temp, somehow returning bestnnet fucks with debugging
 	}
 }

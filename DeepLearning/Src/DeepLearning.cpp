@@ -131,6 +131,7 @@ int main()
 	}
 
 	// Sin test.
+	/*
 	{
 		jv::ai::Mutations mutations{};
 		mutations.threshold.chance = .2;
@@ -147,6 +148,7 @@ int main()
 		const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
 		return 0;
 	}
+	*/
 
 	uint32_t globalInnovationId = 0;
 	jv::ai::NNetCreateInfo nnetCreateInfo{};
@@ -167,7 +169,7 @@ int main()
 	jv::bt::TestInfo testInfo{};
 	testInfo.bot = StockAlgorithm;
 	testInfo.userPtr = &nnetCpy;
-	testInfo.warmup = 100;
+	testInfo.warmup = 500;
 
 	jv::ai::Mutations mutations{};
 	mutations.threshold.chance = .2;
@@ -181,10 +183,7 @@ int main()
 	runInfo.userPtr = &bte;
 	runInfo.ratingFunc = RatingFunc;
 	runInfo.mutations = mutations;
-	//runInfo.width = 100;
-	//runInfo.survivors = 10;
-	//runInfo.arrivals = 10;
-	//runInfo.epochs = 100;
+
 	const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
 	
 	/*

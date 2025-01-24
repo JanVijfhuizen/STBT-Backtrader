@@ -54,6 +54,10 @@ namespace jv::ai
 		nnetCreateInfo.weightCapacity = info.inputSize * info.outputSize + 3;
 		nnetCreateInfo.outputSize = info.outputSize;
 
+		// Add mutation space.
+		nnetCreateInfo.neuronCapacity += info.arrivalMutationCount;
+		nnetCreateInfo.weightCapacity += info.arrivalMutationCount * 3;
+
 		// Set up first generation of random instances.
 		for (uint32_t i = 0; i < info.width; i++)
 		{
@@ -61,6 +65,9 @@ namespace jv::ai
 			nnet = CreateNNet(nnetCreateInfo, arenas[0]);
 			Init(nnet, InitType::random, mutationId);
 			ConnectIO(nnet, jv::ai::InitType::random, mutationId);
+
+			for (uint32_t j = 0; j < info.arrivalMutationCount; j++)
+				Mutate(nnet, currentMutations, mutationId);
 		}
 
 		// Scope used to store best nnet in.
@@ -186,6 +193,8 @@ namespace jv::ai
 				nnet = CreateNNet(nnetCreateInfo, arenas[nInd]);
 				Init(nnet, InitType::random, mutationId);
 				ConnectIO(nnet, jv::ai::InitType::random, mutationId);
+				for (uint32_t j = 0; j < info.arrivalMutationCount; j++)
+					Mutate(nnet, currentMutations, mutationId);
 			}
 
 			if(info.debug)

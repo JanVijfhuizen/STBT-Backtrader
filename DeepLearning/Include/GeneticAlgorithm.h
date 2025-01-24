@@ -16,6 +16,8 @@ namespace jv::ai
 		uint32_t survivors = 100;
 		// New instances added to each new generation.
 		uint32_t arrivals = 100;
+		// Every new instance will mutate x times to get more random initial starts.
+		uint32_t arrivalMutationCount = 0;
 		Mutations mutations = {};
 		// Stagnate after x epochs without improvements. Will swap to a mode where values are changed in a diminishing way
 		// until success if found again.

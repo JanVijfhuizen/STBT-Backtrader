@@ -95,14 +95,21 @@ void StockAlgorithm(jv::Arena& tempArena, const jv::bt::World& world, const jv::
 
 	for (uint32_t i = 0; i < 1000; i++)
 	{
-		float input[2];
+		float input[10];
 		input[0] = (sin(static_cast<float>(i) / 10) + 1) / 2;
 		input[1] = (cos(static_cast<float>(i) / 10) + 1) / 2;
+		input[2] = abs(sin(static_cast<float>(i) / 14));
+		input[3] = i % 2;
+		for (uint32_t j = 0; j < 6; j++)
+		{
+			// Nonsense inputs.
+			input[4 + j] = static_cast<float>(rand() % 1000) / 1000;
+		}
 		bool output;
 		Propagate(nnet, input, &output);
 		if(i > 500)
 			tester.AddResult(output, input[0] < sin(static_cast<float>(i + 5) / 10) &&
-				input[0] > cos(static_cast<float>(i + 12) / 7));
+				(input[3] > 0.1f ? input[0] : 1.f - input[0]) > cos(static_cast<float>(i + 12) / 7) * input[2]);
 	}
 
 	return tester.GetRating();
@@ -133,7 +140,7 @@ int main()
 		mutations.newWeightChance = .5;
 
 		jv::ai::GeneticAlgorithmRunInfo runInfo{};
-		runInfo.inputSize = 2;
+		runInfo.inputSize = 10;
 		runInfo.outputSize = 1;
 		runInfo.ratingFunc = TestRatingFunc;
 		runInfo.mutations = mutations;

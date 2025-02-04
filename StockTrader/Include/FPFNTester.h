@@ -14,7 +14,7 @@ namespace jv::ai
 		uint32_t positives = 0;
 		uint32_t negatives = 0;
 
-		void AddResult(bool result, bool expectation);
-		[[nodiscard]] float GetRating();
+		__declspec(dllexport) void AddResult(bool result, bool expectation);
+		__declspec(dllexport) [[nodiscard]] float GetRating();
 	};
 }

@@ -38,5 +38,5 @@ namespace jv::ai
 		bool debug = true; 
 	};
 
-	[[nodiscard]] NNet RunGeneticAlgorithm(GeneticAlgorithmRunInfo& info, Arena& arena, Arena& tempArena);
+	__declspec(dllexport) [[nodiscard]] NNet RunGeneticAlgorithm(GeneticAlgorithmRunInfo& info, Arena& arena, Arena& tempArena);
 }

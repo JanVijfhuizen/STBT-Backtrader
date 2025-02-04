@@ -78,11 +78,11 @@ namespace jv::bt
 		Tracker tracker;
 		Array<const char*> symbols;
 
-		[[nodiscard]] float RunTestEpochs(Arena& arena, Arena& tempArena, const TestInfo& testInfo) const;
-		[[nodiscard]] Portfolio Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Log& outLog, const RunInfo& runInfo) const;
-		[[nodiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
+		__declspec(dllexport) [[nodiscard]] float RunTestEpochs(Arena& arena, Arena& tempArena, const TestInfo& testInfo) const;
+		__declspec(dllexport) [[nodiscard]] Portfolio Run(Arena& arena, Arena& tempArena, const Portfolio& portfolio, Log& outLog, const RunInfo& runInfo) const;
+		__declspec(dllexport) [[nodiscard]] float GetLiquidity(const Portfolio& portfolio, uint32_t offset) const;
 
-		void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const char* portfolioName, 
+		__declspec(dllexport) void PrintAdvice(Arena& arena, Arena& tempArena, Bot bot, const char* portfolioName,
 			bool apply, void* userPtr, PreProcessBot preProcessBot = nullptr) const;
 	};
 
@@ -94,17 +94,17 @@ namespace jv::bt
 	};
 
 	// Moving Average.
-	[[nodiscard]] float GetMA(const float* data, uint32_t index, uint32_t length);
-	[[nodiscard]] void Normalize(const float* src, float* dst, uint32_t index, uint32_t length);
+	__declspec(dllexport) [[nodiscard]] float GetMA(const float* data, uint32_t index, uint32_t length);
+	__declspec(dllexport) [[nodiscard]] void Normalize(const float* src, float* dst, uint32_t index, uint32_t length);
 
-	[[nodiscard]] Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader);
-	[[nodiscard]] Portfolio LoadPortfolio(Arena& arena, const BackTrader& backTrader, const char* name);
-	void DestroyPortfolio(Arena& arena, const Portfolio& portfolio);
-	void SavePortfolio(const char* name, const Portfolio& portfolio);
+	__declspec(dllexport) [[nodiscard]] Portfolio CreatePortfolio(Arena& arena, const BackTrader& backTrader);
+	__declspec(dllexport) [[nodiscard]] Portfolio LoadPortfolio(Arena& arena, const BackTrader& backTrader, const char* name);
+	__declspec(dllexport) void DestroyPortfolio(Arena& arena, const Portfolio& portfolio);
+	__declspec(dllexport) void SavePortfolio(const char* name, const Portfolio& portfolio);
 
-	[[nodiscard]] BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, const Array<const char*>& symbols, float fee);
-	void DestroyBackTrader(const BackTrader& backTrader, Arena& arena);
+	__declspec(dllexport) [[nodiscard]] BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, const Array<const char*>& symbols, float fee);
+	__declspec(dllexport) void DestroyBackTrader(const BackTrader& backTrader, Arena& arena);
 
-	[[nodiscard]] BackTraderEnvironment CreateBTE(const char** symbols, uint32_t symbolsLength, float fee);
-	void DestroyBTE(const BackTraderEnvironment& bte);
+	__declspec(dllexport) [[nodiscard]] BackTraderEnvironment CreateBTE(const char** symbols, uint32_t symbolsLength, float fee);
+	__declspec(dllexport) void DestroyBTE(const BackTraderEnvironment& bte);
 }

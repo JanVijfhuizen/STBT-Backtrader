@@ -39,16 +39,16 @@ namespace jv::ai
 		uint32_t weightCount;
 	};
 
-	[[nodiscard]] NNet CreateNNet(NNetCreateInfo& info, Arena& arena);
-	void DestroyNNet(NNet& nnet, Arena& arena);
+	__declspec(dllexport) [[nodiscard]] NNet CreateNNet(NNetCreateInfo& info, Arena& arena);
+	__declspec(dllexport) void DestroyNNet(NNet& nnet, Arena& arena);
 
 	// Reset the current value of all neurons to 0.
-	void Clean(NNet& nnet);
+	__declspec(dllexport) void Clean(NNet& nnet);
 	// Destroy all neurons and weights.
-	void Clear(NNet& nnet);
+	__declspec(dllexport) void Clear(NNet& nnet);
 	// Forward information through the network.
-	void Propagate(NNet& nnet, float* input, bool* output);
+	__declspec(dllexport) void Propagate(NNet& nnet, float* input, bool* output);
 
-	bool AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value, uint32_t& gId);
-	bool AddNeuron(NNet& nnet, float decay, float threshold, uint32_t& gId);
+	__declspec(dllexport) bool AddWeight(NNet& nnet, uint32_t from, uint32_t to, float value, uint32_t& gId);
+	__declspec(dllexport) bool AddNeuron(NNet& nnet, float decay, float threshold, uint32_t& gId);
 }

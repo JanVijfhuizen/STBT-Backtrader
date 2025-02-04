@@ -1,6 +1,8 @@
 {
   "dependencies": [
     "boost",
-    "curl"
+    "curl",
+    "glfw3",
+    "opengl"
   ]
 }

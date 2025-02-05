@@ -19,8 +19,35 @@ namespace jv::ai
 		return a > b;
 	}
 
+	void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
+	{
+		glViewport(0, 0, width, height);
+	}
+
 	NNet RunGeneticAlgorithm(GeneticAlgorithmRunInfo& info, Arena& arena, Arena& tempArena)
 	{
+		GLFWwindow* window = nullptr;
+
+		if (info.debug)
+		{
+			glfwInit();
+			// Version 3 is nice and available on nearly all platforms.
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+			const auto resolution = glm::ivec2(800, 600);
+
+			window = glfwCreateWindow(resolution.x, resolution.y, "Backtrader", NULL, NULL);
+			assert(window);
+			glfwMakeContextCurrent(window);
+
+			const auto result = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+			assert(result);
+			glViewport(0, 0, resolution.x, resolution.y);
+			glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
+		}
+
 		const auto tempScope = tempArena.CreateScope();
 		float* ratings = tempArena.New<float>(info.width);
 		float* compabilities = tempArena.New<float>(info.width);
@@ -79,6 +106,17 @@ namespace jv::ai
 
 		for (uint32_t i = 0; i < info.epochs; i++)
 		{
+			if (info.debug)
+			{
+				const bool shouldClose = glfwWindowShouldClose(window);
+				if (shouldClose)
+					break;
+
+				glClear(GL_COLOR_BUFFER_BIT);
+				glfwSwapBuffers(window);
+				glfwPollEvents();
+			}
+
 			previousSurvivorRating = survivorRating;
 			survivorRating = 0;
 			++stagnateStreak;
@@ -233,6 +271,11 @@ namespace jv::ai
 		Arena::Destroy(arenas[1]);
 		Arena::Destroy(arenas[0]);
 		tempArena.DestroyScope(tempScope);
+
+		if (info.debug)
+		{
+			glfwTerminate();
+		}
 
 		return {}; // temp, somehow returning bestnnet fucks with debugging
 	}

@@ -3,6 +3,8 @@
     "boost",
     "curl",
     "glfw3",
+    "glad",
+    "glm",
     "opengl"
   ]
 }

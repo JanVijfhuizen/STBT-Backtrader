@@ -179,8 +179,10 @@
     <ClInclude Include="Include\TimeSeries.h" />
     <ClInclude Include="Include\Tracker.h" />
     <ClInclude Include="Include\Mesh.h" />
+    <ClInclude Include="Include\Renderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\Renderer.cpp" />
     <ClCompile Include="Src\Mesh.cpp" />
     <ClCompile Include="Src\dllmain.cpp" />
     <ClCompile Include="Include\JLib\Math.cpp" />

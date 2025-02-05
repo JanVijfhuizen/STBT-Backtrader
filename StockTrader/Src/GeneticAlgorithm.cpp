@@ -4,6 +4,7 @@
 #include <NNetUtils.h>
 #include <Shader.h>
 #include <Mesh.h>
+#include <Renderer.h>
 
 namespace jv::ai
 {
@@ -21,53 +22,16 @@ namespace jv::ai
 		return a > b;
 	}
 
-	void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
-	{
-		glViewport(0, 0, width, height);
-	}
-
 	NNet RunGeneticAlgorithm(GeneticAlgorithmRunInfo& info, Arena& arena, Arena& tempArena)
 	{
-		GLFWwindow* window = nullptr;
-		gr::Shader shader;
-		gr::Mesh mesh;
+		gr::Renderer renderer;
 
 		if (info.debug)
 		{
-			glfwInit();
-			// Version 3 is nice and available on nearly all platforms.
-			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-			const auto resolution = glm::ivec2(800, 600);
-
-			window = glfwCreateWindow(resolution.x, resolution.y, "GA Backtrader", NULL, NULL);
-			assert(window);
-			glfwMakeContextCurrent(window);
-
-			const auto result = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-			assert(result);
-			glViewport(0, 0, resolution.x, resolution.y);
-			glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
-
-			shader = gr::LoadShader("Shaders/Triangle.vert", "Shaders/Triangle.frag");
-			glUseProgram(shader.program);
-
-			glm::vec3 vertices[] = 
-			{
-				{0.5f,  0.5f, 0.0f },
-				{0.5f, -0.5f, 0.0f },
-				{-0.5f, -0.5f, 0.0f },
-				{-0.5f,  0.5f, 0.0f }
-			};
-			unsigned int indices[] = 
-			{
-				0, 1, 3,
-				1, 2, 3
-			};
-
-			mesh = gr::CreateMesh(vertices, indices, {4, 6});
+			gr::RendererCreateInfo createInfo{};
+			createInfo.title = "GA Progress";
+			renderer = gr::CreateRenderer(createInfo);
+			renderer.EnableWireframe(true);
 		}
 
 		const auto tempScope = tempArena.CreateScope();
@@ -130,16 +94,8 @@ namespace jv::ai
 		{
 			if (info.debug)
 			{
-				const bool shouldClose = glfwWindowShouldClose(window);
-				if (shouldClose)
-					break;
-
-				glClear(GL_COLOR_BUFFER_BIT);
-
-				mesh.Draw();
-
-				glfwSwapBuffers(window);
-				glfwPollEvents();
+				renderer.Draw();
+				renderer.Render();
 			}
 
 			previousSurvivorRating = survivorRating;
@@ -299,9 +255,7 @@ namespace jv::ai
 
 		if (info.debug)
 		{
-			gr::DestroyMesh(mesh);
-			gr::DestroyShader(shader);
-			glfwTerminate();
+			gr::DestroyRenderer(renderer);
 		}
 
 		return {}; // temp, somehow returning bestnnet fucks with debugging

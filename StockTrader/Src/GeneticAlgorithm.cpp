@@ -5,9 +5,16 @@
 #include <Shader.h>
 #include <Mesh.h>
 #include <Renderer.h>
+#include <Jlib/VectorUtils.h>
 
 namespace jv::ai
 {
+	struct EpochDebugData final
+	{
+		float score;
+		float bestScore;
+	};
+
 	void* Alloc(const uint32_t size)
 	{
 		return malloc(size);
@@ -89,13 +96,30 @@ namespace jv::ai
 		float survivorRating = 0;
 		float previousSurvivorRating;
 
+		auto epochDebugData = CreateVector<EpochDebugData>(tempArena, info.epochs);
+
 		for (uint32_t i = 0; i < info.epochs; i++)
 		{
 			if (info.debug)
 			{
-				renderer.DrawPlane(glm::vec2(0), glm::vec2(1), glm::vec4(1));
-				renderer.DrawLine(glm::vec2(-.2, -.2), glm::vec2(.4, .3), glm::vec4(1, 0, 0, 1));
-				renderer.DrawPlane(glm::vec2(0.4), glm::vec2(.2), glm::vec4(0, 1, 0, 1));
+				renderer.DrawPlane(glm::vec2(0), glm::vec2(1 * renderer.GetAspectRatio(), 1), glm::vec4(1));
+
+				float lineWidth = 2.f / (epochDebugData.count - 1);
+
+				for (uint32_t j = 1; j < epochDebugData.count; j++)
+				{
+					float xStart = lineWidth * (j - 1) - 1.f;
+					float xEnd = xStart + lineWidth;
+
+					const auto& prev = epochDebugData[j - 1];
+					const auto& cur = epochDebugData[j];
+					float prevScore = prev.score / bestNNetRating;
+					float score = cur.score / bestNNetRating;
+
+					renderer.DrawLine(glm::vec2(xStart, prevScore - 1), glm::vec2(xEnd, score - 1), glm::vec4(1, 0, 0, 1));
+					renderer.DrawLine(glm::vec2(xStart, prev.bestScore / bestNNetRating - 1), glm::vec2(xEnd, cur.bestScore / bestNNetRating - 1), glm::vec4(0, 1, 0, 1));
+				}
+				
 				const bool result = renderer.Render();
 				if (result)
 					break;
@@ -217,6 +241,14 @@ namespace jv::ai
 				ConnectIO(nnet, jv::ai::InitType::random, mutationId);
 				for (uint32_t j = 0; j < info.arrivalMutationCount; j++)
 					Mutate(nnet, currentMutations, mutationId);
+			}
+
+			if (info.debug)
+			{
+				EpochDebugData debugData{};
+				debugData.score = bestRatingUnfiltered;
+				debugData.bestScore = bestNNetRating;
+				epochDebugData.Add() = debugData;
 			}
 
 			if(info.debug)

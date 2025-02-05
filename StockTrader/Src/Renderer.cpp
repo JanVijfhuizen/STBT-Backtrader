@@ -11,6 +11,7 @@ namespace jv::gr
 	Renderer CreateRenderer(const RendererCreateInfo info)
 	{
 		Renderer renderer{};
+		renderer.resolution = info.resolution;
 
 		glfwInit();
 		// Version 3 is nice and available on nearly all platforms.
@@ -107,6 +108,10 @@ namespace jv::gr
 	{
 		glBindVertexArray(mesh.vao);
 		boundIndicesLength = mesh.indicesLength;
+	}
+	float Renderer::GetAspectRatio()
+	{
+		return resolution.y / resolution.x;
 	}
 	void Renderer::DrawPlane(const glm::vec2 position, const glm::vec2 scale, const glm::vec4 color)
 	{

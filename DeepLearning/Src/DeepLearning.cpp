@@ -184,6 +184,12 @@ int main()
 	runInfo.ratingFunc = RatingFunc;
 	runInfo.mutations = mutations;
 
+	// temp.
+	runInfo.arrivals = 2;
+	runInfo.survivors = 8;
+	runInfo.width = 20;
+	runInfo.epochs = 1000;
+
 	const auto res = jv::ai::RunGeneticAlgorithm(runInfo, bte.arena, bte.tempArena);
 	
 	/*

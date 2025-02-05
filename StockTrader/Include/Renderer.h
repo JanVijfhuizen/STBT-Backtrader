@@ -12,6 +12,7 @@ namespace jv::gr
 
 	struct Renderer final
 	{
+		glm::vec2 resolution;
 		GLFWwindow* window;
 		Mesh planeMesh;
 		Mesh lineMesh;
@@ -24,6 +25,8 @@ namespace jv::gr
 		void EnableWireframe(bool enable);
 		void BindShader(Shader shader);
 		void BindMesh(Mesh mesh);
+
+		[[nodiscard]] float GetAspectRatio();
 
 		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);

@@ -8,12 +8,17 @@ namespace jv::gr
 		mDynamic
 	};
 
+	enum class VertType
+	{
+		line, triangle
+	};
+
 	struct Mesh final
 	{
 		unsigned int vbo, ebo, vao;
 		uint32_t indicesLength;
 	};
 
-	[[nodiscard]] Mesh CreateMesh(glm::vec3* vertices, unsigned int* indices, MeshType type, uint32_t vSize, uint32_t iSize);
+	[[nodiscard]] Mesh CreateMesh(float* vertices, unsigned int* indices, VertType vertType, MeshType renderType, uint32_t vSize, uint32_t iSize);
 	void DestroyMesh(const Mesh& mesh);
 }

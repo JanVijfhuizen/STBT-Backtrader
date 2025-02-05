@@ -65,4 +65,18 @@ namespace jv::gr
 		glDeleteShader(shader.vertex);
 		glDeleteShader(shader.fragment);
 	}
+	unsigned int GetShaderUniform(const Shader& shader, const char* name)
+	{
+		return glGetUniformLocation(shader.program, name);
+	}
+	void SetShaderUniform2f(const Shader& shader, const unsigned int i, const glm::vec2 v)
+	{
+		glUseProgram(shader.program);
+		glUniform2f(i, v.x, v.y);
+	}
+	void SetShaderUniform4f(const Shader& shader, const unsigned int i, const glm::vec4 v)
+	{
+		glUseProgram(shader.program);
+		glUniform4f(i, v.x, v.y, v.z, v.a);
+	}
 }

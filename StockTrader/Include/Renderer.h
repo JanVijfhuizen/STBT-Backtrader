@@ -13,15 +13,20 @@ namespace jv::gr
 	struct Renderer final
 	{
 		GLFWwindow* window;
-		Mesh fallbackMesh;
-		Shader fallbackShader;
+		Mesh planeMesh;
+		Mesh lineMesh;
+		Shader defaultShader;
+		Shader lineShader;
 		uint32_t boundIndicesLength;
 
 		[[nodiscard]] bool Render();
-		void Draw();
+		void Draw(VertType vertType);
 		void EnableWireframe(bool enable);
 		void BindShader(Shader shader);
 		void BindMesh(Mesh mesh);
+
+		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
+		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
 	};
 
 	[[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);

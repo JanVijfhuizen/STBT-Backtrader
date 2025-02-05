@@ -27,31 +27,45 @@ namespace jv::gr
 		glViewport(0, 0, info.resolution.x, info.resolution.y);
 		glfwSetFramebufferSizeCallback(renderer.window, FramebufferSizeCallback);
 
-		glm::vec3 vertices[] =
+		glm::vec3 planeVertices[] =
 		{
 			{0.5f,  0.5f, 0.0f },
 			{0.5f, -0.5f, 0.0f },
 			{-0.5f, -0.5f, 0.0f },
 			{-0.5f,  0.5f, 0.0f }
 		};
-		unsigned int indices[] =
+		unsigned int planeIndices[] =
 		{
 			0, 1, 3,
 			1, 2, 3
 		};
 
-		renderer.fallbackMesh = gr::CreateMesh(vertices, indices, gr::MeshType::mStatic, 4, 6);
-		renderer.fallbackShader = gr::LoadShader("Shaders/Triangle.vert", "Shaders/Triangle.frag");
+		float lineVertices[] =
+		{
+			0, 1
+		};
 
-		renderer.BindMesh(renderer.fallbackMesh);
-		renderer.BindShader(renderer.fallbackShader);
+		unsigned int lineIndices[] =
+		{
+			0, 1
+		};
+
+		renderer.planeMesh = gr::CreateMesh(reinterpret_cast<float*>(planeVertices), planeIndices, gr::VertType::triangle, gr::MeshType::mStatic, 4, 6);
+		renderer.lineMesh = gr::CreateMesh(lineVertices, lineIndices, gr::VertType::line, gr::MeshType::mStatic, 2, 2);
+		renderer.defaultShader = gr::LoadShader("Shaders/Triangle.vert", "Shaders/Triangle.frag");
+		renderer.lineShader = gr::LoadShader("Shaders/Line.vert", "Shaders/Line.frag");
+
+		renderer.BindMesh(renderer.planeMesh);
+		renderer.BindShader(renderer.defaultShader);
 		
 		return renderer;
 	}
 	void DestroyRenderer(Renderer& renderer)
 	{
-		gr::DestroyMesh(renderer.fallbackMesh);
-		gr::DestroyShader(renderer.fallbackShader);
+		gr::DestroyMesh(renderer.planeMesh);
+		gr::DestroyMesh(renderer.lineMesh);
+		gr::DestroyShader(renderer.defaultShader);
+		gr::DestroyShader(renderer.lineShader);
 		glfwTerminate();
 	}
 	bool Renderer::Render()
@@ -65,9 +79,17 @@ namespace jv::gr
 		glClear(GL_COLOR_BUFFER_BIT);
 		return false;
 	}
-	void Renderer::Draw()
+	void Renderer::Draw(const VertType vertType)
 	{
-		glDrawElements(GL_TRIANGLES, boundIndicesLength, GL_UNSIGNED_INT, 0);
+		switch (vertType)
+		{
+		case VertType::triangle:
+			glDrawElements(GL_TRIANGLES, boundIndicesLength, GL_UNSIGNED_INT, 0);
+			break;
+		case VertType::line:
+			glDrawElements(GL_LINES, boundIndicesLength, GL_UNSIGNED_INT, 0);
+			break;
+		}
 	}
 
 	void Renderer::EnableWireframe(const bool enable)
@@ -85,5 +107,29 @@ namespace jv::gr
 	{
 		glBindVertexArray(mesh.vao);
 		boundIndicesLength = mesh.indicesLength;
+	}
+	void Renderer::DrawPlane(const glm::vec2 position, const glm::vec2 scale, const glm::vec4 color)
+	{
+		BindMesh(planeMesh);
+		BindShader(defaultShader);
+		gr::SetShaderUniform2f(defaultShader,
+			gr::GetShaderUniform(defaultShader, "position"), position);
+		gr::SetShaderUniform2f(defaultShader,
+			gr::GetShaderUniform(defaultShader, "scale"), scale);
+		gr::SetShaderUniform4f(defaultShader,
+			gr::GetShaderUniform(defaultShader, "color"), color);
+		Draw(VertType::triangle);
+	}
+	void Renderer::DrawLine(const glm::vec2 start, const glm::vec2 end, const glm::vec4 color)
+	{
+		BindMesh(lineMesh);
+		BindShader(lineShader);
+		gr::SetShaderUniform2f(lineShader,
+			gr::GetShaderUniform(lineShader, "start"), start);
+		gr::SetShaderUniform2f(lineShader,
+			gr::GetShaderUniform(lineShader, "end"), end);
+		gr::SetShaderUniform4f(lineShader,
+			gr::GetShaderUniform(lineShader, "color"), color);
+		Draw(VertType::line);
 	}
 }

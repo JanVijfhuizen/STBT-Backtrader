@@ -31,7 +31,6 @@ namespace jv::ai
 			gr::RendererCreateInfo createInfo{};
 			createInfo.title = "GA Progress";
 			renderer = gr::CreateRenderer(createInfo);
-			renderer.EnableWireframe(true);
 		}
 
 		const auto tempScope = tempArena.CreateScope();
@@ -94,8 +93,12 @@ namespace jv::ai
 		{
 			if (info.debug)
 			{
-				renderer.Draw();
-				renderer.Render();
+				renderer.DrawPlane(glm::vec2(0), glm::vec2(1), glm::vec4(1));
+				renderer.DrawLine(glm::vec2(-.2, -.2), glm::vec2(.4, .3), glm::vec4(1, 0, 0, 1));
+				renderer.DrawPlane(glm::vec2(0.4), glm::vec2(.2), glm::vec4(0, 1, 0, 1));
+				const bool result = renderer.Render();
+				if (result)
+					break;
 			}
 
 			previousSurvivorRating = survivorRating;

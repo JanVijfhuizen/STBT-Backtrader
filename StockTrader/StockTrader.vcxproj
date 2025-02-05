@@ -175,6 +175,7 @@
     <ClInclude Include="Include\NNet.h" />
     <ClInclude Include="Include\NNetUtils.h" />
     <ClInclude Include="Include\pch.h" />
+    <ClInclude Include="Include\Shader.h" />
     <ClInclude Include="Include\TimeSeries.h" />
     <ClInclude Include="Include\Tracker.h" />
   </ItemGroup>
@@ -191,6 +192,7 @@
     <ClCompile Include="Src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Src\Shader.cpp" />
     <ClCompile Include="Src\TimeSeries.cpp" />
     <ClCompile Include="Src\Tracker.cpp" />
   </ItemGroup>

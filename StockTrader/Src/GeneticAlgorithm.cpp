@@ -2,6 +2,7 @@
 #include "GeneticAlgorithm.h"
 #include <JLib/LinearSort.h>
 #include <NNetUtils.h>
+#include <Shader.h>
 
 namespace jv::ai
 {
@@ -27,6 +28,15 @@ namespace jv::ai
 	NNet RunGeneticAlgorithm(GeneticAlgorithmRunInfo& info, Arena& arena, Arena& tempArena)
 	{
 		GLFWwindow* window = nullptr;
+		gr::Shader shader;
+
+		float vertices[] = 
+		{
+			-0.5f, -0.5f, 0.0f,
+			 0.5f, -0.5f, 0.0f,
+			 0.0f,  0.5f, 0.0f
+		};
+		unsigned int VBO, VAO;
 
 		if (info.debug)
 		{
@@ -38,7 +48,7 @@ namespace jv::ai
 
 			const auto resolution = glm::ivec2(800, 600);
 
-			window = glfwCreateWindow(resolution.x, resolution.y, "Backtrader", NULL, NULL);
+			window = glfwCreateWindow(resolution.x, resolution.y, "GA Backtrader", NULL, NULL);
 			assert(window);
 			glfwMakeContextCurrent(window);
 
@@ -46,6 +56,24 @@ namespace jv::ai
 			assert(result);
 			glViewport(0, 0, resolution.x, resolution.y);
 			glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
+
+			glGenBuffers(1, &VBO);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+			glEnableVertexAttribArray(0);
+
+			glGenVertexArrays(1, &VAO);
+			glBindVertexArray(VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+
+			shader = gr::LoadShader("Shaders/Triangle.vert", "Shaders/Triangle.frag");
+			glUseProgram(shader.program);
+			glBindVertexArray(VAO);
 		}
 
 		const auto tempScope = tempArena.CreateScope();
@@ -113,6 +141,9 @@ namespace jv::ai
 					break;
 
 				glClear(GL_COLOR_BUFFER_BIT);
+
+				glDrawArrays(GL_TRIANGLES, 0, 3);
+
 				glfwSwapBuffers(window);
 				glfwPollEvents();
 			}
@@ -274,6 +305,9 @@ namespace jv::ai
 
 		if (info.debug)
 		{
+			glDeleteBuffers(1, &VAO);
+			glDeleteBuffers(1, &VBO);
+			gr::DestroyShader(shader);
 			glfwTerminate();
 		}
 

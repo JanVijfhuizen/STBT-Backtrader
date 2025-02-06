@@ -140,17 +140,25 @@ namespace jv::gr
 		Draw(VertType::line);
 	}
 	void Renderer::DrawGraph(const glm::vec2 position, const glm::vec2 scale, 
-		GraphPoint* points, const uint32_t length, const GraphType type)
+		GraphPoint* points, const uint32_t length, const GraphType type, const bool noBackground)
 	{
-		DrawPlane(position, scale, glm::vec4(1));
-		DrawPlane(position, scale * (1.f - graphBorderThickness), glm::vec4(0));
+		if (!noBackground)
+		{
+			DrawPlane(position, scale, glm::vec4(1));
+			DrawPlane(position, scale * (1.f - graphBorderThickness), glm::vec4(0));
+		}
 
 		float lineWidth = 1.f / (length - 1) * scale.x;
 		float org = -lineWidth * (length - 1) / 2 + position.x;
 		float ceiling = 0;
+		float floor = FLT_MAX;
 
 		for (uint32_t j = 0; j < length; j++)
-			ceiling = jv::Max<float>(ceiling, points[j].value);
+		{
+			const float value = points[j].close;
+			ceiling = jv::Max<float>(ceiling, value);
+			floor = jv::Min<float>(floor, value);
+		}
 
 		for (uint32_t j = 1; j < length; j++)
 		{
@@ -158,30 +166,27 @@ namespace jv::gr
 			float xEnd = xStart + lineWidth;
 
 			const auto& cur = points[j];
+			const float yPos = jv::RLerp<float>(cur.close, floor, ceiling) * scale.y - scale.y / 2;
+			const auto& prev = points[j - 1];
+			const float yPosPrev = jv::RLerp<float>(prev.close, floor, ceiling) * scale.y - scale.y / 2;
 			
 			if (type == GraphType::line)
 			{
-				const auto& prev = points[j - 1];
-
-				const float prevValue = prev.value / ceiling;
-				const float value = cur.value / ceiling;
-
-				const float yPos = (value - 1) * scale.y + position.y;
-				const float yPosPrev = (prevValue - 1) * scale.y + position.y;
-
 				DrawLine(glm::vec2(xStart, yPosPrev), glm::vec2(xEnd, yPos), glm::vec4(1, 0, 0, 1));
 			}
 			if (type == GraphType::candle)
 			{
-				const float open = cur.open / ceiling;
-				const float close = cur.close / ceiling;
+				const float open = cur.open;
+				const float close = cur.close;
 
-				const float candleScale = abs(open - close);
-				const float yPos = ((open + close) / 2 - 1) * scale.y + position.y;
 				const auto color = open < close ? glm::vec4(0, 1, 0, 1) : glm::vec4(1, 0, 0, 1);
 
-				DrawPlane(glm::vec2(xStart + lineWidth / 2, yPos), glm::vec2((xEnd - xStart) * candleThickness,
-					candleScale), color);
+				const float yPos2 = jv::RLerp<float>((open + close) / 2, floor, ceiling) * scale.y - scale.y / 2;
+
+				const auto pos = glm::vec2(xStart + lineWidth / 2, yPos2);
+				const float width = (xEnd - xStart) * candleThickness;
+				const float height = (open - close) / (ceiling - floor) * scale.y;
+				DrawPlane(pos, glm::vec2(width, height), color);
 			}
 		}
 	}

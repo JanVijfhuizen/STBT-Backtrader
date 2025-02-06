@@ -98,14 +98,16 @@ namespace jv::bt
 			// Skip first line.
 			getline(ss, subStr, ',');
 
+			// Open and close are reversed in dataset for some reason.
+
 			getline(ss, subStr, ',');
-			timeSeries.open[i] = std::stof(subStr);
+			timeSeries.close[i] = std::stof(subStr);
 			getline(ss, subStr, ',');
 			timeSeries.high[i] = std::stof(subStr);
 			getline(ss, subStr, ',');
 			timeSeries.low[i] = std::stof(subStr);
 			getline(ss, subStr, ',');
-			timeSeries.close[i] = std::stof(subStr);
+			timeSeries.open[i] = std::stof(subStr);
 			getline(ss, subStr, ',');
 			timeSeries.volume[i] = std::stoi(subStr);
 

@@ -21,4 +21,12 @@ namespace jv
 	}
 
 	[[nodiscard]] float RandF(float min, float max);
+
+	template <typename T>
+	[[nodiscard]] T RLerp(const T& t, const T& min, const T& max)
+	{
+		const T bounds = max - min;
+		const T org = t - min;
+		return org / bounds;
+	}
 }

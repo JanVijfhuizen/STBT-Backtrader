@@ -12,17 +12,10 @@ namespace jv::gr
 
 	struct GraphPoint final
 	{
-		union 
-		{
-			struct 
-			{
-				float open;
-				float high;
-				float low;
-				float close;
-			};
-			float value;
-		};
+		float open;
+		float high;
+		float low;
+		float close;
 	};
 
 	struct RendererCreateInfo final 
@@ -55,7 +48,8 @@ namespace jv::gr
 
 		__declspec(dllexport) void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		__declspec(dllexport) void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
-		__declspec(dllexport) void DrawGraph(glm::vec2 position, glm::vec2 scale, GraphPoint* points, uint32_t length, GraphType type);
+		__declspec(dllexport) void DrawGraph(glm::vec2 position, glm::vec2 scale, GraphPoint* points, 
+			uint32_t length, GraphType type, bool noBackground);
 	};
 
 	__declspec(dllexport) [[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);

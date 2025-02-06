@@ -188,8 +188,9 @@ int main()
 				points[i].high = timeSeries.high[i + static_cast<int>(t)];
 				points[i].low = timeSeries.low[i + static_cast<int>(t)];
 			}
-			renderer.DrawGraph({-.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line);
-			renderer.DrawGraph({.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::candle);
+			renderer.DrawGraph({-.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line, false);
+			renderer.DrawGraph({.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::candle, false);
+			renderer.DrawGraph({ .5, 0 }, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line, true);
 		}
 		return 0;
 	}

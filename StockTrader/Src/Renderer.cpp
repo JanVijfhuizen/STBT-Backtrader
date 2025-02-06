@@ -143,7 +143,7 @@ namespace jv::gr
 		GraphPoint* points, const uint32_t length, const GraphType type)
 	{
 		DrawPlane(position, scale, glm::vec4(1));
-		DrawPlane(position, scale * .96f, glm::vec4(0));
+		DrawPlane(position, scale * (1.f - graphBorderThickness), glm::vec4(0));
 
 		float lineWidth = 1.f / (length - 1) * scale.x;
 		float org = -lineWidth * (length - 1) / 2 + position.x;
@@ -157,15 +157,31 @@ namespace jv::gr
 			float xStart = org + lineWidth * (j - 1);
 			float xEnd = xStart + lineWidth;
 
+			const auto& cur = points[j];
+			
 			if (type == GraphType::line)
 			{
 				const auto& prev = points[j - 1];
-				const auto& cur = points[j];
-				float prevValue = prev.value / ceiling;
-				float value = cur.value / ceiling;
 
-				DrawLine(glm::vec2(xStart, (prevValue - 1) * scale.y + position.y), 
-					glm::vec2(xEnd, (value - 1) * scale.y + position.y), glm::vec4(1, 0, 0, 1));
+				const float prevValue = prev.value / ceiling;
+				const float value = cur.value / ceiling;
+
+				const float yPos = (value - 1) * scale.y + position.y;
+				const float yPosPrev = (prevValue - 1) * scale.y + position.y;
+
+				DrawLine(glm::vec2(xStart, yPosPrev), glm::vec2(xEnd, yPos), glm::vec4(1, 0, 0, 1));
+			}
+			if (type == GraphType::candle)
+			{
+				const float open = cur.open / ceiling;
+				const float close = cur.close / ceiling;
+
+				const float candleScale = abs(open - close);
+				const float yPos = ((open + close) / 2 - 1) * scale.y + position.y;
+				const auto color = open < close ? glm::vec4(0, 1, 0, 1) : glm::vec4(1, 0, 0, 1);
+
+				DrawPlane(glm::vec2(xStart + lineWidth / 2, yPos), glm::vec2((xEnd - xStart) * candleThickness,
+					candleScale), color);
 			}
 		}
 	}

@@ -183,9 +183,13 @@ int main()
 
 			for (uint32_t i = 0; i < LENGTH; i++)
 			{
-				points[i].value = timeSeries.open[i + static_cast<int>(t)];
+				points[i].open = timeSeries.open[i + static_cast<int>(t)];
+				points[i].close = timeSeries.close[i + static_cast<int>(t)];
+				points[i].high = timeSeries.high[i + static_cast<int>(t)];
+				points[i].low = timeSeries.low[i + static_cast<int>(t)];
 			}
-			renderer.DrawGraph({}, glm::vec2(.5 * renderer.GetAspectRatio(), .5), points, LENGTH, jv::gr::GraphType::line);
+			renderer.DrawGraph({-.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line);
+			renderer.DrawGraph({.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::candle);
 		}
 		return 0;
 	}

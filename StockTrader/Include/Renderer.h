@@ -12,7 +12,17 @@ namespace jv::gr
 
 	struct GraphPoint final
 	{
-		float value;
+		union 
+		{
+			struct 
+			{
+				float open;
+				float high;
+				float low;
+				float close;
+			};
+			float value;
+		};
 	};
 
 	struct RendererCreateInfo final 
@@ -31,6 +41,9 @@ namespace jv::gr
 		Shader defaultShader;
 		Shader lineShader;
 		uint32_t boundIndicesLength;
+
+		float graphBorderThickness = .05f;
+		float candleThickness = .6f;
 
 		__declspec(dllexport) [[nodiscard]] bool Render();
 		__declspec(dllexport) void Draw(VertType vertType);

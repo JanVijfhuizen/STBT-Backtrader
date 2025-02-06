@@ -12,6 +12,7 @@ namespace jv::ai
 	struct EpochDebugData final
 	{
 		float score;
+		float filtered;
 		float bestScore;
 	};
 
@@ -118,6 +119,7 @@ namespace jv::ai
 
 					renderer.DrawLine(glm::vec2(xStart, prevScore - 1), glm::vec2(xEnd, score - 1), glm::vec4(1, 0, 0, 1));
 					renderer.DrawLine(glm::vec2(xStart, prev.bestScore / bestNNetRating - 1), glm::vec2(xEnd, cur.bestScore / bestNNetRating - 1), glm::vec4(0, 1, 0, 1));
+					renderer.DrawLine(glm::vec2(xStart, prev.filtered / bestNNetRating - 1), glm::vec2(xEnd, cur.filtered / bestNNetRating - 1), glm::vec4(0, 0, 1, 1));
 				}
 				
 				const bool result = renderer.Render();
@@ -248,6 +250,7 @@ namespace jv::ai
 				EpochDebugData debugData{};
 				debugData.score = bestRatingUnfiltered;
 				debugData.bestScore = bestNNetRating;
+				debugData.filtered = ratings[0];
 				epochDebugData.Add() = debugData;
 			}
 

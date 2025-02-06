@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Renderer.h"
+#include <JLib/Math.h>
 
 namespace jv::gr
 {
@@ -18,6 +19,7 @@ namespace jv::gr
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		glfwWindowHint(GLFW_RESIZABLE, info.resizeable ? GLFW_TRUE : GLFW_FALSE);
 
 		renderer.window = glfwCreateWindow(info.resolution.x, info.resolution.y, info.title, NULL, NULL);
 		assert(renderer.window);
@@ -136,5 +138,35 @@ namespace jv::gr
 		gr::SetShaderUniform4f(lineShader,
 			gr::GetShaderUniform(lineShader, "color"), color);
 		Draw(VertType::line);
+	}
+	void Renderer::DrawGraph(const glm::vec2 position, const glm::vec2 scale, 
+		GraphPoint* points, const uint32_t length, const GraphType type)
+	{
+		DrawPlane(position, scale, glm::vec4(1));
+		DrawPlane(position, scale * .96f, glm::vec4(0));
+
+		float lineWidth = 1.f / (length - 1) * scale.x;
+		float org = -lineWidth * (length - 1) / 2 + position.x;
+		float ceiling = 0;
+
+		for (uint32_t j = 0; j < length; j++)
+			ceiling = jv::Max<float>(ceiling, points[j].value);
+
+		for (uint32_t j = 1; j < length; j++)
+		{
+			float xStart = org + lineWidth * (j - 1);
+			float xEnd = xStart + lineWidth;
+
+			if (type == GraphType::line)
+			{
+				const auto& prev = points[j - 1];
+				const auto& cur = points[j];
+				float prevValue = prev.value / ceiling;
+				float value = cur.value / ceiling;
+
+				DrawLine(glm::vec2(xStart, (prevValue - 1) * scale.y + position.y), 
+					glm::vec2(xEnd, (value - 1) * scale.y + position.y), glm::vec4(1, 0, 0, 1));
+			}
+		}
 	}
 }

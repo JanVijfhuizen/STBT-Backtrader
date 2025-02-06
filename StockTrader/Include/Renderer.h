@@ -4,10 +4,22 @@
 
 namespace jv::gr 
 {
+	enum class GraphType 
+	{
+		line,
+		candle
+	};
+
+	struct GraphPoint final
+	{
+		float value;
+	};
+
 	struct RendererCreateInfo final 
 	{
 		const char* title;
 		glm::vec2 resolution{800, 600};
+		bool resizeable = false;
 	};
 
 	struct Renderer final
@@ -20,18 +32,19 @@ namespace jv::gr
 		Shader lineShader;
 		uint32_t boundIndicesLength;
 
-		[[nodiscard]] bool Render();
-		void Draw(VertType vertType);
-		void EnableWireframe(bool enable);
-		void BindShader(Shader shader);
-		void BindMesh(Mesh mesh);
+		__declspec(dllexport) [[nodiscard]] bool Render();
+		__declspec(dllexport) void Draw(VertType vertType);
+		__declspec(dllexport) void EnableWireframe(bool enable);
+		__declspec(dllexport) void BindShader(Shader shader);
+		__declspec(dllexport) void BindMesh(Mesh mesh);
 
-		[[nodiscard]] float GetAspectRatio();
+		__declspec(dllexport) [[nodiscard]] float GetAspectRatio();
 
-		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
-		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
+		__declspec(dllexport) void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
+		__declspec(dllexport) void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
+		__declspec(dllexport) void DrawGraph(glm::vec2 position, glm::vec2 scale, GraphPoint* points, uint32_t length, GraphType type);
 	};
 
-	[[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);
-	void DestroyRenderer(Renderer& renderer);
+	__declspec(dllexport) [[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);
+	__declspec(dllexport) void DestroyRenderer(Renderer& renderer);
 }

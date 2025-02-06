@@ -8,6 +8,7 @@
 #include <NNetUtils.h>
 #include "GeneticAlgorithm.h";
 #include "FPFNTester.h"
+#include <Renderer.h>
 
 [[nodiscard]] float GetMAValue(const jv::bt::TimeSeries& stock, const uint32_t offset, void* userPtr)
 {
@@ -165,6 +166,29 @@ int main()
 	jv::bt::TimeSeries timeSeries = bte.backTrader.world.timeSeries[0];
 	//jv::bt::Tracker::Debug(timeSeries.close, 30, true);
 	//jv::bt::Tracker::DebugCandles(timeSeries, 0, 400);
+
+	// test
+	{
+		jv::gr::RendererCreateInfo createInfo{};
+		createInfo.title = "Renderer";
+		auto renderer = jv::gr::CreateRenderer(createInfo);
+
+		const uint32_t LENGTH = 20;
+		jv::gr::GraphPoint points[LENGTH];
+		float t = 0;
+
+		while (!renderer.Render())
+		{
+			t += .01;
+
+			for (uint32_t i = 0; i < LENGTH; i++)
+			{
+				points[i].value = timeSeries.open[i + static_cast<int>(t)];
+			}
+			renderer.DrawGraph({}, glm::vec2(.5 * renderer.GetAspectRatio(), .5), points, LENGTH, jv::gr::GraphType::line);
+		}
+		return 0;
+	}
 	
 	jv::bt::TestInfo testInfo{};
 	testInfo.bot = StockAlgorithm;

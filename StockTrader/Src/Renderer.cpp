@@ -155,9 +155,9 @@ namespace jv::gr
 
 		for (uint32_t j = 0; j < length; j++)
 		{
-			const float value = points[j].close;
-			ceiling = jv::Max<float>(ceiling, value);
-			floor = jv::Min<float>(floor, value);
+			const auto& point = points[j];
+			ceiling = jv::Max<float>(ceiling, point.high);
+			floor = jv::Min<float>(floor, point.low);
 		}
 
 		for (uint32_t j = 1; j < length; j++)
@@ -180,12 +180,20 @@ namespace jv::gr
 				const float close = cur.close;
 
 				const auto color = open < close ? glm::vec4(0, 1, 0, 1) : glm::vec4(1, 0, 0, 1);
-
 				const float yPos2 = jv::RLerp<float>((open + close) / 2, floor, ceiling) * scale.y - scale.y / 2;
 
 				const auto pos = glm::vec2(xStart + lineWidth / 2, yPos2);
 				const float width = (xEnd - xStart) * candleThickness;
 				const float height = (open - close) / (ceiling - floor) * scale.y;
+
+				// low/high
+				float low = cur.low;
+				float high = cur.high;
+				
+				low = jv::RLerp<float>(low, floor, ceiling) * scale.y - scale.y / 2;
+				high = jv::RLerp<float>(high, floor, ceiling) * scale.y - scale.y / 2;
+				DrawLine(glm::vec2(pos.x, low), glm::vec2(pos.x, high), glm::vec4(1, 1, 1, 1));
+
 				DrawPlane(pos, glm::vec2(width, height), color);
 			}
 		}

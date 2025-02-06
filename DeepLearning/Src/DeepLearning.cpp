@@ -190,7 +190,6 @@ int main()
 			}
 			renderer.DrawGraph({-.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line, false);
 			renderer.DrawGraph({.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::candle, false);
-			renderer.DrawGraph({ .5, 0 }, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line, true);
 		}
 		return 0;
 	}

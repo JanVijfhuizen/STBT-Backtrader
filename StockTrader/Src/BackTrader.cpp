@@ -255,7 +255,7 @@ namespace jv::bt
 		arena.DestroyScope(backTrader.scope);
 	}
 
-	BackTraderEnvironment CreateBTE(const char** symbols, const uint32_t symbolsLength, float fee)
+	BackTraderEnvironment CreateBTE(const char** symbols, const uint32_t symbolsLength, const float fee)
 	{
 		BackTraderEnvironment bte{};
 

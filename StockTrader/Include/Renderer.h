@@ -53,5 +53,5 @@ namespace jv::gr
 	};
 
 	__declspec(dllexport) [[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);
-	__declspec(dllexport) void DestroyRenderer(Renderer& renderer);
+	__declspec(dllexport) void DestroyRenderer(const Renderer& renderer);
 }

@@ -75,7 +75,7 @@ namespace jv::gr
 		
 		return renderer;
 	}
-	void DestroyRenderer(Renderer& renderer)
+	void DestroyRenderer(const Renderer& renderer)
 	{
 		gr::DestroyMesh(renderer.planeMesh);
 		gr::DestroyMesh(renderer.lineMesh);
@@ -85,10 +85,6 @@ namespace jv::gr
 	}
 	bool Renderer::Render()
 	{
-		ImGui::Begin("test box");
-		ImGui::Text("I am test");
-		ImGui::End();
-
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

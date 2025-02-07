@@ -9,6 +9,7 @@
 #include "GeneticAlgorithm.h";
 #include "FPFNTester.h"
 #include <Renderer.h>
+#include <STBT.h>
 
 [[nodiscard]] float GetMAValue(const jv::bt::TimeSeries& stock, const uint32_t offset, void* userPtr)
 {
@@ -120,6 +121,8 @@ int main()
 {
 	srand(time(nullptr));
 
+	auto stui = jv::ai::CreateSTBT();
+
 	jv::bt::BackTraderEnvironment bte;
 
 	{
@@ -169,15 +172,11 @@ int main()
 
 	// test
 	{
-		jv::gr::RendererCreateInfo createInfo{};
-		createInfo.title = "Renderer";
-		auto renderer = jv::gr::CreateRenderer(createInfo);
-
 		const uint32_t LENGTH = 20;
 		jv::gr::GraphPoint points[LENGTH];
 		float t = 0;
 
-		while (!renderer.Render())
+		while (!stui.renderer.Render())
 		{
 			t += .01;
 
@@ -188,9 +187,11 @@ int main()
 				points[i].high = timeSeries.high[i + static_cast<int>(t)];
 				points[i].low = timeSeries.low[i + static_cast<int>(t)];
 			}
-			renderer.DrawGraph({-.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line, false);
-			renderer.DrawGraph({.5, 0}, glm::vec2(renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::candle, false);
+			stui.renderer.DrawGraph({-.5, 0}, glm::vec2(stui.renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line, false);
+			stui.renderer.DrawGraph({.5, 0}, glm::vec2(stui.renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::candle, false);
 		}
+
+		DestroySTBT(stui);
 		return 0;
 	}
 	

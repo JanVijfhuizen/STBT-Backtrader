@@ -19,6 +19,6 @@ namespace jv::gr
 		uint32_t indicesLength;
 	};
 
-	[[nodiscard]] Mesh CreateMesh(float* vertices, unsigned int* indices, VertType vertType, MeshType renderType, uint32_t vSize, uint32_t iSize);
-	void DestroyMesh(const Mesh& mesh);
+	__declspec(dllexport) [[nodiscard]] Mesh CreateMesh(float* vertices, unsigned int* indices, VertType vertType, MeshType renderType, uint32_t vSize, uint32_t iSize);
+	__declspec(dllexport) void DestroyMesh(const Mesh& mesh);
 }

@@ -180,6 +180,7 @@
     <ClInclude Include="Include\Tracker.h" />
     <ClInclude Include="Include\Mesh.h" />
     <ClInclude Include="Include\Renderer.h" />
+    <ClInclude Include="Include\STBT.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Renderer.cpp" />
@@ -199,6 +200,7 @@
     <ClCompile Include="Src\Shader.cpp" />
     <ClCompile Include="Src\TimeSeries.cpp" />
     <ClCompile Include="Src\Tracker.cpp" />
+    <ClCompile Include="Src\STBT.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

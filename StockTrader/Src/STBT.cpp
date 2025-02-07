@@ -80,6 +80,8 @@ namespace jv::ai
 
 	static void LoadSymbols(STBT& stbt)
 	{
+		stbt.symbolIndex = -1;
+
 		std::string path("Symbols/");
 		std::string ext(".sym");
 
@@ -98,8 +100,6 @@ namespace jv::ai
 		}
 
 		stbt.loadedSymbols = arr;
-		stbt.symbolIndex = -1;
-
 		LoadEnabledSymbols(stbt);
 	}
 
@@ -107,6 +107,23 @@ namespace jv::ai
 	{
 		stbt.arena.DestroyScope(stbt.currentScope);
 		LoadSymbols(stbt);
+	}
+
+	static void RenderSymbolData(STBT& stbt)
+	{
+		const auto& timeSeries = stbt.timeSeries;
+
+		jv::gr::GraphPoint points[30];
+
+		for (uint32_t i = 0; i < 30; i++)
+		{
+			points[i].open = timeSeries.open[i];
+			points[i].close = timeSeries.close[i];
+			points[i].high = timeSeries.high[i];
+			points[i].low = timeSeries.low[i];
+		}
+		stbt.renderer.DrawGraph({ -.5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points, 30, jv::gr::GraphType::line, false);
+		stbt.renderer.DrawGraph({ .5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points, 30, jv::gr::GraphType::candle, false);
 	}
 
 	bool STBT::Update()
@@ -226,10 +243,28 @@ namespace jv::ai
 				ImGui::PopID();
 
 				ImGui::SameLine();
-				ImGui::Button(loadedSymbols[i].c_str());
+
+				const auto symbol = loadedSymbols[i].c_str();
+				if (ImGui::Button(symbol))
+				{
+					LoadSymbolSubMenu(*this);
+					symbolIndex = i;
+
+					const auto str = tracker.GetData(tempArena, loadedSymbols[i].c_str(), "Symbol/");
+					// If the data is invalid.
+					if (str[0] == '{')
+						symbolIndex = -1;
+					else
+						timeSeries = tracker.ConvertDataToTimeSeries(arena, str);
+				}
 			}
 
 			ImGui::End();
+
+			if (symbolIndex != -1)
+			{
+				RenderSymbolData(*this);
+			}
 		}
 
 		const bool ret = renderer.Render();

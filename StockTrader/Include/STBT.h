@@ -21,6 +21,7 @@ namespace jv::ai
 
 		Array<std::string> loadedSymbols;
 		Array<bool> enabledSymbols;
+		bt::TimeSeries timeSeries;
 		uint32_t symbolIndex;
 
 		char buffer[8];

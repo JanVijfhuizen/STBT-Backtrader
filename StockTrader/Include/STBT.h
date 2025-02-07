@@ -27,6 +27,7 @@ namespace jv::ai
 		uint32_t symbolIndex;
 
 		tm from, to;
+		int graphType = 0;
 
 		char buffer[8];
 

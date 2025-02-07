@@ -170,8 +170,11 @@ namespace jv::ai
 			points[i].high = timeSeries.high[index];
 			points[i].low = timeSeries.low[index];
 		}
-		stbt.renderer.DrawGraph({ -.5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points.ptr, points.length, jv::gr::GraphType::line, false);
-		stbt.renderer.DrawGraph({ .5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points.ptr, points.length, jv::gr::GraphType::candle, false);
+
+		stbt.renderer.graphBorderThickness = 0;
+		stbt.renderer.DrawGraph({ .5, 0 }, 
+			glm::vec2(stbt.renderer.GetAspectRatio(), 1), 
+			points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType), false);
 	}
 
 	bool STBT::Update()
@@ -319,9 +322,13 @@ namespace jv::ai
 
 				ImGui::Begin("Stock Analysis", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 				ImGui::SetWindowPos({ 400, 0 });
-				ImGui::SetWindowSize({ 400, 80 });
+				ImGui::SetWindowSize({ 400, 100 });
 				ImGui::DatePicker("Date 1", from);
 				ImGui::DatePicker("Date 2", to);
+
+				const char* items[]{ "Line","Candles" };
+				bool check = ImGui::Combo("Graph Type", &graphType, items, 2);
+
 				ImGui::End();
 			}
 		}
@@ -365,6 +372,7 @@ namespace jv::ai
 		stbt.to = *std::gmtime(&t);
 		t = GetT(28);
 		stbt.from = *std::gmtime(&t);
+		stbt.graphType = 0;
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

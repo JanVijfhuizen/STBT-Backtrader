@@ -223,6 +223,8 @@ namespace jv::bt
 		fout << portfolio.liquidity << std::endl;
 		for (const auto& stock : portfolio.stocks)
 			fout << stock << std::endl;
+
+		fout.close();
 	}
 
 	BackTrader CreateBackTrader(Arena& arena, Arena& tempArena, const Array<const char*>& symbols, const float fee)

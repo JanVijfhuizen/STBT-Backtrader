@@ -22,7 +22,58 @@ namespace jv::ai
 		return free(ptr);
 	}
 
-	[[nodiscard]] static Array<std::string> LoadSymbols(Arena& arena)
+	static void SaveOrCreateEnabledSymbols(STBT& stbt) 
+	{
+		const std::string path = "Symbols/enabled.txt";
+		std::ofstream fout(path);
+
+		if (stbt.enabledSymbols.length != stbt.loadedSymbols.length)
+		{
+			stbt.enabledSymbols = jv::CreateArray<bool>(stbt.arena, stbt.loadedSymbols.length);
+			for(auto& b : stbt.enabledSymbols)
+				b = true;
+		}
+
+		for (const auto enabled : stbt.enabledSymbols)
+			fout << enabled << std::endl;
+		fout.close();
+	}
+
+	static void LoadEnabledSymbols(STBT& stbt)
+	{
+		const std::string path = "Symbols/enabled.txt";
+		std::ifstream fin(path);
+		std::string line;
+
+		if (!fin.good())
+		{
+			SaveOrCreateEnabledSymbols(stbt);
+			return;
+		}
+
+		uint32_t length = 0;
+		while (std::getline(fin, line))
+			++length;
+
+		if (length != stbt.loadedSymbols.length)
+		{
+			SaveOrCreateEnabledSymbols(stbt);
+			return;
+		}
+
+		fin.clear();
+		fin.seekg(0, std::ios::beg);
+
+		auto arr = jv::CreateArray<bool>(stbt.arena, length);
+
+		length = 0;
+		while (std::getline(fin, line))
+			arr[length++] = std::stoi(line);
+
+		stbt.enabledSymbols = arr;
+	}
+
+	static void LoadSymbols(STBT& stbt)
 	{
 		std::string path("Symbols/");
 		std::string ext(".sym");
@@ -32,7 +83,7 @@ namespace jv::ai
 			if (p.path().extension() == ext)
 				++length;
 
-		auto arr = jv::CreateArray<std::string>(arena, length);
+		auto arr = jv::CreateArray<std::string>(stbt.arena, length);
 
 		length = 0;
 		for (auto& p : std::filesystem::recursive_directory_iterator(path))
@@ -40,7 +91,17 @@ namespace jv::ai
 			if (p.path().extension() == ext)
 				arr[length++] = p.path().stem().string();
 		}
-		return arr;
+
+		stbt.loadedSymbols = arr;
+		stbt.symbolIndex = -1;
+
+		LoadEnabledSymbols(stbt);
+	}
+
+	static void LoadSymbolSubMenu(STBT& stbt)
+	{
+		stbt.arena.DestroyScope(stbt.currentScope);
+		LoadSymbols(stbt);
 	}
 
 	bool STBT::Update()
@@ -78,9 +139,8 @@ namespace jv::ai
 		{
 			if (ImGui::Button("Symbols"))
 			{
-				arena.DestroyScope(currentScope);
+				LoadSymbolSubMenu(*this);
 				menuIndex = miSymbols;
-				loadedSymbols = LoadSymbols(arena);
 			}
 			if (ImGui::Button("Backtrader"))
 			{
@@ -108,12 +168,15 @@ namespace jv::ai
 			if (menuIndex == miSymbols)
 			{
 				if (ImGui::Button("Reload"))
-				{
-					arena.DestroyScope(currentScope);
-					loadedSymbols = LoadSymbols(arena);
-				}
-				ImGui::Button("Enable All");
-				ImGui::Button("Disable All");
+					LoadSymbolSubMenu(*this);
+				if (ImGui::Button("Enable All"))
+					for (auto& b : enabledSymbols)
+						b = true;
+				if(ImGui::Button("Disable All"))
+					for (auto& b : enabledSymbols)
+						b = false;
+				if (ImGui::Button("Save changes"))
+					SaveOrCreateEnabledSymbols(*this);
 			}
 
 			if (ImGui::Button("Back"))
@@ -132,7 +195,12 @@ namespace jv::ai
 
 			for (uint32_t i = 0; i < loadedSymbols.length; i++)
 			{
-				ImGui::Text(loadedSymbols[i].c_str());
+				ImGui::PushID(i);
+				ImGui::Checkbox("", &enabledSymbols[i]);
+				ImGui::PopID();
+
+				ImGui::SameLine();
+				ImGui::Button(loadedSymbols[i].c_str());
 			}
 
 			ImGui::End();
@@ -159,6 +227,7 @@ namespace jv::ai
 		stbt.frameArena = Arena::Create(arenaCreateInfo);
 		stbt.currentScope = stbt.arena.CreateScope();
 
+		stbt.enabledSymbols = {};
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

@@ -17,6 +17,8 @@ namespace jv::ai
 		uint64_t currentScope;
 
 		Array<std::string> loadedSymbols;
+		Array<bool> enabledSymbols;
+		uint32_t symbolIndex;
 
 		__declspec(dllexport) bool Update();
 	};

@@ -60,6 +60,18 @@ namespace jv::gr
 
 		renderer.BindMesh(renderer.planeMesh);
 		renderer.BindShader(renderer.defaultShader);
+
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::StyleColorsDark();
+		ImGui_ImplGlfw_InitForOpenGL(renderer.window, true);
+		ImGui_ImplOpenGL3_Init("#version 330");
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 		
 		return renderer;
 	}
@@ -73,6 +85,13 @@ namespace jv::gr
 	}
 	bool Renderer::Render()
 	{
+		ImGui::Begin("test box");
+		ImGui::Text("I am test");
+		ImGui::End();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		const bool shouldClose = glfwWindowShouldClose(window);
 		if (shouldClose)
 			return true;
@@ -80,6 +99,10 @@ namespace jv::gr
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 		return false;
 	}
 	void Renderer::Draw(const VertType vertType)

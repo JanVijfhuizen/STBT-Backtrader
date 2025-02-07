@@ -236,7 +236,7 @@ namespace jv::ai
 				LoadSymbolSubMenu(*this);
 			}
 			ImGui::SameLine();
-			ImGui::InputText("#", buffer, 5);
+			ImGui::InputText("#", buffer, 5, ImGuiInputTextFlags_CharsUppercase);
 
 			for (uint32_t i = 0; i < loadedSymbols.length; i++)
 			{

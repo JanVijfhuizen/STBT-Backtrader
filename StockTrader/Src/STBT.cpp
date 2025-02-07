@@ -114,17 +114,43 @@ namespace jv::ai
 	{
 		const auto& timeSeries = stbt.timeSeries;
 
-		jv::gr::GraphPoint points[30];
+		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+		std::time_t tCurrent = std::chrono::system_clock::to_time_t(now);
 
-		for (uint32_t i = 0; i < 30; i++)
+		auto tTo = mktime(&stbt.to);
+		auto tFrom = mktime(&stbt.from);
+		if (tFrom > tTo)
 		{
-			points[i].open = timeSeries.open[i];
-			points[i].close = timeSeries.close[i];
-			points[i].high = timeSeries.high[i];
-			points[i].low = timeSeries.low[i];
+			auto tTemp = tTo;
+			tTo = tFrom;
+			tFrom = tTemp;
+
+			stbt.from = *std::gmtime(&tFrom);
+			stbt.to = *std::gmtime(&tTo);
 		}
-		stbt.renderer.DrawGraph({ -.5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points, 30, jv::gr::GraphType::line, false);
-		stbt.renderer.DrawGraph({ .5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points, 30, jv::gr::GraphType::candle, false);
+		if (tTo > tCurrent)
+		{
+			tTo = tCurrent;
+			stbt.to = *std::gmtime(&tCurrent);
+		}
+
+		auto diff = difftime(tTo, tFrom);
+		diff = Min<double>(diff, (timeSeries.length - 1) * 60 * 60 * 24);
+		auto orgDiff = Max<double>(difftime(tCurrent, tTo), 0);
+		uint32_t daysDiff = diff / 60 / 60 / 24;
+		uint32_t daysOrgDiff = orgDiff / 60 / 60 / 24;
+
+		auto points = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
+
+		for (uint32_t i = 0; i < daysDiff; i++)
+		{
+			points[i].open = timeSeries.open[i + daysOrgDiff];
+			points[i].close = timeSeries.close[i + daysOrgDiff];
+			points[i].high = timeSeries.high[i + daysOrgDiff];
+			points[i].low = timeSeries.low[i + daysOrgDiff];
+		}
+		stbt.renderer.DrawGraph({ -.5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points.ptr, points.length, jv::gr::GraphType::line, false);
+		stbt.renderer.DrawGraph({ .5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points.ptr, points.length, jv::gr::GraphType::candle, false);
 	}
 
 	bool STBT::Update()
@@ -273,17 +299,8 @@ namespace jv::ai
 				ImGui::Begin("Stock Analysis", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 				ImGui::SetWindowPos({ 400, 0 });
 				ImGui::SetWindowSize({ 400, 80 });
-
-				if (ImGui::DatePicker("Start", from))
-				{
-					
-				}
-
-				if (ImGui::DatePicker("End", to))
-				{
-					
-				}
-
+				ImGui::DatePicker("Date 1", from);
+				ImGui::DatePicker("Date 2", to);
 				ImGui::End();
 			}
 		}

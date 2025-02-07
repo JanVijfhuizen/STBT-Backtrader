@@ -12,7 +12,7 @@ namespace jv::bt
 	class Tracker final
 	{
 	public:
-		__declspec(dllexport) [[nodiscard]] std::string GetData(Arena& tempArena, const char* symbol);
+		__declspec(dllexport) [[nodiscard]] std::string GetData(Arena& tempArena, const char* symbol, const char* path = "");
 		__declspec(dllexport) [[nodiscard]] TimeSeries ConvertDataToTimeSeries(Arena& arena, std::string str) const;
 		__declspec(dllexport) [[nodiscard]] static TimeSeries GetTimeSeriesSubSet(Arena& arena, const TimeSeries& timeSeries, uint32_t depth, uint32_t length);
 		__declspec(dllexport) static void Debug(const float* ptr, uint32_t length, bool reverse);

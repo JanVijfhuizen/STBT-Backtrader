@@ -7,7 +7,7 @@ namespace jv::bt
 {
 	Gnuplot gp("\"C:\\Program Files\\gnuplot\\bin\\gnuplot.exe\"");
 
-	std::string Tracker::GetData(Arena& tempArena, const char* symbol)
+	std::string Tracker::GetData(Arena& tempArena, const char* symbol, const char* path)
 	{
 		// If validity is untested.
 		bool validSymData = false;
@@ -49,7 +49,7 @@ namespace jv::bt
 		const std::string symbolName = symbol;
 		const std::string extension = ".sym";
 		const auto fileName = symbolName + extension;
-		std::ifstream f(fileName);
+		std::ifstream f(path + fileName);
 
 		if (!f.good() || !validSymData)
 		{
@@ -64,7 +64,7 @@ namespace jv::bt
 			assert(res == 0);
 			curl_easy_cleanup(_curl);
 
-			std::ofstream outFile(fileName);
+			std::ofstream outFile(path + fileName);
 			outFile << _readBuffer;
 		}
 		else

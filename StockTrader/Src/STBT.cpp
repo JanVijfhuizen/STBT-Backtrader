@@ -187,11 +187,20 @@ namespace jv::ai
 
 		if (menuIndex == miSymbols)
 		{
-			arena.DestroyScope(currentScope);
-
 			ImGui::Begin("List of symbols", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 			ImGui::SetWindowPos({ 200, 0 });
 			ImGui::SetWindowSize({ 200, renderer.resolution.y });
+
+			if (ImGui::Button("Add")) 
+			{
+				const auto tempScope = tempArena.CreateScope();
+				tracker.GetData(tempArena, buffer, "Symbols/");
+				tempArena.DestroyScope(tempScope);
+				
+				LoadSymbolSubMenu(*this);
+			}
+			ImGui::SameLine();
+			ImGui::InputText("#", buffer, 5);
 
 			for (uint32_t i = 0; i < loadedSymbols.length; i++)
 			{
@@ -213,6 +222,7 @@ namespace jv::ai
 	STBT CreateSTBT()
 	{
 		STBT stbt{};
+		stbt.tracker = {};
 
 		jv::gr::RendererCreateInfo createInfo{};
 		createInfo.title = "STBT (Stock Trading Back Tester)";

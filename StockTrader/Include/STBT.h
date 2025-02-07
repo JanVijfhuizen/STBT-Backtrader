@@ -11,14 +11,19 @@ namespace jv::ai
 
 	struct STBT final
 	{
-		jv::gr::Renderer renderer;
+		gr::Renderer renderer;
+		bt::Tracker tracker;
+
 		Arena arena, tempArena, frameArena;
+		
 		uint32_t menuIndex;
 		uint64_t currentScope;
 
 		Array<std::string> loadedSymbols;
 		Array<bool> enabledSymbols;
 		uint32_t symbolIndex;
+
+		char buffer[8];
 
 		__declspec(dllexport) bool Update();
 	};

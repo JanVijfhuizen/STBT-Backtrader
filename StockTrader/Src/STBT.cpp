@@ -270,23 +270,18 @@ namespace jv::ai
 			{
 				RenderSymbolData(*this);
 
-				std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-				std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-				tm t = *std::gmtime(&currentTime);
-
 				ImGui::Begin("Stock Analysis", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 				ImGui::SetWindowPos({ 400, 0 });
-				ImGui::SetWindowSize({ 400, 200 });
+				ImGui::SetWindowSize({ 400, 80 });
 
-				// Use the picker
-				if (ImGui::DatePicker("Date", t))
+				if (ImGui::DatePicker("Start", from))
 				{
-					// Perform some event whenever the date 't' is changed
+					
 				}
 
-				if (ImGui::DatePicker("Date##2", t))
+				if (ImGui::DatePicker("End", to))
 				{
-					// Perform some event whenever the date 't' is changed
+					
 				}
 
 				ImGui::End();
@@ -327,6 +322,14 @@ namespace jv::ai
 
 		stbt.currentScope = stbt.arena.CreateScope();
 		stbt.enabledSymbols = {};
+
+		using namespace std::chrono_literals;
+		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+		auto past = now - 60s * 60 * 24 * 14;
+		std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+		std::time_t pastTime = std::chrono::system_clock::to_time_t(past);
+		stbt.to = *std::gmtime(&currentTime);
+		stbt.from = *std::gmtime(&pastTime);
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

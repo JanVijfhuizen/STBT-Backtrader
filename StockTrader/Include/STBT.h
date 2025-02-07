@@ -26,6 +26,8 @@ namespace jv::ai
 		bt::TimeSeries timeSeries;
 		uint32_t symbolIndex;
 
+		tm from, to;
+
 		char buffer[8];
 
 		__declspec(dllexport) bool Update();

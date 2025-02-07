@@ -28,8 +28,10 @@ namespace jv::ai
 
 		tm from, to;
 		int graphType = 0;
+		Array<gr::GraphPoint> graphPoints;
 
 		char buffer[8];
+		char buffer2[8];
 
 		__declspec(dllexport) bool Update();
 	};

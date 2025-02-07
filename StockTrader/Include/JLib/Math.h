@@ -29,4 +29,11 @@ namespace jv
 		const T org = t - min;
 		return org / bounds;
 	}
+
+	template <typename T>
+	[[nodiscard]] T Round(const T& t, const uint32_t decimals) 
+	{
+		const T mul = 1 * pow(10, decimals);
+		return floorf(t * mul) / mul;
+	}
 }

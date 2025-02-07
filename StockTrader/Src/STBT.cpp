@@ -175,6 +175,8 @@ namespace jv::ai
 		stbt.renderer.DrawGraph({ .5, 0 }, 
 			glm::vec2(stbt.renderer.GetAspectRatio(), 1), 
 			points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType), false);
+
+		stbt.graphPoints = points;
 	}
 
 	bool STBT::Update()
@@ -273,15 +275,18 @@ namespace jv::ai
 
 				uint32_t index = 0;
 				std::string s{ buffer };
-				for (auto& symbol : loadedSymbols)
-					index += symbol < s;
+				if (s != "")
+				{
+					for (auto& symbol : loadedSymbols)
+						index += symbol < s;
 
-				auto arr = CreateArray<bool>(arena, enabledSymbols.length + 1);
-				for (uint32_t i = 0; i < enabledSymbols.length; i++)
-					arr[i + (i >= index)] = enabledSymbols[i];
-				arr[index] = false;
-
-				enabledSymbols = arr;
+					auto arr = CreateArray<bool>(arena, enabledSymbols.length + 1);
+					for (uint32_t i = 0; i < enabledSymbols.length; i++)
+						arr[i + (i >= index)] = enabledSymbols[i];
+					arr[index] = false;
+					enabledSymbols = arr;
+				}
+				
 				SaveEnabledSymbols(*this);
 				LoadSymbolSubMenu(*this);
 			}
@@ -294,6 +299,10 @@ namespace jv::ai
 				ImGui::Checkbox("", &enabledSymbols[i]);
 				ImGui::PopID();
 				ImGui::SameLine();
+
+				const bool selected = symbolIndex == i;
+				if (selected)
+					ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
 
 				const auto symbol = loadedSymbols[i].c_str();
 				if (ImGui::Button(symbol))
@@ -312,6 +321,9 @@ namespace jv::ai
 					else
 						timeSeries = tracker.ConvertDataToTimeSeries(arena, str);
 				}
+
+				if(selected)
+					ImGui::PopStyleColor();
 			}
 
 			ImGui::End();
@@ -320,14 +332,79 @@ namespace jv::ai
 			{
 				RenderSymbolData(*this);
 
-				ImGui::Begin("Stock Analysis", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+				ImGui::Begin("Settings", nullptr, winFlags);
 				ImGui::SetWindowPos({ 400, 0 });
-				ImGui::SetWindowSize({ 400, 100 });
+				ImGui::SetWindowSize({ 400, 124 });
 				ImGui::DatePicker("Date 1", from);
 				ImGui::DatePicker("Date 2", to);
 
 				const char* items[]{ "Line","Candles" };
 				bool check = ImGui::Combo("Graph Type", &graphType, items, 2);
+
+				if (ImGui::Button("Days"))
+				{
+					const int i = std::atoi(buffer2);
+					if (i < 1)
+					{
+						output.Add() = "ERROR: Invalid number of days given.";
+					}
+					else 
+					{
+						auto t = GetT();
+						to = *std::gmtime(&t);
+						t = GetT(i);
+						from = *std::gmtime(&t);
+					}
+				}
+
+				ImGui::SameLine();
+				ImGui::InputText("##", buffer2, 5, ImGuiInputTextFlags_CharsDecimal);
+
+				ImGui::End();
+
+				std::string title = "Details: ";
+				title += loadedSymbols[symbolIndex];
+				ImGui::Begin(title.c_str(), nullptr, winFlags);
+				ImGui::SetWindowPos({ 400, 500 });
+				ImGui::SetWindowSize({ 400, 100 });
+
+				float min = FLT_MAX, max = 0;
+
+				for (uint32_t i = 0; i < graphPoints.length; i++)
+				{
+					const auto& point = graphPoints[i];
+					min = Min<float>(min, point.low);
+					max = Max<float>(max, point.high);
+				}
+
+				if (graphPoints.length > 0)
+				{
+					auto str = std::format("{:.2f}", graphPoints[0].open);
+					str = "[Start] " + str;
+					ImGui::Text(str.c_str());
+					ImGui::SameLine();
+
+					str = std::format("{:.2f}", graphPoints[graphPoints.length - 1].close);
+					str = "[End] " + str;
+					ImGui::Text(str.c_str());
+					ImGui::SameLine();
+
+					const float change = graphPoints[graphPoints.length - 1].close - graphPoints[0].open;
+					ImGui::PushStyleColor(ImGuiCol_Text, { 1.f * (change < 0), 1.f * (change >= 0), 0, 1 });
+					str = std::format("{:.2f}", change);
+					str = "[Change] " + str;
+					ImGui::Text(str.c_str());
+					ImGui::PopStyleColor();
+
+					str = std::format("{:.2f}", max);
+					str = "[High] " + str;
+					ImGui::Text(str.c_str());
+					ImGui::SameLine();
+
+					str = std::format("{:.2f}", min);
+					str = "[Low] " + str;
+					ImGui::Text(str.c_str());
+				}
 
 				ImGui::End();
 			}
@@ -370,7 +447,7 @@ namespace jv::ai
 
 		auto t = GetT();
 		stbt.to = *std::gmtime(&t);
-		t = GetT(28);
+		t = GetT(30);
 		stbt.from = *std::gmtime(&t);
 		stbt.graphType = 0;
 		return stbt;

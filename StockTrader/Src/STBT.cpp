@@ -110,28 +110,48 @@ namespace jv::ai
 		LoadSymbols(stbt);
 	}
 
+	static std::time_t GetT(const uint32_t days = 0)
+	{
+		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+		using namespace std::chrono_literals;
+		auto offset = 60s * 60 * 24 * days;
+		now -= offset;
+
+		std::time_t tCurrent = std::chrono::system_clock::to_time_t(now);
+
+		auto lt = std::localtime(&tCurrent);
+		lt->tm_hour = 0;
+		lt->tm_min = 0;
+		lt->tm_sec = 0;
+		tCurrent = mktime(lt);
+		return tCurrent;
+	}
+
 	static void RenderSymbolData(STBT& stbt)
 	{
 		const auto& timeSeries = stbt.timeSeries;
 
-		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-		std::time_t tCurrent = std::chrono::system_clock::to_time_t(now);
+		std::time_t tCurrent = GetT();
 
 		auto tTo = mktime(&stbt.to);
 		auto tFrom = mktime(&stbt.from);
+
+		if (tFrom >= tCurrent)
+		{
+			tFrom = tCurrent;
+			stbt.from = *std::gmtime(&tCurrent);
+		}
+		if (tTo >= tCurrent)
+		{
+			tTo = tCurrent;
+			stbt.to = *std::gmtime(&tCurrent);
+		}
 		if (tFrom > tTo)
 		{
 			auto tTemp = tTo;
 			tTo = tFrom;
 			tFrom = tTemp;
-
-			stbt.from = *std::gmtime(&tFrom);
-			stbt.to = *std::gmtime(&tTo);
-		}
-		if (tTo > tCurrent)
-		{
-			tTo = tCurrent;
-			stbt.to = *std::gmtime(&tCurrent);
 		}
 
 		auto diff = difftime(tTo, tFrom);
@@ -144,10 +164,11 @@ namespace jv::ai
 
 		for (uint32_t i = 0; i < daysDiff; i++)
 		{
-			points[i].open = timeSeries.open[i + daysOrgDiff];
-			points[i].close = timeSeries.close[i + daysOrgDiff];
-			points[i].high = timeSeries.high[i + daysOrgDiff];
-			points[i].low = timeSeries.low[i + daysOrgDiff];
+			const uint32_t index = daysDiff - i + daysOrgDiff - 1;
+			points[i].open = timeSeries.open[index];
+			points[i].close = timeSeries.close[index];
+			points[i].high = timeSeries.high[index];
+			points[i].low = timeSeries.low[index];
 		}
 		stbt.renderer.DrawGraph({ -.5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points.ptr, points.length, jv::gr::GraphType::line, false);
 		stbt.renderer.DrawGraph({ .5, 0 }, glm::vec2(stbt.renderer.GetAspectRatio(), 1), points.ptr, points.length, jv::gr::GraphType::candle, false);
@@ -340,13 +361,10 @@ namespace jv::ai
 		stbt.currentScope = stbt.arena.CreateScope();
 		stbt.enabledSymbols = {};
 
-		using namespace std::chrono_literals;
-		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-		auto past = now - 60s * 60 * 24 * 14;
-		std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-		std::time_t pastTime = std::chrono::system_clock::to_time_t(past);
-		stbt.to = *std::gmtime(&currentTime);
-		stbt.from = *std::gmtime(&pastTime);
+		auto t = GetT();
+		stbt.to = *std::gmtime(&t);
+		t = GetT(28);
+		stbt.from = *std::gmtime(&t);
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

@@ -12,10 +12,15 @@ namespace jv::ai
 	struct STBT final
 	{
 		jv::gr::Renderer renderer;
+		Arena arena, tempArena, frameArena;
+		uint32_t menuIndex;
+		uint64_t currentScope;
 
-		bool Update();
+		Array<std::string> loadedSymbols;
+
+		__declspec(dllexport) bool Update();
 	};
 
 	__declspec(dllexport) [[nodiscard]] STBT CreateSTBT();
-	__declspec(dllexport) void DestroySTBT(const STBT& stbt);
+	__declspec(dllexport) void DestroySTBT(STBT& stbt);
 }

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string>
 #include "gnuplot-iostream.h"
+#include <filesystem>
 
 constexpr int32_t DAY_MUL = 60 * 60 * 24;
 

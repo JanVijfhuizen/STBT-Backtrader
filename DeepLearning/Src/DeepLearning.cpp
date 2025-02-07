@@ -123,6 +123,10 @@ int main()
 
 	auto stui = jv::ai::CreateSTBT();
 
+	while (!stui.Update())
+		continue;
+	return 0;
+
 	jv::bt::BackTraderEnvironment bte;
 
 	{

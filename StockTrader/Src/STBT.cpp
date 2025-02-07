@@ -1,24 +1,174 @@
 #include "pch.h"
 #include "STBT.h"
+#include <Jlib/ArrayUtils.h>
 
 namespace jv::ai
 {
+	enum MenuIndex 
+	{
+		miMain,
+		miSymbols,
+		miBacktrader,
+		miTrain,
+		miUse
+	};
+
+	void* MAlloc(const uint32_t size)
+	{
+		return malloc(size);
+	}
+	void MFree(void* ptr)
+	{
+		return free(ptr);
+	}
+
+	[[nodiscard]] static Array<std::string> LoadSymbols(Arena& arena)
+	{
+		std::string path("Symbols/");
+		std::string ext(".sym");
+
+		uint32_t length = 0;
+		for (auto& p : std::filesystem::recursive_directory_iterator(path))
+			if (p.path().extension() == ext)
+				++length;
+
+		auto arr = jv::CreateArray<std::string>(arena, length);
+
+		length = 0;
+		for (auto& p : std::filesystem::recursive_directory_iterator(path))
+		{
+			if (p.path().extension() == ext)
+				arr[length++] = p.path().stem().string();
+		}
+		return arr;
+	}
+
 	bool STBT::Update()
 	{
-		return false;
+		ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+		ImGui::SetWindowPos({0, 0});
+		ImGui::SetWindowSize({200, renderer.resolution.y});
+
+		const char* title = "DEFAULT";
+		const char* description = "";
+		switch (menuIndex)
+		{
+		case miMain:
+			title = "Main Menu";
+			description = "This tool can be used to \ntrain, test and use stock \ntrade algorithms in \nrealtime.";
+			break;
+		case miSymbols:
+			title = "Symbols";
+			description = "Debug symbols, (un)load \nthem and add new ones.";
+			break;
+		case miBacktrader:
+			title = "Back Trader";
+			break;
+		case miTrain:
+			title = "Train";
+			break;
+		case miUse:
+			title = "Use";
+			break;
+		}
+		ImGui::Text(title);
+		ImGui::Text(description);
+
+		if (menuIndex == miMain)
+		{
+			if (ImGui::Button("Symbols"))
+			{
+				arena.DestroyScope(currentScope);
+				menuIndex = miSymbols;
+				loadedSymbols = LoadSymbols(arena);
+			}
+			if (ImGui::Button("Backtrader"))
+			{
+				arena.DestroyScope(currentScope);
+				menuIndex = miBacktrader;
+			}
+			if (ImGui::Button("Train"))
+			{
+				arena.DestroyScope(currentScope);
+				menuIndex = miTrain;
+			}	
+			if (ImGui::Button("Use"))
+			{
+				arena.DestroyScope(currentScope);
+				menuIndex = miUse;
+			}	
+			if (ImGui::Button("Exit"))
+			{
+				arena.DestroyScope(currentScope);
+				return true;
+			}
+		}
+		else 
+		{
+			if (menuIndex == miSymbols)
+			{
+				if (ImGui::Button("Reload"))
+				{
+					arena.DestroyScope(currentScope);
+					loadedSymbols = LoadSymbols(arena);
+				}
+				ImGui::Button("Enable All");
+				ImGui::Button("Disable All");
+			}
+
+			if (ImGui::Button("Back"))
+				menuIndex = miMain;
+		}
+		
+		ImGui::End();
+
+		if (menuIndex == miSymbols)
+		{
+			arena.DestroyScope(currentScope);
+
+			ImGui::Begin("List of symbols", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+			ImGui::SetWindowPos({ 200, 0 });
+			ImGui::SetWindowSize({ 200, renderer.resolution.y });
+
+			for (uint32_t i = 0; i < loadedSymbols.length; i++)
+			{
+				ImGui::Text(loadedSymbols[i].c_str());
+			}
+
+			ImGui::End();
+		}
+
+		const bool ret = renderer.Render();
+		frameArena.Clear();
+		return ret;
 	}
 	STBT CreateSTBT()
 	{
-		STBT stbi{};
+		STBT stbt{};
 
 		jv::gr::RendererCreateInfo createInfo{};
-		createInfo.title = "STBI (Stock Trading Back Tester)";
-		stbi.renderer = jv::gr::CreateRenderer(createInfo);
+		createInfo.title = "STBT (Stock Trading Back Tester)";
+		stbt.renderer = jv::gr::CreateRenderer(createInfo);
+		stbt.menuIndex = 0;
 
-		return stbi;
+		ArenaCreateInfo arenaCreateInfo{};
+		arenaCreateInfo.alloc = MAlloc;
+		arenaCreateInfo.free = MFree;
+		stbt.arena = Arena::Create(arenaCreateInfo);
+		stbt.tempArena = Arena::Create(arenaCreateInfo);
+		stbt.frameArena = Arena::Create(arenaCreateInfo);
+		stbt.currentScope = stbt.arena.CreateScope();
+
+		return stbt;
 	}
-	void DestroySTBT(const STBT& stbt)
+	void DestroySTBT(STBT& stbt)
 	{
+		stbt.arena.DestroyScope(stbt.currentScope);
+
+		Arena::Destroy(stbt.frameArena);
+		Arena::Destroy(stbt.tempArena);
+		Arena::Destroy(stbt.arena);
+
 		DestroyRenderer(stbt.renderer);
 	}
 }

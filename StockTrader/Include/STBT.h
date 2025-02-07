@@ -1,5 +1,6 @@
 #pragma once
 #include <Renderer.h>
+#include "JLib/Queue.h"
 
 namespace jv::ai 
 {
@@ -15,6 +16,7 @@ namespace jv::ai
 		bt::Tracker tracker;
 
 		Arena arena, tempArena, frameArena;
+		Queue<const char*> output;
 		
 		uint32_t menuIndex;
 		uint64_t currentScope;

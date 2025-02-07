@@ -15,6 +15,7 @@
 
 constexpr int32_t DAY_MUL = 60 * 60 * 24;
 
+#include "Ext/ImGuiDatePicker.h"
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>

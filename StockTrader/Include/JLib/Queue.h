@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <JLib/Math.h>
 
 namespace jv
 {
@@ -10,7 +11,7 @@ namespace jv
 	template <typename T>
 	struct QueueIterator final
 	{
-		Queue<T>* ptr = nullptr;
+		const Queue<T>* ptr = nullptr;
 		uint32_t index = 0;
 
 		T& operator*() const;
@@ -54,7 +55,7 @@ namespace jv
 	{
 		assert(ptr);
 		assert(index <= ptr->length);
-		return ptr[index];
+		return (*ptr)[index];
 	}
 
 	template <typename T>
@@ -62,7 +63,7 @@ namespace jv
 	{
 		assert(ptr);
 		assert(index <= ptr->length);
-		return ptr[index];
+		return (*ptr)[index];
 	}
 
 	template <typename T>
@@ -91,8 +92,8 @@ namespace jv
 	QueueIterator<T> Queue<T>::begin() const
 	{
 		QueueIterator<T> it{};
-		it.length = count;
-		it.ptr = ptr;
+		it.index = 0;
+		it.ptr = this;
 		return it;
 	}
 
@@ -100,17 +101,19 @@ namespace jv
 	QueueIterator<T> Queue<T>::end() const
 	{
 		QueueIterator<T> it{};
-		it.length = count;
 		it.index = count;
-		it.ptr = ptr;
+		it.ptr = this;
 		return it;
 	}
 
 	template <typename T>
 	T& Queue<T>::Add()
 	{
-		assert(count < length);
-		return ptr[GetIndex(count++)];
+		auto& ret = ptr[GetIndex(count++)];
+		if (count > length)
+			front = (front + 1) % length;
+		count = Min<uint32_t>(count, length);
+		return ret;
 	}
 
 	template <typename T>

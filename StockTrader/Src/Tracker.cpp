@@ -48,8 +48,8 @@ namespace jv::bt
 
 		const std::string symbolName = symbol;
 		const std::string extension = ".sym";
-		const auto fileName = symbolName + extension;
-		std::ifstream f(path + fileName);
+		const auto fileName = path + symbolName + extension;
+		std::ifstream f(fileName);
 
 		if (!f.good() || !validSymData)
 		{
@@ -64,7 +64,7 @@ namespace jv::bt
 			assert(res == 0);
 			curl_easy_cleanup(_curl);
 
-			std::ofstream outFile(path + fileName);
+			std::ofstream outFile(fileName);
 			outFile << _readBuffer;
 		}
 		else

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "STBT.h"
 #include <Jlib/ArrayUtils.h>
+#include "JLib/QueueUtils.h"
 
 namespace jv::ai
 {
@@ -128,9 +129,10 @@ namespace jv::ai
 
 	bool STBT::Update()
 	{
-		ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+		const auto winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+		ImGui::Begin("Menu", nullptr, winFlags);
 		ImGui::SetWindowPos({0, 0});
-		ImGui::SetWindowSize({200, renderer.resolution.y});
+		ImGui::SetWindowSize({200, 400});
 
 		const char* title = "DEFAULT";
 		const char* description = "";
@@ -209,9 +211,9 @@ namespace jv::ai
 
 		if (menuIndex == miSymbols)
 		{
-			ImGui::Begin("List of symbols", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+			ImGui::Begin("List of symbols", nullptr, winFlags);
 			ImGui::SetWindowPos({ 200, 0 });
-			ImGui::SetWindowSize({ 200, renderer.resolution.y });
+			ImGui::SetWindowSize({ 200, 400 });
 
 			if (ImGui::Button("Add")) 
 			{
@@ -241,7 +243,6 @@ namespace jv::ai
 				ImGui::PushID(i);
 				ImGui::Checkbox("", &enabledSymbols[i]);
 				ImGui::PopID();
-
 				ImGui::SameLine();
 
 				const auto symbol = loadedSymbols[i].c_str();
@@ -250,10 +251,14 @@ namespace jv::ai
 					LoadSymbolSubMenu(*this);
 					symbolIndex = i;
 
-					const auto str = tracker.GetData(tempArena, loadedSymbols[i].c_str(), "Symbol/");
+					const auto str = tracker.GetData(tempArena, loadedSymbols[i].c_str(), "Symbols/");
 					// If the data is invalid.
 					if (str[0] == '{')
+					{
 						symbolIndex = -1;
+						output.Add() = "ERROR: No stock data found for given symbol:";
+						output.Add() = loadedSymbols[i].c_str();
+					}
 					else
 						timeSeries = tracker.ConvertDataToTimeSeries(arena, str);
 				}
@@ -264,8 +269,38 @@ namespace jv::ai
 			if (symbolIndex != -1)
 			{
 				RenderSymbolData(*this);
+
+				std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+				std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+				tm t = *std::gmtime(&currentTime);
+
+				ImGui::Begin("Stock Analysis", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+				ImGui::SetWindowPos({ 400, 0 });
+				ImGui::SetWindowSize({ 400, 200 });
+
+				// Use the picker
+				if (ImGui::DatePicker("Date", t))
+				{
+					// Perform some event whenever the date 't' is changed
+				}
+
+				if (ImGui::DatePicker("Date##2", t))
+				{
+					// Perform some event whenever the date 't' is changed
+				}
+
+				ImGui::End();
 			}
 		}
+
+		ImGui::Begin("Output", nullptr, winFlags);
+		ImGui::SetWindowPos({ 0, 400 });
+		ImGui::SetWindowSize({ 400, 200 });
+
+		for (auto& a : output)
+			ImGui::Text(a);
+
+		ImGui::End();
 
 		const bool ret = renderer.Render();
 		frameArena.Clear();
@@ -287,8 +322,10 @@ namespace jv::ai
 		stbt.arena = Arena::Create(arenaCreateInfo);
 		stbt.tempArena = Arena::Create(arenaCreateInfo);
 		stbt.frameArena = Arena::Create(arenaCreateInfo);
-		stbt.currentScope = stbt.arena.CreateScope();
 
+		stbt.output = CreateQueue<const char*>(stbt.arena, 50);
+
+		stbt.currentScope = stbt.arena.CreateScope();
 		stbt.enabledSymbols = {};
 		return stbt;
 	}

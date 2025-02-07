@@ -108,6 +108,9 @@
     <ClInclude Include="Include\STBT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Ext\ImGuiDatePicker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\dllmain.cpp">
@@ -156,6 +159,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\STBT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\ImGuiDatePicker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

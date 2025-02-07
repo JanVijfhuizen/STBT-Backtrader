@@ -150,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Ext\ImGuiDatePicker.h" />
     <ClInclude Include="Include\framework.h" />
     <ClInclude Include="Include\BackTrader.h" />
     <ClInclude Include="Include\FPFNTester.h" />
@@ -183,6 +184,7 @@
     <ClInclude Include="Include\STBT.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\ImGuiDatePicker.cpp" />
     <ClCompile Include="Src\Renderer.cpp" />
     <ClCompile Include="Src\Mesh.cpp" />
     <ClCompile Include="Src\dllmain.cpp" />

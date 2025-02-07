@@ -22,21 +22,26 @@ namespace jv::ai
 		return free(ptr);
 	}
 
-	static void SaveOrCreateEnabledSymbols(STBT& stbt) 
+	static void SaveEnabledSymbols(STBT& stbt)
 	{
 		const std::string path = "Symbols/enabled.txt";
 		std::ofstream fout(path);
 
-		if (stbt.enabledSymbols.length != stbt.loadedSymbols.length)
-		{
-			stbt.enabledSymbols = jv::CreateArray<bool>(stbt.arena, stbt.loadedSymbols.length);
-			for(auto& b : stbt.enabledSymbols)
-				b = true;
-		}
-
 		for (const auto enabled : stbt.enabledSymbols)
 			fout << enabled << std::endl;
 		fout.close();
+	}
+
+	static void SaveOrCreateEnabledSymbols(STBT& stbt)
+	{
+		if (stbt.enabledSymbols.length != stbt.loadedSymbols.length)
+		{
+			stbt.enabledSymbols = jv::CreateArray<bool>(stbt.arena, stbt.loadedSymbols.length);
+			for (auto& b : stbt.enabledSymbols)
+				b = true;
+		}
+
+		SaveEnabledSymbols(stbt);
 	}
 
 	static void LoadEnabledSymbols(STBT& stbt)
@@ -196,7 +201,19 @@ namespace jv::ai
 				const auto tempScope = tempArena.CreateScope();
 				tracker.GetData(tempArena, buffer, "Symbols/");
 				tempArena.DestroyScope(tempScope);
-				
+
+				uint32_t index = 0;
+				std::string s{ buffer };
+				for (auto& symbol : loadedSymbols)
+					index += symbol < s;
+
+				auto arr = CreateArray<bool>(arena, enabledSymbols.length + 1);
+				for (uint32_t i = 0; i < enabledSymbols.length; i++)
+					arr[i + (i >= index)] = enabledSymbols[i];
+				arr[index] = false;
+
+				enabledSymbols = arr;
+				SaveEnabledSymbols(*this);
 				LoadSymbolSubMenu(*this);
 			}
 			ImGui::SameLine();

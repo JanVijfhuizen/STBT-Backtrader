@@ -49,7 +49,7 @@ namespace jv::gr
 		__declspec(dllexport) void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		__declspec(dllexport) void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
 		__declspec(dllexport) void DrawGraph(glm::vec2 position, glm::vec2 scale, GraphPoint* points, 
-			uint32_t length, GraphType type, bool noBackground);
+			uint32_t length, GraphType type, bool noBackground, glm::vec4 color = glm::vec4(1, 0, 0, 1));
 	};
 
 	__declspec(dllexport) [[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);

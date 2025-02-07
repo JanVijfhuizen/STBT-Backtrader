@@ -170,11 +170,36 @@ namespace jv::ai
 			points[i].high = timeSeries.high[index];
 			points[i].low = timeSeries.low[index];
 		}
+		// If it's not trying to get data from before this stock existed.
+		if (stbt.ma > 0 && daysOrgDiff + daysDiff + 1 + stbt.ma < timeSeries.length && stbt.ma < 10000)
+		{
+			auto points = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
+			for (uint32_t i = 0; i < daysDiff; i++)
+			{
+				float v = 0;
+
+				for (uint32_t j = 0; j < stbt.ma; j++)
+				{
+					const uint32_t index = daysDiff - i + j + daysOrgDiff - 1;
+					v += timeSeries.close[index];
+				}
+				v /= stbt.ma;
+
+				points[i].open = v;
+				points[i].close = v;
+				points[i].high = v;
+				points[i].low = v;
+			}
+
+			stbt.renderer.DrawGraph({ .5, 0 },
+				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
+				points.ptr, points.length, gr::GraphType::line, true, glm::vec4(0, 1, 0, 1));
+		}
 
 		stbt.renderer.graphBorderThickness = 0;
 		stbt.renderer.DrawGraph({ .5, 0 }, 
 			glm::vec2(stbt.renderer.GetAspectRatio(), 1), 
-			points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType), false);
+			points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType), true);
 
 		stbt.graphPoints = points;
 	}
@@ -358,7 +383,12 @@ namespace jv::ai
 				}
 
 				ImGui::SameLine();
+				ImGui::PushItemWidth(40);
 				ImGui::InputText("##", buffer2, 5, ImGuiInputTextFlags_CharsDecimal);
+				ImGui::SameLine();
+				ImGui::InputText("MA", buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
+				ma = std::atoi(buffer3);
+				ImGui::PopItemWidth();
 
 				ImGui::End();
 
@@ -427,6 +457,8 @@ namespace jv::ai
 	{
 		STBT stbt{};
 		stbt.tracker = {};
+		stbt.graphType = 0;
+		stbt.ma = 30;
 
 		jv::gr::RendererCreateInfo createInfo{};
 		createInfo.title = "STBT (Stock Trading Back Tester)";

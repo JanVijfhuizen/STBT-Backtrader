@@ -159,7 +159,8 @@ namespace jv::gr
 		Draw(VertType::line);
 	}
 	void Renderer::DrawGraph(const glm::vec2 position, const glm::vec2 scale, 
-		GraphPoint* points, const uint32_t length, const GraphType type, const bool noBackground)
+		GraphPoint* points, const uint32_t length, const GraphType type, 
+		const bool noBackground, const glm::vec4 color)
 	{
 		if (!noBackground)
 		{
@@ -191,7 +192,7 @@ namespace jv::gr
 			
 			if (type == GraphType::line)
 			{
-				DrawLine(glm::vec2(xStart, yPosPrev), glm::vec2(xEnd, yPos), glm::vec4(1, 0, 0, 1));
+				DrawLine(glm::vec2(xStart, yPosPrev), glm::vec2(xEnd, yPos), color);
 			}
 			if (type == GraphType::candle)
 			{

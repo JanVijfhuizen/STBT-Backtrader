@@ -27,11 +27,13 @@ namespace jv::ai
 		uint32_t symbolIndex;
 
 		tm from, to;
-		int graphType = 0;
+		int graphType;
+		uint32_t ma;
 		Array<gr::GraphPoint> graphPoints;
 
 		char buffer[8];
 		char buffer2[8];
+		char buffer3[8];
 
 		__declspec(dllexport) bool Update();
 	};

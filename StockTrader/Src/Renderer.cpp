@@ -160,7 +160,7 @@ namespace jv::gr
 	}
 	void Renderer::DrawGraph(const glm::vec2 position, const glm::vec2 scale, 
 		GraphPoint* points, const uint32_t length, const GraphType type, 
-		const bool noBackground, const glm::vec4 color)
+		const bool noBackground, const bool normalize, const glm::vec4 color)
 	{
 		if (!noBackground)
 		{
@@ -179,6 +179,9 @@ namespace jv::gr
 			ceiling = jv::Max<float>(ceiling, type == GraphType::line ? point.close : point.high);
 			floor = jv::Min<float>(floor, type == GraphType::line ? point.close : point.low);
 		}
+
+		if (!normalize)
+			floor = Min<float>(0, floor);
 
 		for (uint32_t j = 1; j < length; j++)
 		{

@@ -30,6 +30,7 @@ namespace jv::ai
 		int graphType;
 		uint32_t ma;
 		Array<gr::GraphPoint> graphPoints;
+		bool normalizeGraph;
 
 		char buffer[8];
 		char buffer2[8];

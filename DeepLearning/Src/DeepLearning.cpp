@@ -191,8 +191,8 @@ int main()
 				points[i].high = timeSeries.high[i + static_cast<int>(t)];
 				points[i].low = timeSeries.low[i + static_cast<int>(t)];
 			}
-			stui.renderer.DrawGraph({-.5, 0}, glm::vec2(stui.renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line, false);
-			stui.renderer.DrawGraph({.5, 0}, glm::vec2(stui.renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::candle, false);
+			stui.renderer.DrawGraph({-.5, 0}, glm::vec2(stui.renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::line, false, true);
+			stui.renderer.DrawGraph({.5, 0}, glm::vec2(stui.renderer.GetAspectRatio(), 1), points, LENGTH, jv::gr::GraphType::candle, false, true);
 		}
 
 		DestroySTBT(stui);

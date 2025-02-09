@@ -197,13 +197,15 @@ namespace jv::ai
 
 			stbt.renderer.DrawGraph({ .5, 0 },
 				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
-				points.ptr, points.length, gr::GraphType::line, true, glm::vec4(0, 1, 0, 1));
+				points.ptr, points.length, gr::GraphType::line, 
+				true, stbt.normalizeGraph, glm::vec4(0, 1, 0, 1));
 		}
 
 		stbt.renderer.graphBorderThickness = 0;
 		stbt.renderer.DrawGraph({ .5, 0 }, 
 			glm::vec2(stbt.renderer.GetAspectRatio(), 1), 
-			points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType), true);
+			points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType), 
+			true, stbt.normalizeGraph);
 
 		stbt.graphPoints = points;
 	}
@@ -428,6 +430,8 @@ namespace jv::ai
 				ImGui::InputText("MA", buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
 				ma = std::atoi(buffer3);
 				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::Checkbox("Norm", &normalizeGraph);
 
 				ImGui::End();
 
@@ -498,6 +502,7 @@ namespace jv::ai
 		stbt.tracker = {};
 		stbt.graphType = 0;
 		stbt.ma = 30;
+		stbt.normalizeGraph = true;
 
 		jv::gr::RendererCreateInfo createInfo{};
 		createInfo.title = "STBT (Stock Trading Back Tester)";

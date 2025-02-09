@@ -38,11 +38,11 @@ namespace jv::bt
 				upToDate = upToDate && year == std::stoi(line);
 			}
 
+			f.clear();
+			f.seekg(0);
+
 			if (upToDate)
 			{
-				f.clear();
-				f.seekg(0);
-
 				std::ostringstream buf;
 				buf << f.rdbuf();
 				return buf.str();
@@ -94,14 +94,13 @@ namespace jv::bt
 		auto timeSeries = CreateTimeSeries(arena, lineCount - 4);
 
 		// Get Date
-		std::tm tm;
+		std::tm tm{};
 		getline(f, line);
 		tm.tm_mday = std::stoi(line);
 		getline(f, line);
-		tm.tm_mon = std::stoi(line);
+		tm.tm_mon = std::stoi(line) - 1;
 		getline(f, line);
-		tm.tm_year = std::stoi(line);
-		
+		tm.tm_year = std::stoi(line) - 1900;
 		timeSeries.date = mktime(&tm);
 
 		// Remove meta info.

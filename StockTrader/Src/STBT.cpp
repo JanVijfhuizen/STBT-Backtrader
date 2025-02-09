@@ -132,7 +132,7 @@ namespace jv::ai
 	{
 		const auto& timeSeries = stbt.timeSeries;
 
-		std::time_t tCurrent = GetT();
+		std::time_t tCurrent = timeSeries.date;
 
 		auto tTo = mktime(&stbt.to);
 		auto tFrom = mktime(&stbt.from);
@@ -340,11 +340,16 @@ namespace jv::ai
 					if (str[0] == '{')
 					{
 						symbolIndex = -1;
-						output.Add() = "ERROR: No stock data found for given symbol:";
-						output.Add() = loadedSymbols[i].c_str();
+						output.Add() = "ERROR: No valid symbol data found.";
 					}
 					else
+					{
 						timeSeries = tracker.ConvertDataToTimeSeries(arena, str);
+						if (timeSeries.date != GetT())
+						{
+							output.Add() = "WARNING: Symbol data is outdated.";
+						}
+					}
 				}
 
 				if(selected)

@@ -21,66 +21,77 @@ namespace jv::bt
 		const std::string symbolName = symbol;
 		const std::string extension = ".sym";
 		const auto fileName = path + symbolName + extension;
-		std::ifstream f(fileName);
-
-		if (f.good())
+		
 		{
-			std::string line;
-			bool upToDate = false;
-			getline(f, line);
-
-			if (line[0] != '{')
+			std::ifstream f(fileName);
+			if (f.good())
 			{
-				upToDate = day == std::stoi(line);
+				std::string line;
+				bool upToDate = false;
 				getline(f, line);
-				upToDate = upToDate && month == std::stoi(line);
-				getline(f, line);
-				upToDate = upToDate && year == std::stoi(line);
+
+				if (line[0] != '{')
+				{
+					upToDate = day == std::stoi(line);
+					getline(f, line);
+					upToDate = upToDate && month == std::stoi(line);
+					getline(f, line);
+					upToDate = upToDate && year == std::stoi(line);
+				}
+
+				f.clear();
+				f.seekg(0);
+
+				if (upToDate)
+				{
+					std::ostringstream buf;
+					buf << f.rdbuf();
+					return buf.str();
+				}
 			}
 
-			f.clear();
-			f.seekg(0);
+			_curl = curl_easy_init();
+			assert(_curl);
+			const auto url = CreateUrl(tempArena, symbol);
+			curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
+			curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+			std::string readBuffer;
+			curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &readBuffer);
+			const auto res = curl_easy_perform(_curl);
+			curl_easy_cleanup(_curl);
 
-			if (upToDate)
+			// If the downloaded data is invalid / no internet connection.
+			if (res != 0)
 			{
+				// If there is no old data, return nothing.
+				if (!f.good())
+					return "{";
+
+				// Return old data.
 				std::ostringstream buf;
 				buf << f.rdbuf();
 				return buf.str();
 			}
+
+			// Save newly downloaded symbol data.
+			
+			if (readBuffer[0] != '{')
+			{
+				std::ofstream outFile(fileName);
+				outFile << day << std::endl;
+				outFile << month << std::endl;
+				outFile << year << std::endl;
+				outFile << readBuffer;
+			}	
 		}
 
-		_curl = curl_easy_init();
-		assert(_curl);
-		const auto url = CreateUrl(tempArena, symbol);
-		curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
-		curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		std::string readBuffer;
-		curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &readBuffer);
-		const auto res = curl_easy_perform(_curl);
-		curl_easy_cleanup(_curl);
+		std::ifstream f(fileName);
+		if (!f.good())
+			return "{";
 
-		// If the downloaded data is invalid / no internet connection.
-		if (res != 0)
-		{
-			if (!f.good())
-				return "{";
-
-			std::ostringstream buf;
-			buf << f.rdbuf();
-			return buf.str();
-		}
-
-		std::ofstream outFile(fileName);
-
-		if (readBuffer[0] != '{')
-		{
-			outFile << day << std::endl;
-			outFile << month << std::endl;
-			outFile << year << std::endl;
-		}
-		
-		outFile << readBuffer;
-		return readBuffer;
+		std::ostringstream buf;
+		buf << f.rdbuf();
+		return buf.str();
 	}
 
 	TimeSeries Tracker::ConvertDataToTimeSeries(Arena& arena, std::string str) const

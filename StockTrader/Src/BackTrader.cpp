@@ -243,7 +243,7 @@ namespace jv::bt
 		for (uint32_t i = 0; i < symbols.length; ++i)
 		{
 			const auto tempScope = tempArena.CreateScope();
-			const auto str = tracker.GetData(tempArena, symbols[i]);
+			const auto str = tracker.GetData(tempArena, symbols[i], "Symbols/");
 			const auto timeSeries = tracker.ConvertDataToTimeSeries(arena, str);
 			backTrader.world.timeSeries[i] = timeSeries;
 			tempArena.DestroyScope(tempScope);

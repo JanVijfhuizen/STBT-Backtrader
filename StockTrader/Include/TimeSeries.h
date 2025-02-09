@@ -9,6 +9,8 @@ namespace jv
 	{
 		struct TimeSeries final
 		{
+			std::time_t date;
+
 			float* open;
 			float* high;
 			float* low;

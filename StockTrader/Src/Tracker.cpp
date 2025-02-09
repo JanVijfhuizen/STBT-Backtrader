@@ -9,72 +9,78 @@ namespace jv::bt
 
 	std::string Tracker::GetData(Arena& tempArena, const char* symbol, const char* path)
 	{
-		// If validity is untested.
-		bool validSymData = false;
-		if(_valid == 0)
-		{
-			typedef std::chrono::system_clock Clock;
-			auto now = Clock::now();
+		typedef std::chrono::system_clock Clock;
+		auto now = Clock::now();
 
-			std::ifstream fin("date.sym");
-			std::string line;
-
-			std::time_t now_c = Clock::to_time_t(now);
-			tm* parts = std::localtime(&now_c);
-			uint32_t year = 1900 + parts->tm_year;
-			uint32_t month = 1 + parts->tm_mon;
-			uint32_t day = parts->tm_mday;
-
-			if (fin.good())
-			{
-				validSymData = true;
-				getline(fin, line);
-				validSymData = validSymData && year == std::stoi(line);
-				getline(fin, line);
-				validSymData = validSymData && month == std::stoi(line);
-				getline(fin, line);
-				validSymData = validSymData && day == std::stoi(line);
-			}
-			if (!validSymData)
-			{
-				std::ofstream fout("date.sym");
-				fout << year << std::endl;
-				fout << month << std::endl;
-				fout << day << std::endl;
-			}
-			_valid = 1 + validSymData;
-		}
-		validSymData = _valid - 1;
+		std::time_t now_c = Clock::to_time_t(now);
+		tm* parts = std::localtime(&now_c);
+		uint32_t year = 1900 + parts->tm_year;
+		uint32_t month = 1 + parts->tm_mon;
+		uint32_t day = parts->tm_mday;
 
 		const std::string symbolName = symbol;
 		const std::string extension = ".sym";
 		const auto fileName = path + symbolName + extension;
 		std::ifstream f(fileName);
 
-		if (!f.good() || !validSymData)
+		if (f.good())
 		{
-			_curl = curl_easy_init();
-			assert(_curl);
-			const auto url = CreateUrl(tempArena, symbol);
-			curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
-			curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-			_readBuffer = {};
-			curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &_readBuffer);
-			const auto res = curl_easy_perform(_curl);
-			assert(res == 0);
-			curl_easy_cleanup(_curl);
+			std::string line;
+			bool upToDate = false;
+			getline(f, line);
 
-			std::ofstream outFile(fileName);
-			outFile << _readBuffer;
+			if (line[0] != '{')
+			{
+				upToDate = day == std::stoi(line);
+				getline(f, line);
+				upToDate = upToDate && month == std::stoi(line);
+				getline(f, line);
+				upToDate = upToDate && year == std::stoi(line);
+			}
+
+			if (upToDate)
+			{
+				f.clear();
+				f.seekg(0);
+
+				std::ostringstream buf;
+				buf << f.rdbuf();
+				return buf.str();
+			}
 		}
-		else
+
+		_curl = curl_easy_init();
+		assert(_curl);
+		const auto url = CreateUrl(tempArena, symbol);
+		curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		std::string readBuffer;
+		curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &readBuffer);
+		const auto res = curl_easy_perform(_curl);
+		curl_easy_cleanup(_curl);
+
+		// If the downloaded data is invalid / no internet connection.
+		if (res != 0)
 		{
+			if (!f.good())
+				return "{";
+
 			std::ostringstream buf;
 			buf << f.rdbuf();
-			_readBuffer = buf.str();
+			return buf.str();
+		}
+
+		std::ofstream outFile(fileName);
+
+		if (readBuffer[0] != '{')
+		{
+			outFile << day << std::endl;
+			outFile << month << std::endl;
+			outFile << year << std::endl;
 		}
 		
-		return _readBuffer;
+		outFile << readBuffer;
+		return readBuffer;
 	}
 
 	TimeSeries Tracker::ConvertDataToTimeSeries(Arena& arena, std::string str) const
@@ -85,10 +91,22 @@ namespace jv::bt
 		auto lineCount = std::count(str.begin(), str.end(), '\n');
 		lineCount += !str.empty() && str.back() != '\n';
 
-		const auto timeSeries = CreateTimeSeries(arena, lineCount - 1);
+		auto timeSeries = CreateTimeSeries(arena, lineCount - 4);
 
-		// Remove first line with meta info.
+		// Get Date
+		std::tm tm;
+		getline(f, line);
+		tm.tm_mday = std::stoi(line);
+		getline(f, line);
+		tm.tm_mon = std::stoi(line);
+		getline(f, line);
+		tm.tm_year = std::stoi(line);
+		
+		timeSeries.date = mktime(&tm);
+
+		// Remove meta info.
 		std::getline(f, line);
+
 		uint32_t i = 0;
 		while (std::getline(f, line)) 
 		{
@@ -109,7 +127,7 @@ namespace jv::bt
 			getline(ss, subStr, ',');
 			timeSeries.open[i] = std::stof(subStr);
 			getline(ss, subStr, ',');
-			timeSeries.volume[i] = std::stoi(subStr);
+			timeSeries.volume[i] = std::stof(subStr);
 
 			++i;
 		}

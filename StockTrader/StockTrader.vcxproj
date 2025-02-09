@@ -152,9 +152,7 @@
   <ItemGroup>
     <ClInclude Include="Include\Ext\ImGuiDatePicker.h" />
     <ClInclude Include="Include\framework.h" />
-    <ClInclude Include="Include\BackTrader.h" />
-    <ClInclude Include="Include\FPFNTester.h" />
-    <ClInclude Include="Include\GeneticAlgorithm.h" />
+    <ClInclude Include="Include\JLib\FPFNTester.h" />
     <ClInclude Include="Include\gnuplot-iostream.h" />
     <ClInclude Include="Include\JLib\Arena.h" />
     <ClInclude Include="Include\JLib\Array.h" />
@@ -173,8 +171,6 @@
     <ClInclude Include="Include\JLib\QueueUtils.h" />
     <ClInclude Include="Include\JLib\Vector.h" />
     <ClInclude Include="Include\JLib\VectorUtils.h" />
-    <ClInclude Include="Include\NNet.h" />
-    <ClInclude Include="Include\NNetUtils.h" />
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\Shader.h" />
     <ClInclude Include="Include\TimeSeries.h" />
@@ -190,12 +186,8 @@
     <ClCompile Include="Src\dllmain.cpp" />
     <ClCompile Include="Include\JLib\Math.cpp" />
     <ClCompile Include="Src\Arena.cpp" />
-    <ClCompile Include="Src\BackTrader.cpp" />
     <ClCompile Include="Src\FPFNTester.cpp" />
     <ClCompile Include="Src\framework.cpp" />
-    <ClCompile Include="Src\GeneticAlgorithm.cpp" />
-    <ClCompile Include="Src\NNet.cpp" />
-    <ClCompile Include="Src\NNetUtils.cpp" />
     <ClCompile Include="Src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>

@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "FPFNTester.h"
+#include "JLib/FPFNTester.h"
 
-namespace jv::ai 
+namespace jv
 {
 	void FPFNTester::AddResult(const bool result, const bool expectation)
 	{

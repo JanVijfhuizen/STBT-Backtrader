@@ -141,11 +141,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BackTrader.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="GeneticAlgorithm.h" />
+    <ClInclude Include="NNet.h" />
+    <ClInclude Include="NNetUtils.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BackTrader.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="GeneticAlgorithm.cpp" />
+    <ClCompile Include="NNet.cpp" />
+    <ClCompile Include="NNetUtils.cpp" />
+    <ClCompile Include="OldCode.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

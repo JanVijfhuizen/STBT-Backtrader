@@ -1,6 +1,6 @@
 #pragma once
 
-namespace jv::ai
+namespace jv
 {
 	// False Positive / False Negative Tester
 	/* The problem with percentage based rating is that if you, for instance, have a set

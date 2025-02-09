@@ -15,7 +15,8 @@ namespace jv::ai
 		miBacktrader,
 		miTrain,
 		miUse,
-		miPortfolio
+		miPortfolio,
+		miTutorial
 	};
 
 	void* MAlloc(const uint32_t size)
@@ -245,6 +246,9 @@ namespace jv::ai
 		case miPortfolio:
 			title = "Portfolio";
 			break;
+		case miTutorial:
+			title = "Tutorial";
+			break;
 		}
 		ImGui::Text(title);
 		ImGui::Text(description);
@@ -276,6 +280,11 @@ namespace jv::ai
 			{
 				arena.DestroyScope(currentScope);
 				menuIndex = miPortfolio;
+			}
+			if (ImGui::Button("Tutorial"))
+			{
+				arena.DestroyScope(currentScope);
+				menuIndex = miTutorial;
 			}
 			if (ImGui::Button("Licensing"))
 			{

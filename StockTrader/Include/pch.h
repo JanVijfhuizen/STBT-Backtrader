@@ -25,11 +25,9 @@ constexpr int32_t DAY_MUL = 60 * 60 * 24;
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include <BackTrader.h>
-#include <FPFNTester.h>
-#include <GeneticAlgorithm.h>
-#include <NNet.h>
-#include <NNetUtils.h>
+#include <Jlib/Arena.h>
+#include <JLib/Iterator.h>
+#include <JLib/Array.h>
 #include <TimeSeries.h>
 #include <Tracker.h>
 

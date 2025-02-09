@@ -66,22 +66,10 @@
     <ClInclude Include="Include\JLib\VectorUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\BackTrader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\FPFNTester.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\GeneticAlgorithm.h">
+    <ClInclude Include="Include\JLib\FPFNTester.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\gnuplot-iostream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\NNet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\NNetUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\pch.h">
@@ -122,19 +110,7 @@
     <ClCompile Include="Src\Arena.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\BackTrader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Src\FPFNTester.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\GeneticAlgorithm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\NNet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\NNetUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\pch.cpp">

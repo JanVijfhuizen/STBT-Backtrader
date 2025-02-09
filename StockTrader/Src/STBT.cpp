@@ -295,7 +295,10 @@ namespace jv::ai
 			if (ImGui::Button("Add")) 
 			{
 				const auto tempScope = tempArena.CreateScope();
-				tracker.GetData(tempArena, buffer, "Symbols/");
+				const auto c = tracker.GetData(tempArena, buffer, "Symbols/");
+				if (c[0] == '{')
+					output.Add() = "ERROR: Unable to download symbol data.";
+
 				tempArena.DestroyScope(tempScope);
 
 				uint32_t index = 0;

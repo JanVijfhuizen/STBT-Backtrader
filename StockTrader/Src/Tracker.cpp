@@ -7,7 +7,7 @@ namespace jv::bt
 {
 	Gnuplot gp("\"C:\\Program Files\\gnuplot\\bin\\gnuplot.exe\"");
 
-	std::string Tracker::GetData(Arena& tempArena, const char* symbol, const char* path)
+	std::string Tracker::GetData(Arena& tempArena, const char* symbol, const char* path, const char* key)
 	{
 		typedef std::chrono::system_clock Clock;
 		auto now = Clock::now();
@@ -52,7 +52,7 @@ namespace jv::bt
 
 			_curl = curl_easy_init();
 			assert(_curl);
-			const auto url = CreateUrl(tempArena, symbol);
+			const auto url = CreateUrl(tempArena, symbol, key);
 			curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 			std::string readBuffer;
@@ -203,9 +203,8 @@ namespace jv::bt
 		gp << "pause 1e9\n";
 	}
 
-	std::string Tracker::CreateUrl(Arena& tempArena, const char* symbol)
+	std::string Tracker::CreateUrl(Arena& tempArena, const char* symbol, const char* key)
 	{
-		const char* key = "7HIFX74MVML11CUF";
 		const auto scope = tempArena.CreateScope();
 
 		std::string str = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=";

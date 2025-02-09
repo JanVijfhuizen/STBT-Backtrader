@@ -34,6 +34,7 @@ namespace jv::ai
 		char buffer[8];
 		char buffer2[8];
 		char buffer3[8];
+		char license[32];
 
 		__declspec(dllexport) bool Update();
 	};

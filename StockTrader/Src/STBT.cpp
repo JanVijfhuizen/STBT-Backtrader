@@ -5,13 +5,17 @@
 
 namespace jv::ai
 {
+	const char* LICENSE_FILE_PATH = "license.txt";
+
 	enum MenuIndex 
 	{
 		miMain,
+		miLicense,
 		miSymbols,
 		miBacktrader,
 		miTrain,
-		miUse
+		miUse,
+		miPortfolio
 	};
 
 	void* MAlloc(const uint32_t size)
@@ -219,12 +223,16 @@ namespace jv::ai
 			title = "Main Menu";
 			description = "This tool can be used to \ntrain, test and use stock \ntrade algorithms in \nrealtime.";
 			break;
+		case miLicense:
+			title = "Licensing";
+			description = "NOTE THAT THIS PROGRAM DOES \nNOT REQUIRE ANY LICENSING. \nLicenses however, are \nrequired for some external \nAPI calls.";
+			break;
 		case miSymbols:
 			title = "Symbols";
 			description = "Debug symbols, (un)load \nthem and add new ones.";
 			break;
 		case miBacktrader:
-			title = "Back Trader";
+			title = "Backtrader";
 			break;
 		case miTrain:
 			title = "Train";
@@ -232,9 +240,13 @@ namespace jv::ai
 		case miUse:
 			title = "Use";
 			break;
+		case miPortfolio:
+			title = "Portfolio";
+			break;
 		}
 		ImGui::Text(title);
 		ImGui::Text(description);
+		ImGui::Dummy({ 0, 20 });
 
 		if (menuIndex == miMain)
 		{
@@ -258,6 +270,16 @@ namespace jv::ai
 				arena.DestroyScope(currentScope);
 				menuIndex = miUse;
 			}	
+			if (ImGui::Button("Portfolio"))
+			{
+				arena.DestroyScope(currentScope);
+				menuIndex = miPortfolio;
+			}
+			if (ImGui::Button("Licensing"))
+			{
+				arena.DestroyScope(currentScope);
+				menuIndex = miLicense;
+			}
 			if (ImGui::Button("Exit"))
 			{
 				arena.DestroyScope(currentScope);
@@ -266,6 +288,15 @@ namespace jv::ai
 		}
 		else 
 		{
+			if (menuIndex == miLicense)
+			{
+				ImGui::Text("Alpha Vantage");
+				if (ImGui::InputText("##", license, 17))
+				{
+					std::ofstream outFile(LICENSE_FILE_PATH); //"7HIFX74MVML11CUF"
+					outFile << license << std::endl;
+				}
+			}
 			if (menuIndex == miSymbols)
 			{
 				if (ImGui::Button("Reload"))
@@ -295,7 +326,7 @@ namespace jv::ai
 			if (ImGui::Button("Add")) 
 			{
 				const auto tempScope = tempArena.CreateScope();
-				const auto c = tracker.GetData(tempArena, buffer, "Symbols/");
+				const auto c = tracker.GetData(tempArena, buffer, "Symbols/", license);
 				if (c[0] == '{')
 					output.Add() = "ERROR: Unable to download symbol data.";
 
@@ -338,7 +369,7 @@ namespace jv::ai
 					LoadSymbolSubMenu(*this);
 					symbolIndex = i;
 
-					const auto str = tracker.GetData(tempArena, loadedSymbols[i].c_str(), "Symbols/");
+					const auto str = tracker.GetData(tempArena, loadedSymbols[i].c_str(), "Symbols/", license);
 					// If the data is invalid.
 					if (str[0] == '{')
 					{
@@ -490,6 +521,19 @@ namespace jv::ai
 		t = GetT(30);
 		stbt.from = *std::gmtime(&t);
 		stbt.graphType = 0;
+
+		std::ifstream f(LICENSE_FILE_PATH);
+		if (f.good())
+		{
+			std::string line;
+			getline(f, line);
+			memcpy(stbt.license, line.c_str(), line.length());
+		}
+
+		std::string strLicense = stbt.license;
+		if(strLicense == "")
+			stbt.output.Add() = "WARNING: Missing licensing.";
+			
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

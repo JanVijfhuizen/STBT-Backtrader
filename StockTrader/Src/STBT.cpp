@@ -273,10 +273,10 @@ namespace jv::bt
 			}
 
 			stbt.renderer.graphBorderThickness = 0;
-			stbt.renderer.SetLineWidth(1.f + (sId == i) * .5f);
+			stbt.renderer.SetLineWidth(1.f + (sId == i) * 1.f);
 
 			auto color = stbt.randColors[i];
-			color *= .5f + .5f * (sId == i);
+			color *= .2f + .8f * (sId == i);
 
 			stbt.renderer.DrawGraph({ .5, 0 },
 				glm::vec2(stbt.renderer.GetAspectRatio(), 1),

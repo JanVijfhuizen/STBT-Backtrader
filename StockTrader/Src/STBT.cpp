@@ -16,6 +16,12 @@ namespace jv::bt
 		miBacktrader
 	};
 
+	enum BTMenuIndex
+	{
+		btmiPortfolio,
+		btmiScripts
+	};
+
 	void* MAlloc(const uint32_t size)
 	{
 		return malloc(size);
@@ -97,6 +103,30 @@ namespace jv::bt
 			arr[length++] = std::stoi(line);
 
 		stbt.enabledSymbols = arr;
+	}
+
+	static void LoadScripts(STBT& stbt)
+	{
+		stbt.arena.DestroyScope(stbt.subScope);
+
+		std::string path("Scripts/");
+		std::string ext(".lua");
+
+		uint32_t length = 0;
+		for (auto& p : std::filesystem::recursive_directory_iterator(path))
+			if (p.path().extension() == ext)
+				++length;
+
+		auto arr = jv::CreateArray<std::string>(stbt.arena, length);
+
+		length = 0;
+		for (auto& p : std::filesystem::recursive_directory_iterator(path))
+		{
+			if (p.path().extension() == ext)
+				arr[length++] = p.path().stem().string();
+		}
+
+		stbt.scripts = arr;
 	}
 
 	static void LoadSymbols(STBT& stbt)
@@ -197,6 +227,8 @@ namespace jv::bt
 		}
 		stbt.symbolIndex = -1;
 		LoadRandColors(stbt);
+		stbt.subScope = stbt.arena.CreateScope();
+		stbt.subMenuIndex = 0;
 	}
 
 	static void RenderSymbolData(STBT& stbt)
@@ -483,6 +515,28 @@ namespace jv::bt
 				if (ImGui::Button("Save changes"))
 					SaveOrCreateEnabledSymbols(*this);
 			}
+			if (menuIndex == miBacktrader)
+			{
+				const char* buttons[]
+				{
+					"Portfolio",
+					"Scripts"
+				};
+
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					const bool selected = subMenuIndex == i;
+					if (selected)
+						ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+					if (ImGui::Button(buttons[i]))
+					{
+						LoadScripts(*this);
+						subMenuIndex = i;
+					}
+					if (selected)
+						ImGui::PopStyleColor();
+				}
+			}
 
 			if (ImGui::Button("Back"))
 				menuIndex = miMain;
@@ -492,38 +546,54 @@ namespace jv::bt
 
 		if (menuIndex == miBacktrader)
 		{
-			ImGui::Begin("Portfolio", nullptr, WIN_FLAGS);
-			ImGui::SetWindowPos({ 200, 0 });
-			ImGui::SetWindowSize({ 200, 400 });
-
-			uint32_t index = 0;
-			ImGui::InputText("Cash", buffArr[0], 9, ImGuiInputTextFlags_CharsScientific);
-
-			for (uint32_t i = 0; i < loadedSymbols.length; i++)
+			if (subMenuIndex == btmiPortfolio)
 			{
-				if (!enabledSymbols[i])
-					continue;
-				++index;
+				ImGui::Begin("Portfolio", nullptr, WIN_FLAGS);
+				ImGui::SetWindowPos({ 200, 0 });
+				ImGui::SetWindowSize({ 200, 400 });
 
-				ImGui::PushID(i);
-				ImGui::InputText("##", buffArr[index], 9, ImGuiInputTextFlags_CharsDecimal);
-				ImGui::PopID();
-				ImGui::SameLine();
+				uint32_t index = 0;
+				ImGui::InputText("Cash", buffArr[0], 9, ImGuiInputTextFlags_CharsScientific);
 
-				const bool selected = symbolIndex == i;
-				if (selected)
-					ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+				for (uint32_t i = 0; i < loadedSymbols.length; i++)
+				{
+					if (!enabledSymbols[i])
+						continue;
+					++index;
 
-				const auto symbol = loadedSymbols[i].c_str();
-				if (ImGui::Button(symbol))
-					symbolIndex = i;
+					ImGui::PushID(i);
+					ImGui::InputText("##", buffArr[index], 9, ImGuiInputTextFlags_CharsDecimal);
+					ImGui::PopID();
+					ImGui::SameLine();
 
-				if (selected)
-					ImGui::PopStyleColor();
+					const bool selected = symbolIndex == i;
+					if (selected)
+						ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+
+					const auto symbol = loadedSymbols[i].c_str();
+					if (ImGui::Button(symbol))
+						symbolIndex = i;
+
+					if (selected)
+						ImGui::PopStyleColor();
+				}
+
+				ImGui::End();
+				TryRenderSymbol(*this);
 			}
+			if (subMenuIndex == btmiScripts)
+			{
+				ImGui::Begin("Scripts", nullptr, WIN_FLAGS);
+				ImGui::SetWindowPos({ 200, 0 });
+				ImGui::SetWindowSize({ 200, 400 });
 
-			ImGui::End();
-			TryRenderSymbol(*this);
+				for (uint32_t i = 0; i < scripts.length; i++)
+				{
+					ImGui::Button(scripts[i].c_str());
+				}
+
+				ImGui::End();
+			}
 		}
 
 		if (menuIndex == miSymbols)

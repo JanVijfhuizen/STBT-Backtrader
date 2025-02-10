@@ -19,11 +19,15 @@ namespace jv::bt
 		Queue<const char*> output;
 		
 		uint32_t menuIndex;
+		uint32_t subMenuIndex;
 		uint64_t currentScope;
+		uint64_t subScope;
 
 		Array<std::string> loadedSymbols;
 		Array<bool> enabledSymbols;
 		uint32_t symbolIndex;
+
+		Array<std::string> scripts;
 
 		tm from, to;
 		int graphType;

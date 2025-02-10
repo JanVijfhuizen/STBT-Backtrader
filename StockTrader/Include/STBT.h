@@ -2,7 +2,7 @@
 #include <Renderer.h>
 #include "JLib/Queue.h"
 
-namespace jv::ai 
+namespace jv::bt
 {
 	struct STBTCreateInfo final
 	{
@@ -13,7 +13,7 @@ namespace jv::ai
 	struct STBT final
 	{
 		gr::Renderer renderer;
-		bt::Tracker tracker;
+		Tracker tracker;
 
 		Arena arena, tempArena, frameArena;
 		Queue<const char*> output;
@@ -23,7 +23,7 @@ namespace jv::ai
 
 		Array<std::string> loadedSymbols;
 		Array<bool> enabledSymbols;
-		bt::TimeSeries timeSeries;
+		TimeSeries timeSeries;
 		uint32_t symbolIndex;
 
 		tm from, to;
@@ -36,7 +36,9 @@ namespace jv::ai
 		char buffer2[8];
 		char buffer3[8];
 		char license[32];
+
 		Array<char*> buffArr;
+		Array<TimeSeries> timeSeriesArr;
 
 		__declspec(dllexport) bool Update();
 	};

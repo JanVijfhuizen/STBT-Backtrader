@@ -3,7 +3,7 @@
 #include <Jlib/ArrayUtils.h>
 #include "JLib/QueueUtils.h"
 
-namespace jv::ai
+namespace jv::bt
 {
 	const char* LICENSE_FILE_PATH = "license.txt";
 	const auto WIN_FLAGS = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
@@ -23,6 +23,24 @@ namespace jv::ai
 	void MFree(void* ptr)
 	{
 		return free(ptr);
+	}
+
+	static std::time_t GetT(const uint32_t days = 0)
+	{
+		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+		using namespace std::chrono_literals;
+		auto offset = 60s * 60 * 24 * days;
+		now -= offset;
+
+		std::time_t tCurrent = std::chrono::system_clock::to_time_t(now);
+
+		auto lt = std::localtime(&tCurrent);
+		lt->tm_hour = 0;
+		lt->tm_min = 0;
+		lt->tm_sec = 0;
+		tCurrent = mktime(lt);
+		return tCurrent;
 	}
 
 	static void SaveEnabledSymbols(STBT& stbt)
@@ -106,6 +124,34 @@ namespace jv::ai
 		LoadEnabledSymbols(stbt);
 	}
 
+	static void LoadSymbolSubMenu(STBT& stbt)
+	{
+		stbt.arena.DestroyScope(stbt.currentScope);
+		LoadSymbols(stbt);
+	}
+
+	TimeSeries LoadSymbol(STBT& stbt, const uint32_t i)
+	{
+		LoadSymbolSubMenu(stbt);
+		stbt.symbolIndex = i;
+
+		const auto str = stbt.tracker.GetData(stbt.tempArena, stbt.loadedSymbols[i].c_str(), "Symbols/", stbt.license);
+		// If the data is invalid.
+		if (str[0] == '{')
+		{
+			stbt.symbolIndex = -1;
+			stbt.output.Add() = "ERROR: No valid symbol data found.";
+		}
+		else
+		{
+			auto timeSeries = stbt.tracker.ConvertDataToTimeSeries(stbt.arena, str);
+			if (timeSeries.date != GetT())
+				stbt.output.Add() = "WARNING: Symbol data is outdated.";
+			return timeSeries;
+		}
+		return {};
+	}
+
 	static void LoadBacktraderSubMenu(STBT& stbt)
 	{
 		stbt.arena.DestroyScope(stbt.currentScope);
@@ -113,33 +159,19 @@ namespace jv::ai
 		uint32_t c = 0;
 		for (uint32_t i = 0; i < stbt.loadedSymbols.length; i++)
 			c += stbt.enabledSymbols[i];
-		stbt.buffArr = CreateArray<char*>(stbt.arena, c);
+		stbt.buffArr = CreateArray<char*>(stbt.arena, c + 1);
 		for (uint32_t i = 0; i < stbt.buffArr.length; i++)
 			stbt.buffArr[i] = stbt.arena.New<char>(16);
-	}
+		stbt.timeSeriesArr = CreateArray<TimeSeries>(stbt.arena, c);
 
-	static void LoadSymbolSubMenu(STBT& stbt)
-	{
-		stbt.arena.DestroyScope(stbt.currentScope);
-		LoadSymbols(stbt);
-	}
-
-	static std::time_t GetT(const uint32_t days = 0)
-	{
-		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-
-		using namespace std::chrono_literals;
-		auto offset = 60s * 60 * 24 * days;
-		now -= offset;
-
-		std::time_t tCurrent = std::chrono::system_clock::to_time_t(now);
-
-		auto lt = std::localtime(&tCurrent);
-		lt->tm_hour = 0;
-		lt->tm_min = 0;
-		lt->tm_sec = 0;
-		tCurrent = mktime(lt);
-		return tCurrent;
+		uint32_t index = 0;
+		for (size_t i = 0; i < stbt.enabledSymbols.length; i++)
+		{
+			if (!stbt.enabledSymbols[i])
+				continue;
+			stbt.timeSeriesArr[index++] = LoadSymbol(stbt, i);
+		}
+		stbt.symbolIndex = -1;
 	}
 
 	static void RenderSymbolData(STBT& stbt)
@@ -218,26 +250,6 @@ namespace jv::ai
 			true, stbt.normalizeGraph);
 
 		stbt.graphPoints = points;
-	}
-
-	void LoadSymbol(STBT& stbt, const uint32_t i) 
-	{
-		LoadSymbolSubMenu(stbt);
-		stbt.symbolIndex = i;
-
-		const auto str = stbt.tracker.GetData(stbt.tempArena, stbt.loadedSymbols[i].c_str(), "Symbols/", stbt.license);
-		// If the data is invalid.
-		if (str[0] == '{')
-		{
-			stbt.symbolIndex = -1;
-			stbt.output.Add() = "ERROR: No valid symbol data found.";
-		}
-		else
-		{
-			stbt.timeSeries = stbt.tracker.ConvertDataToTimeSeries(stbt.arena, str);
-			if (stbt.timeSeries.date != GetT())
-				stbt.output.Add() = "WARNING: Symbol data is outdated.";
-		}
 	}
 
 	void TryRenderSymbol(STBT& stbt)
@@ -423,10 +435,13 @@ namespace jv::ai
 			ImGui::SetWindowSize({ 200, 400 });
 
 			uint32_t index = 0;
+			ImGui::InputText("Cash", buffArr[0], 9, ImGuiInputTextFlags_CharsScientific);
+
 			for (uint32_t i = 0; i < loadedSymbols.length; i++)
 			{
 				if (!enabledSymbols[i])
 					continue;
+				++index;
 
 				ImGui::PushID(i);
 				ImGui::InputText("##", buffArr[index], 9, ImGuiInputTextFlags_CharsDecimal);
@@ -438,9 +453,11 @@ namespace jv::ai
 					ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
 
 				const auto symbol = loadedSymbols[i].c_str();
-				if(ImGui::Button(symbol))
-					LoadSymbol(*this, i);
-				++index;
+				if (ImGui::Button(symbol))
+				{
+					symbolIndex = i;
+					timeSeries = timeSeriesArr[index - 1];
+				}
 
 				if (selected)
 					ImGui::PopStyleColor();
@@ -498,7 +515,7 @@ namespace jv::ai
 
 				const auto symbol = loadedSymbols[i].c_str();
 				if (ImGui::Button(symbol))
-					LoadSymbol(*this, i);
+					timeSeries = LoadSymbol(*this, i);
 
 				if(selected)
 					ImGui::PopStyleColor();

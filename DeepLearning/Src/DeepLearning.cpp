@@ -27,7 +27,7 @@ int main()
 
 	lua_close(L);
 
-	auto stui = jv::ai::CreateSTBT();
+	auto stui = jv::bt::CreateSTBT();
 
 	while (!stui.Update())
 		continue;

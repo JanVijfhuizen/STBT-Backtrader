@@ -23,7 +23,6 @@ namespace jv::bt
 
 		Array<std::string> loadedSymbols;
 		Array<bool> enabledSymbols;
-		TimeSeries timeSeries;
 		uint32_t symbolIndex;
 
 		tm from, to;

@@ -128,6 +128,7 @@ namespace jv::bt
 	{
 		stbt.arena.DestroyScope(stbt.currentScope);
 		LoadSymbols(stbt);
+		stbt.timeSeriesArr = CreateArray<TimeSeries>(stbt.arena, 1);
 	}
 
 	TimeSeries LoadSymbol(STBT& stbt, const uint32_t i)
@@ -171,17 +172,28 @@ namespace jv::bt
 			stbt.timeSeriesArr[index++] = LoadSymbol(stbt, i);
 		}
 		stbt.symbolIndex = -1;
-
 	}
 
 	static void RenderSymbolData(STBT& stbt)
 	{
-		const auto& timeSeries = stbt.timeSeries;
-
-		std::time_t tCurrent = timeSeries.date;
-
 		auto tTo = mktime(&stbt.to);
 		auto tFrom = mktime(&stbt.from);
+		std::time_t tCurrent;
+		uint32_t length = UINT32_MAX;
+
+		for (uint32_t i = 0; i < stbt.timeSeriesArr.length; i++)
+		{
+			const auto& timeSeries = stbt.timeSeriesArr[i];
+			std::time_t current = timeSeries.date;
+			if (i == 0)
+				tCurrent = current;
+			else if (tCurrent != current)
+			{
+				stbt.output.Add() = "ERROR: Some symbol data is outdated.";
+				return;
+			}
+			length = Min<uint32_t>(length, timeSeries.length);
+		}
 
 		if (tFrom >= tCurrent)
 		{
@@ -201,23 +213,49 @@ namespace jv::bt
 		}
 
 		auto diff = difftime(tTo, tFrom);
-		diff = Min<double>(diff, (timeSeries.length - 1) * 60 * 60 * 24);
+		diff = Min<double>(diff, (length - 1) * 60 * 60 * 24);
 		auto orgDiff = Max<double>(difftime(tCurrent, tTo), 0);
 		uint32_t daysDiff = diff / 60 / 60 / 24;
 		uint32_t daysOrgDiff = orgDiff / 60 / 60 / 24;
 
-		auto points = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
-
-		for (uint32_t i = 0; i < daysDiff; i++)
+		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, stbt.timeSeriesArr.length);
+		for (uint32_t i = 0; i < stbt.timeSeriesArr.length; i++)
 		{
-			const uint32_t index = daysDiff - i + daysOrgDiff - 1;
-			points[i].open = timeSeries.open[index];
-			points[i].close = timeSeries.close[index];
-			points[i].high = timeSeries.high[index];
-			points[i].low = timeSeries.low[index];
+			auto& timeSeries = stbt.timeSeriesArr[i];
+			auto& points = graphPoints[i] = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
+
+			for (uint32_t i = 0; i < daysDiff; i++)
+			{
+				const uint32_t index = daysDiff - i + daysOrgDiff - 1;
+				points[i].open = timeSeries.open[index];
+				points[i].close = timeSeries.close[index];
+				points[i].high = timeSeries.high[index];
+				points[i].low = timeSeries.low[index];
+			}
+
+			stbt.renderer.graphBorderThickness = 0;
+			stbt.renderer.DrawGraph({ .5, 0 },
+				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
+				points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType),
+				true, stbt.normalizeGraph);
 		}
+
+		// Get symbol index to normal index.
+		uint32_t sId = 0;
+		if (stbt.timeSeriesArr.length > 1)
+		{
+			for (uint32_t i = 0; i < stbt.enabledSymbols.length; i++)
+			{
+				if (!stbt.enabledSymbols[i])
+					continue;
+				if (i == stbt.symbolIndex)
+					break;
+				++sId;
+			}
+		}
+		
 		// If it's not trying to get data from before this stock existed.
-		if (stbt.ma > 0 && daysOrgDiff + daysDiff + 1 + stbt.ma < timeSeries.length && stbt.ma < 10000)
+		if (stbt.ma > 0 && daysOrgDiff + daysDiff + 1 + stbt.ma < length && stbt.ma < 10000)
 		{
 			auto points = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
 			for (uint32_t i = 0; i < daysDiff; i++)
@@ -227,7 +265,7 @@ namespace jv::bt
 				for (uint32_t j = 0; j < stbt.ma; j++)
 				{
 					const uint32_t index = daysDiff - i + j + daysOrgDiff - 1;
-					v += timeSeries.close[index];
+					v += stbt.timeSeriesArr[sId].close[index];
 				}
 				v /= stbt.ma;
 
@@ -243,13 +281,7 @@ namespace jv::bt
 				true, stbt.normalizeGraph, glm::vec4(0, 1, 0, 1));
 		}
 
-		stbt.renderer.graphBorderThickness = 0;
-		stbt.renderer.DrawGraph({ .5, 0 }, 
-			glm::vec2(stbt.renderer.GetAspectRatio(), 1), 
-			points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType), 
-			true, stbt.normalizeGraph);
-
-		stbt.graphPoints = points;
+		stbt.graphPoints = graphPoints[sId];
 	}
 
 	void TryRenderSymbol(STBT& stbt)
@@ -454,10 +486,7 @@ namespace jv::bt
 
 				const auto symbol = loadedSymbols[i].c_str();
 				if (ImGui::Button(symbol))
-				{
 					symbolIndex = i;
-					timeSeries = timeSeriesArr[index - 1];
-				}
 
 				if (selected)
 					ImGui::PopStyleColor();
@@ -517,9 +546,8 @@ namespace jv::bt
 				if (ImGui::Button(symbol))
 				{
 					LoadSymbolSubMenu(*this);
-					timeSeries = LoadSymbol(*this, i);
+					timeSeriesArr[0] = LoadSymbol(*this, i);
 				}
-					
 
 				if(selected)
 					ImGui::PopStyleColor();

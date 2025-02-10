@@ -438,9 +438,9 @@ namespace jv::bt
 	}
 
 	STBT* gSTBT;
-	uint32_t gSymInd;
+	int gId;
 
-	int gSetSymbol(lua_State* L)
+	int gGetSymbolIndex(lua_State* L)
 	{
 		const char* symbol = lua_tolstring(L, 0, nullptr);
 
@@ -451,17 +451,24 @@ namespace jv::bt
 				continue;
 			if (gSTBT->loadedSymbols[i] == symbol)
 			{
-				gSymInd = index;
-				return 0;
+				lua_pushnumber(L, index);
+				return 1;
 			}
 			index++;
 		}
+		lua_pushnumber(L, -1);
+		return 1;
+	}
+
+	int gSetIndex(lua_State* L)
+	{
+		gId = lua_tonumber(L, 0);
 		return 0;
 	}
 
 	int gGet(lua_State* L, float* TimeSeries::* arr)
 	{
-		const auto& active = gSTBT->timeSeriesArr[gSymInd];
+		const auto& active = gSTBT->timeSeriesArr[gId];
 		lua_createtable(L, active.length, 0);
 		int newTable = lua_gettop(L);
 
@@ -497,7 +504,7 @@ namespace jv::bt
 
 	int gGetLength(lua_State* L)
 	{
-		lua_pushnumber(L, gSTBT->timeSeriesArr[gSymInd].length);
+		lua_pushnumber(L, gSTBT->timeSeriesArr[gId].length);
 		return 1;
 	}
 
@@ -518,18 +525,20 @@ namespace jv::bt
 		luaL_openlibs(stbt.L);
 		std::string f = "Scripts/" + stbt.activeScript + ".lua";
 		luaL_dofile(stbt.L, f.c_str());
-		lua_register(stbt.L, "SetSymbol", gSetSymbol);
+		lua_register(stbt.L, "GetSymbolId", gGetSymbolIndex);
+		lua_register(stbt.L, "SetId", gSetIndex);
 		lua_register(stbt.L, "GetOpen", gGetOpen);
 		lua_register(stbt.L, "GetClose", gGetClose);
 		lua_register(stbt.L, "GetHigh", gGetHigh);
 		lua_register(stbt.L, "GetLow", gGetLow);
 		lua_register(stbt.L, "GetLength", gGetLength);
+		// buy n, sell n, get liquidity
 
 		// test.
-		lua_getglobal(stbt.L, "TEST");
-		lua_call(stbt.L, 0, 1);
-		float result = (float)lua_tonumber(stbt.L, -1);
-		lua_pop(stbt.L, 1);
+		//lua_getglobal(stbt.L, "TEST");
+		//lua_call(stbt.L, 0, 1);
+		//float result = (float)lua_tonumber(stbt.L, -1);
+		//lua_pop(stbt.L, 1);
 	}
 
 	bool STBT::Update()
@@ -615,7 +624,7 @@ namespace jv::bt
 				const char* buttons[]
 				{
 					"Portfolio",
-					"Scripts"
+					"Run Script"
 				};
 
 				for (uint32_t i = 0; i < 2; i++)
@@ -680,7 +689,7 @@ namespace jv::bt
 			{
 				ImGui::Begin("Scripts", nullptr, WIN_FLAGS);
 				ImGui::SetWindowPos({ 200, 0 });
-				ImGui::SetWindowSize({ 200, 400 });
+				ImGui::SetWindowSize({ 200, 100 });
 
 				std::string s = "Active: " + (L ? activeScript : "none");
 				ImGui::Text(s.c_str());
@@ -692,6 +701,26 @@ namespace jv::bt
 						activeScript = scripts[i];
 						OpenLua(*this);
 					}
+				}
+
+				ImGui::End();
+
+				ImGui::Begin("Run Info", nullptr, WIN_FLAGS);
+				ImGui::SetWindowPos({ 200, 100 });
+				ImGui::SetWindowSize({ 200, 300 });
+
+				ImGui::DatePicker("##", from);
+				ImGui::SameLine();
+				ImGui::Text("From");
+				ImGui::DatePicker("##2", to);
+				ImGui::SameLine();
+				ImGui::Text("To");
+
+				if (difftime(mktime(&from), mktime(&to)) > 0)
+				{
+					auto temp = to;
+					to = from;
+					from = to;
 				}
 
 				ImGui::End();

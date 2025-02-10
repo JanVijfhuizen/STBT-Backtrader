@@ -45,6 +45,7 @@ namespace jv::gr
 		__declspec(dllexport) void BindMesh(Mesh mesh);
 
 		__declspec(dllexport) [[nodiscard]] float GetAspectRatio();
+		__declspec(dllexport) void SetLineWidth(float width);
 
 		__declspec(dllexport) void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		__declspec(dllexport) void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);

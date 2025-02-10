@@ -38,6 +38,7 @@ namespace jv::bt
 
 		Array<char*> buffArr;
 		Array<TimeSeries> timeSeriesArr;
+		Array<glm::vec4> randColors;
 
 		__declspec(dllexport) bool Update();
 	};

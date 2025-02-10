@@ -124,11 +124,35 @@ namespace jv::bt
 		LoadEnabledSymbols(stbt);
 	}
 
+	static void LoadRandColors(STBT& stbt)
+	{
+		const uint32_t l = stbt.timeSeriesArr.length;
+		stbt.randColors = CreateArray<glm::vec4>(stbt.arena, l);
+
+		glm::vec4 predetermined[5]
+		{
+			glm::vec4(1, 0, 0, 1),
+			glm::vec4(0, 0, 1, 1),
+			glm::vec4(0, 1, 1, 1),
+			glm::vec4(1, 1, 0, 1),
+			glm::vec4(1, 0, 1, 1)
+		};
+
+		for (uint32_t i = 0; i < l; i++)
+		{
+			if (i < (sizeof(predetermined) / sizeof(glm::vec4)))
+				stbt.randColors[i] = predetermined[i];
+			else
+				stbt.randColors[i] = glm::vec4(RandF(0, 1), RandF(0, 1), RandF(0, 1), 1);
+		}
+	}
+
 	static void LoadSymbolSubMenu(STBT& stbt)
 	{
 		stbt.arena.DestroyScope(stbt.currentScope);
 		LoadSymbols(stbt);
 		stbt.timeSeriesArr = CreateArray<TimeSeries>(stbt.arena, 1);
+		LoadRandColors(stbt);
 	}
 
 	TimeSeries LoadSymbol(STBT& stbt, const uint32_t i)
@@ -172,6 +196,7 @@ namespace jv::bt
 			stbt.timeSeriesArr[index++] = LoadSymbol(stbt, i);
 		}
 		stbt.symbolIndex = -1;
+		LoadRandColors(stbt);
 	}
 
 	static void RenderSymbolData(STBT& stbt)
@@ -218,6 +243,20 @@ namespace jv::bt
 		uint32_t daysDiff = diff / 60 / 60 / 24;
 		uint32_t daysOrgDiff = orgDiff / 60 / 60 / 24;
 
+		// Get symbol index to normal index.
+		uint32_t sId = 0;
+		if (stbt.timeSeriesArr.length > 1)
+		{
+			for (uint32_t i = 0; i < stbt.enabledSymbols.length; i++)
+			{
+				if (!stbt.enabledSymbols[i])
+					continue;
+				if (i == stbt.symbolIndex)
+					break;
+				++sId;
+			}
+		}
+
 		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, stbt.timeSeriesArr.length);
 		for (uint32_t i = 0; i < stbt.timeSeriesArr.length; i++)
 		{
@@ -234,25 +273,17 @@ namespace jv::bt
 			}
 
 			stbt.renderer.graphBorderThickness = 0;
+			stbt.renderer.SetLineWidth(1.f + (sId == i) * .5f);
+
+			auto color = stbt.randColors[i];
+			color *= .5f + .5f * (sId == i);
+
 			stbt.renderer.DrawGraph({ .5, 0 },
 				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
 				points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType),
-				true, stbt.normalizeGraph);
+				true, stbt.normalizeGraph, color);
 		}
-
-		// Get symbol index to normal index.
-		uint32_t sId = 0;
-		if (stbt.timeSeriesArr.length > 1)
-		{
-			for (uint32_t i = 0; i < stbt.enabledSymbols.length; i++)
-			{
-				if (!stbt.enabledSymbols[i])
-					continue;
-				if (i == stbt.symbolIndex)
-					break;
-				++sId;
-			}
-		}
+		stbt.renderer.SetLineWidth(1);
 		
 		// If it's not trying to get data from before this stock existed.
 		if (stbt.ma > 0 && daysOrgDiff + daysDiff + 1 + stbt.ma < length && stbt.ma < 10000)
@@ -324,7 +355,6 @@ namespace jv::bt
 			ImGui::PopItemWidth();
 			ImGui::SameLine();
 			ImGui::Checkbox("Norm", &stbt.normalizeGraph);
-
 			ImGui::End();
 
 			std::string title = "Details: ";

@@ -132,7 +132,6 @@ namespace jv::bt
 
 	TimeSeries LoadSymbol(STBT& stbt, const uint32_t i)
 	{
-		LoadSymbolSubMenu(stbt);
 		stbt.symbolIndex = i;
 
 		const auto str = stbt.tracker.GetData(stbt.tempArena, stbt.loadedSymbols[i].c_str(), "Symbols/", stbt.license);
@@ -172,6 +171,9 @@ namespace jv::bt
 			stbt.timeSeriesArr[index++] = LoadSymbol(stbt, i);
 		}
 		stbt.symbolIndex = -1;
+
+		assert(stbt.timeSeriesArr[0].volume != stbt.timeSeriesArr[1].volume);
+
 	}
 
 	static void RenderSymbolData(STBT& stbt)
@@ -515,7 +517,11 @@ namespace jv::bt
 
 				const auto symbol = loadedSymbols[i].c_str();
 				if (ImGui::Button(symbol))
+				{
+					LoadSymbolSubMenu(*this);
 					timeSeries = LoadSymbol(*this, i);
+				}
+					
 
 				if(selected)
 					ImGui::PopStyleColor();

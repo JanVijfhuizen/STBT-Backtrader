@@ -28,6 +28,8 @@ namespace jv::bt
 		uint32_t symbolIndex;
 
 		Array<std::string> scripts;
+		std::string activeScript;
+		lua_State* L;
 
 		tm from, to;
 		int graphType;

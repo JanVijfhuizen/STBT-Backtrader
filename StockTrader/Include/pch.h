@@ -14,6 +14,13 @@
 #include <filesystem>
 #include <format>
 
+extern "C"
+{
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+}
+
 constexpr int32_t DAY_MUL = 60 * 60 * 24;
 
 #include "Ext/ImGuiDatePicker.h"

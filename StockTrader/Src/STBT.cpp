@@ -437,6 +437,101 @@ namespace jv::bt
 		}
 	}
 
+	STBT* gSTBT;
+	uint32_t gSymInd;
+
+	int gSetSymbol(lua_State* L)
+	{
+		const char* symbol = lua_tolstring(L, 0, nullptr);
+
+		uint32_t index = 0;
+		for (uint32_t i = 0; i < gSTBT->loadedSymbols.length; i++)
+		{
+			if (!gSTBT->enabledSymbols[i])
+				continue;
+			if (gSTBT->loadedSymbols[i] == symbol)
+			{
+				gSymInd = index;
+				return 0;
+			}
+			index++;
+		}
+		return 0;
+	}
+
+	int gGet(lua_State* L, float* TimeSeries::* arr)
+	{
+		const auto& active = gSTBT->timeSeriesArr[gSymInd];
+		lua_createtable(L, active.length, 0);
+		int newTable = lua_gettop(L);
+
+		for (uint32_t i = 0; i < active.length; i++)
+		{
+			const auto n = (active.*arr)[i];
+			lua_pushnumber(L, n);
+			lua_rawseti(L, newTable, i);
+		}
+
+		return 1;
+	}
+
+	int gGetOpen(lua_State* L)
+	{
+		return gGet(L, &TimeSeries::open);
+	}
+
+	int gGetClose(lua_State* L)
+	{
+		return gGet(L, &TimeSeries::close);
+	}
+
+	int gGetHigh(lua_State* L)
+	{
+		return gGet(L, &TimeSeries::high);
+	}
+
+	int gGetLow(lua_State* L)
+	{
+		return gGet(L, &TimeSeries::low);
+	}
+
+	int gGetLength(lua_State* L)
+	{
+		lua_pushnumber(L, gSTBT->timeSeriesArr[gSymInd].length);
+		return 1;
+	}
+
+	void CloseLua(STBT& stbt)
+	{
+		if (!stbt.L)
+			return;
+		lua_close(stbt.L);
+		stbt.L = nullptr;
+	}
+
+	void OpenLua(STBT& stbt)
+	{
+		// Needed for global functions.
+		gSTBT = &stbt;
+		CloseLua(stbt);
+		stbt.L = luaL_newstate();
+		luaL_openlibs(stbt.L);
+		std::string f = "Scripts/" + stbt.activeScript + ".lua";
+		luaL_dofile(stbt.L, f.c_str());
+		lua_register(stbt.L, "SetSymbol", gSetSymbol);
+		lua_register(stbt.L, "GetOpen", gGetOpen);
+		lua_register(stbt.L, "GetClose", gGetClose);
+		lua_register(stbt.L, "GetHigh", gGetHigh);
+		lua_register(stbt.L, "GetLow", gGetLow);
+		lua_register(stbt.L, "GetLength", gGetLength);
+
+		// test.
+		lua_getglobal(stbt.L, "TEST");
+		lua_call(stbt.L, 0, 1);
+		float result = (float)lua_tonumber(stbt.L, -1);
+		lua_pop(stbt.L, 1);
+	}
+
 	bool STBT::Update()
 	{
 		ImGui::Begin("Menu", nullptr, WIN_FLAGS);
@@ -587,9 +682,16 @@ namespace jv::bt
 				ImGui::SetWindowPos({ 200, 0 });
 				ImGui::SetWindowSize({ 200, 400 });
 
+				std::string s = "Active: " + (L ? activeScript : "none");
+				ImGui::Text(s.c_str());
+
 				for (uint32_t i = 0; i < scripts.length; i++)
 				{
-					ImGui::Button(scripts[i].c_str());
+					if (ImGui::Button(scripts[i].c_str())) 
+					{
+						activeScript = scripts[i];
+						OpenLua(*this);
+					}
 				}
 
 				ImGui::End();
@@ -713,7 +815,8 @@ namespace jv::bt
 		std::string strLicense = stbt.license;
 		if(strLicense == "")
 			stbt.output.Add() = "WARNING: Missing licensing.";
-			
+		
+		stbt.L = nullptr;
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

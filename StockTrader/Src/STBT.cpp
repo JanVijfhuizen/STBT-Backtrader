@@ -231,12 +231,11 @@ namespace jv::bt
 		stbt.subMenuIndex = 0;
 	}
 
-	static void RenderSymbolData(STBT& stbt)
+	static void ClampDates(STBT& stbt, std::time_t& tFrom, std::time_t& tTo, std::time_t& tCurrent, uint32_t& length)
 	{
-		auto tTo = mktime(&stbt.to);
-		auto tFrom = mktime(&stbt.from);
-		std::time_t tCurrent;
-		uint32_t length = UINT32_MAX;
+		tFrom = mktime(&stbt.from);
+		tTo = mktime(&stbt.to);
+		length = UINT32_MAX;
 
 		for (uint32_t i = 0; i < stbt.timeSeriesArr.length; i++)
 		{
@@ -268,6 +267,13 @@ namespace jv::bt
 			tTo = tFrom;
 			tFrom = tTemp;
 		}
+	}
+
+	static void RenderSymbolData(STBT& stbt)
+	{
+		std::time_t tFrom, tTo, tCurrent;
+		uint32_t length;
+		ClampDates(stbt, tFrom, tTo, tCurrent, length);
 
 		auto diff = difftime(tTo, tFrom);
 		diff = Min<double>(diff, (length - 1) * 60 * 60 * 24);
@@ -364,7 +370,7 @@ namespace jv::bt
 
 			if (ImGui::Button("Days"))
 			{
-				const int i = std::atoi(stbt.buffer2);
+				const int i = std::atoi(stbt.dayBuffer);
 				if (i < 1)
 				{
 					stbt.output.Add() = "ERROR: Invalid number of days given.";
@@ -380,7 +386,7 @@ namespace jv::bt
 
 			ImGui::SameLine();
 			ImGui::PushItemWidth(40);
-			ImGui::InputText("##", stbt.buffer2, 5, ImGuiInputTextFlags_CharsDecimal);
+			ImGui::InputText("##", stbt.dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal);
 			ImGui::SameLine();
 			ImGui::InputText("MA", stbt.buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
 			stbt.ma = std::atoi(stbt.buffer3);
@@ -666,7 +672,12 @@ namespace jv::bt
 					++index;
 
 					ImGui::PushID(i);
-					ImGui::InputText("##", buffArr[index], 9, ImGuiInputTextFlags_CharsDecimal);
+					if (ImGui::InputText("##", buffArr[index], 9, ImGuiInputTextFlags_CharsDecimal))
+					{
+						int32_t n = std::atoi(buffArr[index]);
+						if(n < 0)
+							snprintf(buffArr[index], sizeof(buffArr[index]), "%i", 0);
+					}
 					ImGui::PopID();
 					ImGui::SameLine();
 
@@ -688,8 +699,8 @@ namespace jv::bt
 			if (subMenuIndex == btmiScripts)
 			{
 				ImGui::Begin("Scripts", nullptr, WIN_FLAGS);
-				ImGui::SetWindowPos({ 200, 0 });
-				ImGui::SetWindowSize({ 200, 100 });
+				ImGui::SetWindowPos({ 200, 200 });
+				ImGui::SetWindowSize({ 200, 200 });
 
 				std::string s = "Active: " + (L ? activeScript : "none");
 				ImGui::Text(s.c_str());
@@ -706,8 +717,8 @@ namespace jv::bt
 				ImGui::End();
 
 				ImGui::Begin("Run Info", nullptr, WIN_FLAGS);
-				ImGui::SetWindowPos({ 200, 100 });
-				ImGui::SetWindowSize({ 200, 300 });
+				ImGui::SetWindowPos({ 200, 0 });
+				ImGui::SetWindowSize({ 200, 200 });
 
 				ImGui::DatePicker("##", from);
 				ImGui::SameLine();
@@ -715,6 +726,52 @@ namespace jv::bt
 				ImGui::DatePicker("##2", to);
 				ImGui::SameLine();
 				ImGui::Text("To");
+				/*
+				std::time_t tFrom = mktime(&from), tTo = mktime(&to), tCurrent;
+				uint32_t tLength;
+				ClampDates(*this, tFrom, tTo, tCurrent, tLength);
+				//from = *std::gmtime(&tFrom);
+				//to = *std::gmtime(&tTo);
+				*/
+				ImGui::InputText("Buffer", buffBuffer, 4, ImGuiInputTextFlags_CharsDecimal);
+				ImGui::InputText("Fee", feeBuffer, 5, ImGuiInputTextFlags_CharsScientific);
+
+				if (ImGui::Button("Days"))
+				{
+					const int i = std::atoi(dayBuffer);
+					if (i < 1)
+					{
+						output.Add() = "ERROR: Invalid number of days given.";
+					}
+					else
+					{
+						auto t = GetT();
+						to = *std::gmtime(&t);
+						t = GetT(i);
+						from = *std::gmtime(&t);
+					}
+				}
+				ImGui::SameLine();
+				ImGui::PushItemWidth(40);
+				ImGui::InputText("##4", dayBuffer, 5, ImGuiInputTextFlags_CharsScientific);
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::Checkbox("Randomize", &randomizeDate);
+
+				ImGui::PushItemWidth(40);
+				if (ImGui::InputText("Runs", runBuffer, 5, ImGuiInputTextFlags_CharsScientific))
+				{
+					int32_t n = std::atoi(runBuffer);
+					if (n < 1)
+						snprintf(runBuffer, sizeof(runBuffer), "%i", 1);
+				}
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::Checkbox("Log", &log);
+				ImGui::Button("Run Script");
+
+				// randomize date 
+				// save logs
 
 				if (difftime(mktime(&from), mktime(&to)) > 0)
 				{
@@ -846,6 +903,11 @@ namespace jv::bt
 			stbt.output.Add() = "WARNING: Missing licensing.";
 		
 		stbt.L = nullptr;
+		snprintf(stbt.feeBuffer, sizeof(stbt.feeBuffer), "%f", 1e-3f);
+		snprintf(stbt.buffBuffer, sizeof(stbt.buffBuffer), "%i", 0);
+		snprintf(stbt.runBuffer, sizeof(stbt.runBuffer), "%i", 1);
+		stbt.randomizeDate = false;
+		stbt.log = true;
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

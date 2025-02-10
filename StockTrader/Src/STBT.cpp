@@ -6,17 +6,14 @@
 namespace jv::ai
 {
 	const char* LICENSE_FILE_PATH = "license.txt";
+	const auto WIN_FLAGS = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
 	enum MenuIndex 
 	{
 		miMain,
 		miLicense,
 		miSymbols,
-		miBacktrader,
-		miTrain,
-		miUse,
-		miPortfolio,
-		miTutorial
+		miBacktrader
 	};
 
 	void* MAlloc(const uint32_t size)
@@ -107,6 +104,18 @@ namespace jv::ai
 
 		stbt.loadedSymbols = arr;
 		LoadEnabledSymbols(stbt);
+	}
+
+	static void LoadBacktraderSubMenu(STBT& stbt)
+	{
+		stbt.arena.DestroyScope(stbt.currentScope);
+		LoadSymbols(stbt);
+		uint32_t c = 0;
+		for (uint32_t i = 0; i < stbt.loadedSymbols.length; i++)
+			c += stbt.enabledSymbols[i];
+		stbt.buffArr = CreateArray<char*>(stbt.arena, c);
+		for (uint32_t i = 0; i < stbt.buffArr.length; i++)
+			stbt.buffArr[i] = stbt.arena.New<char>(16);
 	}
 
 	static void LoadSymbolSubMenu(STBT& stbt)
@@ -211,10 +220,120 @@ namespace jv::ai
 		stbt.graphPoints = points;
 	}
 
+	void LoadSymbol(STBT& stbt, const uint32_t i) 
+	{
+		LoadSymbolSubMenu(stbt);
+		stbt.symbolIndex = i;
+
+		const auto str = stbt.tracker.GetData(stbt.tempArena, stbt.loadedSymbols[i].c_str(), "Symbols/", stbt.license);
+		// If the data is invalid.
+		if (str[0] == '{')
+		{
+			stbt.symbolIndex = -1;
+			stbt.output.Add() = "ERROR: No valid symbol data found.";
+		}
+		else
+		{
+			stbt.timeSeries = stbt.tracker.ConvertDataToTimeSeries(stbt.arena, str);
+			if (stbt.timeSeries.date != GetT())
+				stbt.output.Add() = "WARNING: Symbol data is outdated.";
+		}
+	}
+
+	void TryRenderSymbol(STBT& stbt)
+	{
+		if (stbt.symbolIndex != -1)
+		{
+			RenderSymbolData(stbt);
+
+			ImGui::Begin("Settings", nullptr, WIN_FLAGS);
+			ImGui::SetWindowPos({ 400, 0 });
+			ImGui::SetWindowSize({ 400, 124 });
+			ImGui::DatePicker("Date 1", stbt.from);
+			ImGui::DatePicker("Date 2", stbt.to);
+
+			const char* items[]{ "Line","Candles" };
+			bool check = ImGui::Combo("Graph Type", &stbt.graphType, items, 2);
+
+			if (ImGui::Button("Days"))
+			{
+				const int i = std::atoi(stbt.buffer2);
+				if (i < 1)
+				{
+					stbt.output.Add() = "ERROR: Invalid number of days given.";
+				}
+				else
+				{
+					auto t = GetT();
+					stbt.to = *std::gmtime(&t);
+					t = GetT(i);
+					stbt.from = *std::gmtime(&t);
+				}
+			}
+
+			ImGui::SameLine();
+			ImGui::PushItemWidth(40);
+			ImGui::InputText("##", stbt.buffer2, 5, ImGuiInputTextFlags_CharsDecimal);
+			ImGui::SameLine();
+			ImGui::InputText("MA", stbt.buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
+			stbt.ma = std::atoi(stbt.buffer3);
+			ImGui::PopItemWidth();
+			ImGui::SameLine();
+			ImGui::Checkbox("Norm", &stbt.normalizeGraph);
+
+			ImGui::End();
+
+			std::string title = "Details: ";
+			title += stbt.loadedSymbols[stbt.symbolIndex];
+			ImGui::Begin(title.c_str(), nullptr, WIN_FLAGS);
+			ImGui::SetWindowPos({ 400, 500 });
+			ImGui::SetWindowSize({ 400, 100 });
+
+			float min = FLT_MAX, max = 0;
+
+			for (uint32_t i = 0; i < stbt.graphPoints.length; i++)
+			{
+				const auto& point = stbt.graphPoints[i];
+				min = Min<float>(min, point.low);
+				max = Max<float>(max, point.high);
+			}
+
+			if (stbt.graphPoints.length > 0)
+			{
+				auto str = std::format("{:.2f}", stbt.graphPoints[0].open);
+				str = "[Start] " + str;
+				ImGui::Text(str.c_str());
+				ImGui::SameLine();
+
+				str = std::format("{:.2f}", stbt.graphPoints[stbt.graphPoints.length - 1].close);
+				str = "[End] " + str;
+				ImGui::Text(str.c_str());
+				ImGui::SameLine();
+
+				const float change = stbt.graphPoints[stbt.graphPoints.length - 1].close - stbt.graphPoints[0].open;
+				ImGui::PushStyleColor(ImGuiCol_Text, { 1.f * (change < 0), 1.f * (change >= 0), 0, 1 });
+				str = std::format("{:.2f}", change);
+				str = "[Change] " + str;
+				ImGui::Text(str.c_str());
+				ImGui::PopStyleColor();
+
+				str = std::format("{:.2f}", max);
+				str = "[High] " + str;
+				ImGui::Text(str.c_str());
+				ImGui::SameLine();
+
+				str = std::format("{:.2f}", min);
+				str = "[Low] " + str;
+				ImGui::Text(str.c_str());
+			}
+
+			ImGui::End();
+		}
+	}
+
 	bool STBT::Update()
 	{
-		const auto winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-		ImGui::Begin("Menu", nullptr, winFlags);
+		ImGui::Begin("Menu", nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({0, 0});
 		ImGui::SetWindowSize({200, 400});
 
@@ -236,18 +355,7 @@ namespace jv::ai
 			break;
 		case miBacktrader:
 			title = "Backtrader";
-			break;
-		case miTrain:
-			title = "Train";
-			break;
-		case miUse:
-			title = "Use";
-			break;
-		case miPortfolio:
-			title = "Portfolio";
-			break;
-		case miTutorial:
-			title = "Tutorial";
+			description = "Test trade algorithms \nin paper trading.";
 			break;
 		}
 		ImGui::Text(title);
@@ -263,28 +371,8 @@ namespace jv::ai
 			}
 			if (ImGui::Button("Backtrader"))
 			{
-				arena.DestroyScope(currentScope);
+				LoadBacktraderSubMenu(*this);
 				menuIndex = miBacktrader;
-			}
-			if (ImGui::Button("Train"))
-			{
-				arena.DestroyScope(currentScope);
-				menuIndex = miTrain;
-			}	
-			if (ImGui::Button("Use"))
-			{
-				arena.DestroyScope(currentScope);
-				menuIndex = miUse;
-			}	
-			if (ImGui::Button("Portfolio"))
-			{
-				arena.DestroyScope(currentScope);
-				menuIndex = miPortfolio;
-			}
-			if (ImGui::Button("Tutorial"))
-			{
-				arena.DestroyScope(currentScope);
-				menuIndex = miTutorial;
 			}
 			if (ImGui::Button("Licensing"))
 			{
@@ -328,9 +416,43 @@ namespace jv::ai
 		
 		ImGui::End();
 
+		if (menuIndex == miBacktrader)
+		{
+			ImGui::Begin("Portfolio", nullptr, WIN_FLAGS);
+			ImGui::SetWindowPos({ 200, 0 });
+			ImGui::SetWindowSize({ 200, 400 });
+
+			uint32_t index = 0;
+			for (uint32_t i = 0; i < loadedSymbols.length; i++)
+			{
+				if (!enabledSymbols[i])
+					continue;
+
+				ImGui::PushID(i);
+				ImGui::InputText("##", buffArr[index], 9, ImGuiInputTextFlags_CharsDecimal);
+				ImGui::PopID();
+				ImGui::SameLine();
+
+				const bool selected = symbolIndex == i;
+				if (selected)
+					ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+
+				const auto symbol = loadedSymbols[i].c_str();
+				if(ImGui::Button(symbol))
+					LoadSymbol(*this, i);
+				++index;
+
+				if (selected)
+					ImGui::PopStyleColor();
+			}
+
+			ImGui::End();
+			TryRenderSymbol(*this);
+		}
+
 		if (menuIndex == miSymbols)
 		{
-			ImGui::Begin("List of symbols", nullptr, winFlags);
+			ImGui::Begin("List of symbols", nullptr, WIN_FLAGS);
 			ImGui::SetWindowPos({ 200, 0 });
 			ImGui::SetWindowSize({ 200, 400 });
 
@@ -376,26 +498,7 @@ namespace jv::ai
 
 				const auto symbol = loadedSymbols[i].c_str();
 				if (ImGui::Button(symbol))
-				{
-					LoadSymbolSubMenu(*this);
-					symbolIndex = i;
-
-					const auto str = tracker.GetData(tempArena, loadedSymbols[i].c_str(), "Symbols/", license);
-					// If the data is invalid.
-					if (str[0] == '{')
-					{
-						symbolIndex = -1;
-						output.Add() = "ERROR: No valid symbol data found.";
-					}
-					else
-					{
-						timeSeries = tracker.ConvertDataToTimeSeries(arena, str);
-						if (timeSeries.date != GetT())
-						{
-							output.Add() = "WARNING: Symbol data is outdated.";
-						}
-					}
-				}
+					LoadSymbol(*this, i);
 
 				if(selected)
 					ImGui::PopStyleColor();
@@ -403,96 +506,10 @@ namespace jv::ai
 
 			ImGui::End();
 
-			if (symbolIndex != -1)
-			{
-				RenderSymbolData(*this);
-
-				ImGui::Begin("Settings", nullptr, winFlags);
-				ImGui::SetWindowPos({ 400, 0 });
-				ImGui::SetWindowSize({ 400, 124 });
-				ImGui::DatePicker("Date 1", from);
-				ImGui::DatePicker("Date 2", to);
-
-				const char* items[]{ "Line","Candles" };
-				bool check = ImGui::Combo("Graph Type", &graphType, items, 2);
-
-				if (ImGui::Button("Days"))
-				{
-					const int i = std::atoi(buffer2);
-					if (i < 1)
-					{
-						output.Add() = "ERROR: Invalid number of days given.";
-					}
-					else 
-					{
-						auto t = GetT();
-						to = *std::gmtime(&t);
-						t = GetT(i);
-						from = *std::gmtime(&t);
-					}
-				}
-
-				ImGui::SameLine();
-				ImGui::PushItemWidth(40);
-				ImGui::InputText("##", buffer2, 5, ImGuiInputTextFlags_CharsDecimal);
-				ImGui::SameLine();
-				ImGui::InputText("MA", buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
-				ma = std::atoi(buffer3);
-				ImGui::PopItemWidth();
-				ImGui::SameLine();
-				ImGui::Checkbox("Norm", &normalizeGraph);
-
-				ImGui::End();
-
-				std::string title = "Details: ";
-				title += loadedSymbols[symbolIndex];
-				ImGui::Begin(title.c_str(), nullptr, winFlags);
-				ImGui::SetWindowPos({ 400, 500 });
-				ImGui::SetWindowSize({ 400, 100 });
-
-				float min = FLT_MAX, max = 0;
-
-				for (uint32_t i = 0; i < graphPoints.length; i++)
-				{
-					const auto& point = graphPoints[i];
-					min = Min<float>(min, point.low);
-					max = Max<float>(max, point.high);
-				}
-
-				if (graphPoints.length > 0)
-				{
-					auto str = std::format("{:.2f}", graphPoints[0].open);
-					str = "[Start] " + str;
-					ImGui::Text(str.c_str());
-					ImGui::SameLine();
-
-					str = std::format("{:.2f}", graphPoints[graphPoints.length - 1].close);
-					str = "[End] " + str;
-					ImGui::Text(str.c_str());
-					ImGui::SameLine();
-
-					const float change = graphPoints[graphPoints.length - 1].close - graphPoints[0].open;
-					ImGui::PushStyleColor(ImGuiCol_Text, { 1.f * (change < 0), 1.f * (change >= 0), 0, 1 });
-					str = std::format("{:.2f}", change);
-					str = "[Change] " + str;
-					ImGui::Text(str.c_str());
-					ImGui::PopStyleColor();
-
-					str = std::format("{:.2f}", max);
-					str = "[High] " + str;
-					ImGui::Text(str.c_str());
-					ImGui::SameLine();
-
-					str = std::format("{:.2f}", min);
-					str = "[Low] " + str;
-					ImGui::Text(str.c_str());
-				}
-
-				ImGui::End();
-			}
+			TryRenderSymbol(*this);
 		}
 
-		ImGui::Begin("Output", nullptr, winFlags);
+		ImGui::Begin("Output", nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({ 0, 400 });
 		ImGui::SetWindowSize({ 400, 200 });
 

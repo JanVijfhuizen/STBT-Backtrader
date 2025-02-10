@@ -172,8 +172,6 @@ namespace jv::bt
 		}
 		stbt.symbolIndex = -1;
 
-		assert(stbt.timeSeriesArr[0].volume != stbt.timeSeriesArr[1].volume);
-
 	}
 
 	static void RenderSymbolData(STBT& stbt)

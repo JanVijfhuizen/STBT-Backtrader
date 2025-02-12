@@ -225,13 +225,16 @@ namespace jv::bt
 				continue;
 			stbt.timeSeriesArr[index++] = LoadSymbol(stbt, i);
 		}
-		stbt.symbolIndex = -1;
+
 		LoadRandColors(stbt);
 		stbt.subScope = stbt.arena.CreateScope();
 		stbt.subMenuIndex = 0;
+		if(c > 0)
+			stbt.symbolIndex = 0;
 	}
 
-	static void ClampDates(STBT& stbt, std::time_t& tFrom, std::time_t& tTo, std::time_t& tCurrent, uint32_t& length)
+	static void ClampDates(STBT& stbt, std::time_t& tFrom, std::time_t& tTo, 
+		std::time_t& tCurrent, uint32_t& length, const uint32_t buffer)
 	{
 		tFrom = mktime(&stbt.from);
 		tTo = mktime(&stbt.to);
@@ -250,6 +253,8 @@ namespace jv::bt
 			}
 			length = Min<uint32_t>(length, timeSeries.length);
 		}
+		length = Max(buffer, length);
+		length -= buffer;
 
 		auto minTime = tTo > tFrom ? tTo : tFrom;
 		minTime -= (60 * 60 * 24) * length;
@@ -282,7 +287,7 @@ namespace jv::bt
 	{
 		std::time_t tFrom, tTo, tCurrent;
 		uint32_t length;
-		ClampDates(stbt, tFrom, tTo, tCurrent, length);
+		ClampDates(stbt, tFrom, tTo, tCurrent, length, 0);
 
 		auto diff = difftime(tTo, tFrom);
 		diff = Min<double>(diff, (length - 1) * 60 * 60 * 24);
@@ -662,8 +667,8 @@ namespace jv::bt
 			{
 				const char* buttons[]
 				{
-					"Portfolio",
-					"Run Script"
+					"Environment",
+					"Run Info"
 				};
 
 				for (uint32_t i = 0; i < 2; i++)
@@ -753,41 +758,28 @@ namespace jv::bt
 				ImGui::SetWindowPos({ 200, 0 });
 				ImGui::SetWindowSize({ 200, 200 });
 
-				ImGui::DatePicker("##", from);
-				ImGui::SameLine();
-				ImGui::Text("Date 1");
-				ImGui::DatePicker("##2", to);
-				ImGui::SameLine();
-				ImGui::Text("Date 2");
-				///*
-				std::time_t tFrom = mktime(&from), tTo = mktime(&to), tCurrent;
-				uint32_t tLength;
-				ClampDates(*this, tFrom, tTo, tCurrent, tLength);
-				//*/
+				ImGui::Checkbox("Randomize date", &randomizeDate);
+
+				if (randomizeDate)
+				{
+					ImGui::InputText("Days", dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal);
+				}
+				else
+				{
+					ImGui::DatePicker("##", from);
+					ImGui::SameLine();
+					ImGui::Text("Date 1");
+					ImGui::DatePicker("##2", to);
+					ImGui::SameLine();
+					ImGui::Text("Date 2");
+					///*
+					std::time_t tFrom = mktime(&from), tTo = mktime(&to), tCurrent;
+					uint32_t tLength;
+					ClampDates(*this, tFrom, tTo, tCurrent, tLength, std::atoi(buffBuffer));
+				}
+
 				ImGui::InputText("Buffer", buffBuffer, 4, ImGuiInputTextFlags_CharsDecimal);
 				ImGui::InputText("Fee", feeBuffer, 5, ImGuiInputTextFlags_CharsScientific);
-
-				if (ImGui::Button("Days"))
-				{
-					const int i = std::atoi(dayBuffer);
-					if (i < 1)
-					{
-						output.Add() = "ERROR: Invalid number of days given.";
-					}
-					else
-					{
-						auto t = GetT();
-						to = *std::gmtime(&t);
-						t = GetT(i);
-						from = *std::gmtime(&t);
-					}
-				}
-				ImGui::SameLine();
-				ImGui::PushItemWidth(40);
-				ImGui::InputText("##4", dayBuffer, 5, ImGuiInputTextFlags_CharsScientific);
-				ImGui::PopItemWidth();
-				ImGui::SameLine();
-				ImGui::Checkbox("Randomize", &randomizeDate);
 
 				ImGui::PushItemWidth(40);
 				if (ImGui::InputText("Runs", runBuffer, 5, ImGuiInputTextFlags_CharsScientific))

@@ -309,7 +309,7 @@ namespace jv::bt
 		{
 			auto& timeSeries = stbt.timeSeriesArr[i];
 			auto& points = graphPoints[i] = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
-
+			
 			for (uint32_t i = 0; i < daysDiff; i++)
 			{
 				const uint32_t index = daysDiff - i + daysOrgDiff - 1;
@@ -402,6 +402,13 @@ namespace jv::bt
 			ImGui::PopItemWidth();
 			ImGui::SameLine();
 			ImGui::Checkbox("Norm", &stbt.normalizeGraph);
+			ImGui::SameLine();
+			if (ImGui::Button("Lifetime"))
+			{
+				stbt.from = {};
+				auto t = GetT();
+				stbt.to = *std::gmtime(&t);
+			}
 			ImGui::End();
 
 			std::string title = "Details: ";
@@ -523,6 +530,22 @@ namespace jv::bt
 		return 1;
 	}
 
+	int gGetVolume(lua_State* L)
+	{
+		const auto& active = gSTBT->timeSeriesArr[gId];
+		lua_createtable(L, active.length, 0);
+		int newTable = lua_gettop(L);
+
+		for (uint32_t i = 0; i < active.length; i++)
+		{
+			const auto n = (active.volume)[i];
+			lua_pushnumber(L, n);
+			lua_rawseti(L, newTable, i);
+		}
+
+		return 1;
+	}
+
 	void CloseLua(STBT& stbt)
 	{
 		if (!stbt.L)
@@ -547,6 +570,7 @@ namespace jv::bt
 		lua_register(stbt.L, "GetHigh", gGetHigh);
 		lua_register(stbt.L, "GetLow", gGetLow);
 		lua_register(stbt.L, "GetLength", gGetLength);
+		lua_register(stbt.L, "GetVolume", gGetVolume);
 		// buy n, sell n, get liquidity
 
 		// test.
@@ -731,17 +755,15 @@ namespace jv::bt
 
 				ImGui::DatePicker("##", from);
 				ImGui::SameLine();
-				ImGui::Text("From");
+				ImGui::Text("Date 1");
 				ImGui::DatePicker("##2", to);
 				ImGui::SameLine();
-				ImGui::Text("To");
-				/*
+				ImGui::Text("Date 2");
+				///*
 				std::time_t tFrom = mktime(&from), tTo = mktime(&to), tCurrent;
 				uint32_t tLength;
 				ClampDates(*this, tFrom, tTo, tCurrent, tLength);
-				//from = *std::gmtime(&tFrom);
-				//to = *std::gmtime(&tTo);
-				*/
+				//*/
 				ImGui::InputText("Buffer", buffBuffer, 4, ImGuiInputTextFlags_CharsDecimal);
 				ImGui::InputText("Fee", feeBuffer, 5, ImGuiInputTextFlags_CharsScientific);
 

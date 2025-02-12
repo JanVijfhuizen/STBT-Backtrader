@@ -251,6 +251,15 @@ namespace jv::bt
 			length = Min<uint32_t>(length, timeSeries.length);
 		}
 
+		auto minTime = tTo > tFrom ? tTo : tFrom;
+		minTime -= (60 * 60 * 24) * length;
+		auto& floor = tTo > tFrom ? tFrom : tTo;
+		if (floor < minTime)
+		{
+			floor = minTime;
+			(tTo > tFrom ? stbt.from : stbt.to) = *std::gmtime(&floor);
+		}
+
 		if (tFrom >= tCurrent)
 		{
 			tFrom = tCurrent;

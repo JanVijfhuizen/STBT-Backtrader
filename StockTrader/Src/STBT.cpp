@@ -7,6 +7,7 @@ namespace jv::bt
 {
 	const char* LICENSE_FILE_PATH = "license.txt";
 	const auto WIN_FLAGS = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+	const uint32_t DAYS_DEFAULT = 28;
 
 	enum MenuIndex 
 	{
@@ -551,6 +552,26 @@ namespace jv::bt
 		return 1;
 	}
 
+	int gBuy(lua_State* L)
+	{
+		return 0;
+	}
+
+	int gSell(lua_State* L)
+	{
+		return 0;
+	}
+
+	int gGetNumInPort(lua_State* L)
+	{
+		return 1;
+	}
+
+	int gGetLiquidity(lua_State* L) 
+	{
+		return 1;
+	}
+
 	void CloseLua(STBT& stbt)
 	{
 		if (!stbt.L)
@@ -576,7 +597,10 @@ namespace jv::bt
 		lua_register(stbt.L, "GetLow", gGetLow);
 		lua_register(stbt.L, "GetLength", gGetLength);
 		lua_register(stbt.L, "GetVolume", gGetVolume);
-		// buy n, sell n, get liquidity
+		lua_register(stbt.L, "Buy", gBuy);
+		lua_register(stbt.L, "Sell", gSell);
+		lua_register(stbt.L, "GetLiquidity", gGetLiquidity);
+		lua_register(stbt.L, "GetNumInPort", gGetNumInPort);
 
 		// test.
 		//lua_getglobal(stbt.L, "TEST");
@@ -909,7 +933,7 @@ namespace jv::bt
 
 		auto t = GetT();
 		stbt.to = *std::gmtime(&t);
-		t = GetT(30);
+		t = GetT(DAYS_DEFAULT);
 		stbt.from = *std::gmtime(&t);
 		stbt.graphType = 0;
 
@@ -928,6 +952,7 @@ namespace jv::bt
 		stbt.L = nullptr;
 		snprintf(stbt.feeBuffer, sizeof(stbt.feeBuffer), "%f", 1e-3f);
 		snprintf(stbt.buffBuffer, sizeof(stbt.buffBuffer), "%i", 0);
+		snprintf(stbt.dayBuffer, sizeof(stbt.dayBuffer), "%i", DAYS_DEFAULT);
 		snprintf(stbt.runBuffer, sizeof(stbt.runBuffer), "%i", 1);
 		stbt.randomizeDate = false;
 		stbt.log = true;

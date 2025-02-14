@@ -2,10 +2,12 @@
 #include "STBT.h"
 #include <Jlib/ArrayUtils.h>
 #include "JLib/QueueUtils.h"
+#include <MenuItems/MI_Symbols.h>
+#include <MenuItems/MI_Licensing.h>
+#include <MenuItems/MI_Backtrader.h>
 
 namespace jv::bt
 {
-	const char* LICENSE_FILE_PATH = "license.txt";
 	const auto WIN_FLAGS = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 	const uint32_t DAYS_DEFAULT = 28;
 
@@ -50,62 +52,6 @@ namespace jv::bt
 		return tCurrent;
 	}
 
-	static void SaveEnabledSymbols(STBT& stbt)
-	{
-		const std::string path = "Symbols/enabled.txt";
-		std::ofstream fout(path);
-
-		for (const auto enabled : stbt.enabledSymbols)
-			fout << enabled << std::endl;
-		fout.close();
-	}
-
-	static void SaveOrCreateEnabledSymbols(STBT& stbt)
-	{
-		if (stbt.enabledSymbols.length != stbt.loadedSymbols.length)
-		{
-			stbt.enabledSymbols = jv::CreateArray<bool>(stbt.arena, stbt.loadedSymbols.length);
-			for (auto& b : stbt.enabledSymbols)
-				b = true;
-		}
-
-		SaveEnabledSymbols(stbt);
-	}
-
-	static void LoadEnabledSymbols(STBT& stbt)
-	{
-		const std::string path = "Symbols/enabled.txt";
-		std::ifstream fin(path);
-		std::string line;
-
-		if (!fin.good())
-		{
-			SaveOrCreateEnabledSymbols(stbt);
-			return;
-		}
-
-		uint32_t length = 0;
-		while (std::getline(fin, line))
-			++length;
-
-		if (length != stbt.loadedSymbols.length)
-		{
-			SaveOrCreateEnabledSymbols(stbt);
-			return;
-		}
-
-		fin.clear();
-		fin.seekg(0, std::ios::beg);
-
-		auto arr = jv::CreateArray<bool>(stbt.arena, length);
-
-		length = 0;
-		while (std::getline(fin, line))
-			arr[length++] = std::stoi(line);
-
-		stbt.enabledSymbols = arr;
-	}
-
 	static void LoadScripts(STBT& stbt)
 	{
 		stbt.arena.DestroyScope(stbt.subScope);
@@ -130,62 +76,6 @@ namespace jv::bt
 		stbt.scripts = arr;
 	}
 
-	static void LoadSymbols(STBT& stbt)
-	{
-		stbt.symbolIndex = -1;
-
-		std::string path("Symbols/");
-		std::string ext(".sym");
-
-		uint32_t length = 0;
-		for (auto& p : std::filesystem::recursive_directory_iterator(path))
-			if (p.path().extension() == ext)
-				++length;
-
-		auto arr = jv::CreateArray<std::string>(stbt.arena, length);
-
-		length = 0;
-		for (auto& p : std::filesystem::recursive_directory_iterator(path))
-		{
-			if (p.path().extension() == ext)
-				arr[length++] = p.path().stem().string();
-		}
-
-		stbt.loadedSymbols = arr;
-		LoadEnabledSymbols(stbt);
-	}
-
-	static void LoadRandColors(STBT& stbt)
-	{
-		const uint32_t l = stbt.timeSeriesArr.length;
-		stbt.randColors = CreateArray<glm::vec4>(stbt.arena, l);
-
-		glm::vec4 predetermined[5]
-		{
-			glm::vec4(1, 0, 0, 1),
-			glm::vec4(0, 0, 1, 1),
-			glm::vec4(0, 1, 1, 1),
-			glm::vec4(1, 1, 0, 1),
-			glm::vec4(1, 0, 1, 1)
-		};
-
-		for (uint32_t i = 0; i < l; i++)
-		{
-			if (i < (sizeof(predetermined) / sizeof(glm::vec4)))
-				stbt.randColors[i] = predetermined[i];
-			else
-				stbt.randColors[i] = glm::vec4(RandF(0, 1), RandF(0, 1), RandF(0, 1), 1);
-		}
-	}
-
-	static void LoadSymbolSubMenu(STBT& stbt)
-	{
-		stbt.arena.DestroyScope(stbt.currentScope);
-		LoadSymbols(stbt);
-		stbt.timeSeriesArr = CreateArray<TimeSeries>(stbt.arena, 1);
-		LoadRandColors(stbt);
-	}
-
 	TimeSeries LoadSymbol(STBT& stbt, const uint32_t i)
 	{
 		stbt.symbolIndex = i;
@@ -205,35 +95,6 @@ namespace jv::bt
 			return timeSeries;
 		}
 		return {};
-	}
-
-	static void LoadBacktraderSubMenu(STBT& stbt)
-	{
-		stbt.arena.DestroyScope(stbt.currentScope);
-		LoadSymbols(stbt);
-		uint32_t c = 0;
-		for (uint32_t i = 0; i < stbt.loadedSymbols.length; i++)
-			c += stbt.enabledSymbols[i];
-		stbt.buffArr = CreateArray<char*>(stbt.arena, c + 1);
-		for (uint32_t i = 0; i < stbt.buffArr.length; i++)
-			stbt.buffArr[i] = stbt.arena.New<char>(16);
-		stbt.timeSeriesArr = CreateArray<TimeSeries>(stbt.arena, c);
-
-		uint32_t index = 0;
-		for (size_t i = 0; i < stbt.enabledSymbols.length; i++)
-		{
-			if (!stbt.enabledSymbols[i])
-				continue;
-			stbt.timeSeriesArr[index++] = LoadSymbol(stbt, i);
-		}
-
-		LoadRandColors(stbt);
-		stbt.subScope = stbt.arena.CreateScope();
-		stbt.subMenuIndex = 0;
-		if(c > 0)
-			stbt.symbolIndex = 0;
-
-		stbt.portfolio = CreateArray<uint32_t>(stbt.arena, index);
 	}
 
 	static bool GetMaxLength(STBT& stbt, std::time_t& tCurrent, 
@@ -670,7 +531,7 @@ namespace jv::bt
 
 		const char* title = "DEFAULT";
 		const char* description = "";
-		switch (menuIndex)
+		switch (menu.GetIndex())
 		{
 		case miMain:
 			title = "Main Menu";
@@ -693,30 +554,25 @@ namespace jv::bt
 		ImGui::Text(description);
 		ImGui::Dummy({ 0, 20 });
 
-		if (menuIndex == miMain)
+		if (menu.GetIndex() == miMain)
 		{
 			if (ImGui::Button("Symbols"))
 			{
+				menu.SetIndex(arena, *this, miSymbols);
 				LoadSymbolSubMenu(*this);
-				menuIndex = miSymbols;
 			}
 			if (ImGui::Button("Backtrader"))
-			{
+			{	
+				menu.SetIndex(arena, *this, miBacktrader);
 				LoadBacktraderSubMenu(*this);
-				menuIndex = miBacktrader;
 			}
 			if (ImGui::Button("Licensing"))
-			{
-				arena.DestroyScope(currentScope);
-				menuIndex = miLicense;
-			}
+				menu.SetIndex(arena, *this, miLicense);
 			if (ImGui::Button("Exit"))
-			{
-				arena.DestroyScope(currentScope);
 				return true;
-			}
 		}
-		else 
+		else
+			menu.Update(*this);
 		{
 			if (menuIndex == miLicense)
 			{
@@ -994,7 +850,6 @@ namespace jv::bt
 		jv::gr::RendererCreateInfo createInfo{};
 		createInfo.title = "STBT (Stock Trading Back Tester)";
 		stbt.renderer = jv::gr::CreateRenderer(createInfo);
-		stbt.menuIndex = 0;
 
 		ArenaCreateInfo arenaCreateInfo{};
 		arenaCreateInfo.alloc = MAlloc;
@@ -1034,6 +889,11 @@ namespace jv::bt
 		stbt.randomizeDate = false;
 		stbt.log = true;
 		stbt.runsQueued = 0;
+
+		auto& menu = stbt.menu = Menu<STBT>::CreateMenu(stbt.arena, 3);
+		menu.Add() = stbt.arena.New<MI_Symbols>();
+		menu.Add() = stbt.arena.New<MI_Backtrader>();
+		menu.Add() = stbt.arena.New<MI_Licensing>();
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

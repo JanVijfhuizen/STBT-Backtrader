@@ -21,7 +21,12 @@ extern "C"
 #include "lauxlib.h"
 }
 
-constexpr int32_t DAY_MUL = 60 * 60 * 24;
+constexpr const int32_t DAY_MUL = 60 * 60 * 24;
+constexpr const glm::ivec2 RESOLUTION{ 600, 400 };
+constexpr const uint32_t MENU_WIDTH = 200;
+const glm::ivec2 MENU_RESOLUTION_SMALL{ MENU_WIDTH, 100 };
+const glm::ivec2 MENU_RESOLUTION = MENU_RESOLUTION_SMALL * glm::ivec2(1, 2);
+const glm::ivec2 MENU_RESOLUTION_LARGE = MENU_RESOLUTION_SMALL * glm::ivec2(1, 4);
 
 #include "Ext/ImGuiDatePicker.h"
 #include <imgui.h>

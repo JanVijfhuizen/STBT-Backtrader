@@ -182,8 +182,10 @@
     <ClInclude Include="Include\MenuItems\MI_Symbols.h" />
     <ClInclude Include="Include\MenuItems\MI_Backtrader.h" />
     <ClInclude Include="Include\MenuItems\MI_Licensing.h" />
+    <ClInclude Include="Include\MenuItems\MI_Utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\MI_Utils.cpp" />
     <ClCompile Include="Src\MI_Backtrader.cpp" />
     <ClCompile Include="Src\MI_Licensing.cpp" />
     <ClCompile Include="Src\MI_Symbols.cpp" />

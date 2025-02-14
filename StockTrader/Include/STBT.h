@@ -51,6 +51,8 @@ namespace jv::bt
 		Array<glm::vec4> randColors;
 
 		uint32_t runsQueued;
+		Array<uint32_t> portfolio;
+		float liquidity;
 
 		__declspec(dllexport) bool Update();
 	};

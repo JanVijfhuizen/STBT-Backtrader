@@ -232,6 +232,8 @@ namespace jv::bt
 		stbt.subMenuIndex = 0;
 		if(c > 0)
 			stbt.symbolIndex = 0;
+
+		stbt.portfolio = CreateArray<uint32_t>(stbt.arena, index);
 	}
 
 	static bool GetMaxLength(STBT& stbt, std::time_t& tCurrent, 
@@ -610,21 +612,43 @@ namespace jv::bt
 		lua_register(stbt.L, "Sell", gSell);
 		lua_register(stbt.L, "GetLiquidity", gGetLiquidity);
 		lua_register(stbt.L, "GetNumInPort", gGetNumInPort);
-
-		// test.
-		//lua_getglobal(stbt.L, "TEST");
-		//lua_call(stbt.L, 0, 1);
-		//float result = (float)lua_tonumber(stbt.L, -1);
-		//lua_pop(stbt.L, 1);
 	}
 
-	void ExecuteRun(STBT& stbt)
+	static void ExecuteRun(STBT& stbt)
 	{
+		--stbt.runsQueued;
+
 		ImGui::Begin("Active Run", nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({ 300, 225 });
 		ImGui::SetWindowSize({ 200, 150 });
 
 		ImGui::Text("Running...");
+
+		time_t current;
+		uint32_t length;
+		uint32_t buffer = std::atoi(stbt.buffBuffer);
+		const auto days = std::atoi(stbt.dayBuffer);
+		GetMaxLength(stbt, current, length, buffer);
+
+		if (stbt.randomizeDate)
+		{
+			uint32_t startOffset = rand() % (length - days);
+			auto a = GetT(startOffset);
+			auto b = GetT(startOffset + days);
+			stbt.from = *std::gmtime(&a);
+			stbt.to = *std::gmtime(&b);
+		}
+
+		stbt.liquidity = std::atof(stbt.buffArr[0]);
+		for (uint32_t i = 0; i < stbt.portfolio.length; i++)
+			int32_t n = std::atoi(stbt.buffArr[i + 1]);
+
+		//lua_getglobal(stbt.L, "PRE");
+
+		for (uint32_t i = 0; i < length - buffer; i++)
+		{
+
+		}
 
 		ImGui::End();
 	}
@@ -854,7 +878,7 @@ namespace jv::bt
 					}
 					else 
 					{
-						runsQueued = std::atoi(runBuffer);
+						bool valid = true;
 						if (randomizeDate)
 						{
 							time_t current;
@@ -865,17 +889,11 @@ namespace jv::bt
 							if (!GetMaxLength(*this, current, length, buffer) || days > length)
 							{
 								output.Add() = "ERROR: Can't start run.";
-								runsQueued = 0;
-							}
-							else
-							{
-								uint32_t startOffset = rand() % (length - days);
-								auto a = GetT(startOffset);
-								auto b = GetT(startOffset + days);
-								from = *std::gmtime(&a);
-								to = *std::gmtime(&b);
+								valid = false;
 							}
 						}
+						if (valid)
+							runsQueued = std::atoi(runBuffer);
 					}
 				}
 

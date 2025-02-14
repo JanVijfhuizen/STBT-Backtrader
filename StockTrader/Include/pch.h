@@ -35,7 +35,10 @@ constexpr int32_t DAY_MUL = 60 * 60 * 24;
 #include <Jlib/Arena.h>
 #include <JLib/Iterator.h>
 #include <JLib/Array.h>
+#include <JLib/Menu.h>
+
 #include <TimeSeries.h>
 #include <Tracker.h>
+#include <STBT.h>
 
 #endif //PCH_H

@@ -167,6 +167,7 @@
     <ClInclude Include="Include\JLib\Map.h" />
     <ClInclude Include="Include\JLib\MapUtils.h" />
     <ClInclude Include="Include\JLib\Math.h" />
+    <ClInclude Include="Include\JLib\Menu.h" />
     <ClInclude Include="Include\JLib\Queue.h" />
     <ClInclude Include="Include\JLib\QueueUtils.h" />
     <ClInclude Include="Include\JLib\Vector.h" />
@@ -178,8 +179,14 @@
     <ClInclude Include="Include\Graphics\Mesh.h" />
     <ClInclude Include="Include\Graphics\Renderer.h" />
     <ClInclude Include="Include\STBT.h" />
+    <ClInclude Include="Include\MenuItems\MI_Symbols.h" />
+    <ClInclude Include="Include\MenuItems\MI_Backtrader.h" />
+    <ClInclude Include="Include\MenuItems\MI_Licensing.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\MI_Backtrader.cpp" />
+    <ClCompile Include="Src\MI_Licensing.cpp" />
+    <ClCompile Include="Src\MI_Symbols.cpp" />
     <ClCompile Include="Src\ImGuiDatePicker.cpp" />
     <ClCompile Include="Src\Renderer.cpp" />
     <ClCompile Include="Src\Mesh.cpp" />

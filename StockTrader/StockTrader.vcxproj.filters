@@ -99,6 +99,18 @@
     <ClInclude Include="Include\Ext\ImGuiDatePicker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\JLib\Menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MenuItems\MI_Symbols.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MenuItems\MI_Licensing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MenuItems\MI_Backtrader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\dllmain.cpp">
@@ -138,6 +150,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\ImGuiDatePicker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\MI_Symbols.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\MI_Licensing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\MI_Backtrader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

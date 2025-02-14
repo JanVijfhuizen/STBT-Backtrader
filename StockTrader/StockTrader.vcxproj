@@ -172,11 +172,11 @@
     <ClInclude Include="Include\JLib\Vector.h" />
     <ClInclude Include="Include\JLib\VectorUtils.h" />
     <ClInclude Include="Include\pch.h" />
-    <ClInclude Include="Include\Shader.h" />
+    <ClInclude Include="Include\Graphics\Shader.h" />
     <ClInclude Include="Include\TimeSeries.h" />
     <ClInclude Include="Include\Tracker.h" />
-    <ClInclude Include="Include\Mesh.h" />
-    <ClInclude Include="Include\Renderer.h" />
+    <ClInclude Include="Include\Graphics\Mesh.h" />
+    <ClInclude Include="Include\Graphics\Renderer.h" />
     <ClInclude Include="Include\STBT.h" />
   </ItemGroup>
   <ItemGroup>

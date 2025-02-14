@@ -3,7 +3,7 @@
 #include "JLib/ArrayUtils.h"
 #include "JLib/Math.h"
 #include "JLib/Queue.h"
-#include <Renderer.h>
+#include <Graphics/Renderer.h>
 #include <STBT.h>
 
 int Add(lua_State* L)

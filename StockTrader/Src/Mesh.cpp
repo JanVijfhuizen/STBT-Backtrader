@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Mesh.h"
+#include "Graphics/Mesh.h"
 
 namespace jv::gr
 {

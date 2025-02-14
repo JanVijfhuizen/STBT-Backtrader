@@ -21,7 +21,7 @@ namespace jv
 			uint32_t length;
 		};
 
-		__declspec(dllexport) TimeSeries CreateTimeSeries(Arena& arena, uint32_t length);
-		__declspec(dllexport) void DestroyTimeSeries(const TimeSeries& timeSeries, Arena& arena);
+		TimeSeries CreateTimeSeries(Arena& arena, uint32_t length);
+		void DestroyTimeSeries(const TimeSeries& timeSeries, Arena& arena);
 	}
 }

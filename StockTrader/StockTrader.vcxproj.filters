@@ -84,13 +84,13 @@
     <ClInclude Include="Include\framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Shader.h">
+    <ClInclude Include="Include\Graphics\Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Mesh.h">
+    <ClInclude Include="Include\Graphics\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Renderer.h">
+    <ClInclude Include="Include\Graphics\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\STBT.h">

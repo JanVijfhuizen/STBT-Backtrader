@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Shader.h"
+#include "Graphics/Shader.h"
 
 namespace jv::gr
 {

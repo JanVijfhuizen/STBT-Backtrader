@@ -234,11 +234,9 @@ namespace jv::bt
 			stbt.symbolIndex = 0;
 	}
 
-	static void ClampDates(STBT& stbt, std::time_t& tFrom, std::time_t& tTo, 
-		std::time_t& tCurrent, uint32_t& length, const uint32_t buffer)
+	static bool GetMaxLength(STBT& stbt, std::time_t& tCurrent, 
+		uint32_t& length, const uint32_t buffer)
 	{
-		tFrom = mktime(&stbt.from);
-		tTo = mktime(&stbt.to);
 		length = UINT32_MAX;
 
 		for (uint32_t i = 0; i < stbt.timeSeriesArr.length; i++)
@@ -250,12 +248,23 @@ namespace jv::bt
 			else if (tCurrent != current)
 			{
 				stbt.output.Add() = "ERROR: Some symbol data is outdated.";
-				return;
+				return false;
 			}
 			length = Min<uint32_t>(length, timeSeries.length);
 		}
 		length = Max(buffer, length);
 		length -= buffer;
+		return true;
+	}
+
+	static void ClampDates(STBT& stbt, std::time_t& tFrom, std::time_t& tTo, 
+		std::time_t& tCurrent, uint32_t& length, const uint32_t buffer)
+	{
+		if (!GetMaxLength(stbt, tCurrent, length, buffer))
+			return;
+
+		tFrom = mktime(&stbt.from);
+		tTo = mktime(&stbt.to);
 
 		auto minTime = tTo > tFrom ? tTo : tFrom;
 		minTime -= (60 * 60 * 24) * length;
@@ -609,8 +618,28 @@ namespace jv::bt
 		//lua_pop(stbt.L, 1);
 	}
 
+	void ExecuteRun(STBT& stbt)
+	{
+		ImGui::Begin("Active Run", nullptr, WIN_FLAGS);
+		ImGui::SetWindowPos({ 300, 225 });
+		ImGui::SetWindowSize({ 200, 150 });
+
+		ImGui::Text("Running...");
+
+		ImGui::End();
+	}
+
 	bool STBT::Update()
 	{
+		if (runsQueued > 0)
+		{
+			ExecuteRun(*this);
+			ImGui::Render();
+			const bool ret = renderer.Render();
+			frameArena.Clear();
+			return ret;
+		}
+
 		ImGui::Begin("Menu", nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({0, 0});
 		ImGui::SetWindowSize({200, 400});
@@ -796,7 +825,7 @@ namespace jv::bt
 					ImGui::DatePicker("##2", to);
 					ImGui::SameLine();
 					ImGui::Text("Date 2");
-					///*
+
 					std::time_t tFrom = mktime(&from), tTo = mktime(&to), tCurrent;
 					uint32_t tLength;
 					ClampDates(*this, tFrom, tTo, tCurrent, tLength, std::atoi(buffBuffer));
@@ -812,13 +841,43 @@ namespace jv::bt
 					if (n < 1)
 						snprintf(runBuffer, sizeof(runBuffer), "%i", 1);
 				}
+
 				ImGui::PopItemWidth();
 				ImGui::SameLine();
 				ImGui::Checkbox("Log", &log);
-				ImGui::Button("Run Script");
 
-				// randomize date 
-				// save logs
+				if (ImGui::Button("Run Script"))
+				{
+					if (activeScript == "")
+					{
+						output.Add() = "ERROR: No script selected.";
+					}
+					else 
+					{
+						runsQueued = std::atoi(runBuffer);
+						if (randomizeDate)
+						{
+							time_t current;
+							uint32_t length;
+							uint32_t buffer = std::atoi(buffBuffer);
+							const auto days = std::atoi(dayBuffer);
+
+							if (!GetMaxLength(*this, current, length, buffer) || days > length)
+							{
+								output.Add() = "ERROR: Can't start run.";
+								runsQueued = 0;
+							}
+							else
+							{
+								uint32_t startOffset = rand() % (length - days);
+								auto a = GetT(startOffset);
+								auto b = GetT(startOffset + days);
+								from = *std::gmtime(&a);
+								to = *std::gmtime(&b);
+							}
+						}
+					}
+				}
 
 				if (difftime(mktime(&from), mktime(&to)) > 0)
 				{
@@ -956,6 +1015,7 @@ namespace jv::bt
 		snprintf(stbt.runBuffer, sizeof(stbt.runBuffer), "%i", 1);
 		stbt.randomizeDate = false;
 		stbt.log = true;
+		stbt.runsQueued = 0;
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)

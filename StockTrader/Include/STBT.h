@@ -50,6 +50,8 @@ namespace jv::bt
 		Array<TimeSeries> timeSeriesArr;
 		Array<glm::vec4> randColors;
 
+		uint32_t runsQueued;
+
 		__declspec(dllexport) bool Update();
 	};
 

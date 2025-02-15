@@ -7,11 +7,11 @@ namespace jv::bt
 	{
 	public:
 		Array<TimeSeries> timeSeries;
-		Array<glm::vec4> timeSeriesColors;
 		Array<std::string> names;
 		Array<bool> enabled;
 		char nameBuffer[6];
 		uint32_t symbolIndex = -1;
+		bool normalizeGraph = true;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);
@@ -28,7 +28,8 @@ namespace jv::bt
 		[[nodiscard]] static Array<std::string> GetSymbolNames(STBT& stbt);
 		[[nodiscard]] static TimeSeries LoadSymbol(STBT& stbt, const uint32_t i, const Array<std::string>& names, uint32_t& index);
 		[[nodiscard]] static Array<bool> GetEnabled(STBT& stbt, const Array<std::string>& names, Array<bool>& enabled);
-		static void RenderSymbolData(STBT& stbt);
+		[[nodiscard]] static Array<gr::GraphPoint> RenderSymbolData(STBT& stbt, Array<TimeSeries>& timeSeries, 
+			const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, const bool normalizeGraph);
 		void TryRenderSymbol(STBT& stbt);
 	};
 }

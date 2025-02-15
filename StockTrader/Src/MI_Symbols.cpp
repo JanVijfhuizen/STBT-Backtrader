@@ -13,9 +13,10 @@ namespace jv::bt
 		names = GetSymbolNames(stbt);
 		enabled = GetEnabled(stbt, names, enabled);
 		timeSeries = CreateArray<TimeSeries>(stbt.arena, 1);
-		timeSeriesColors = LoadRandColors(stbt, 1);
 		if (symbolIndex != -1 && symbolIndex >= names.length)
 			symbolIndex = -1;
+		if(symbolIndex != -1)
+			timeSeries[0] = LoadSymbol(stbt, symbolIndex, names, symbolIndex);
 	}
 
 	bool MI_Symbols::DrawMainMenu(STBT& stbt, uint32_t& index)
@@ -90,7 +91,6 @@ namespace jv::bt
 			const auto symbol = names[i].c_str();
 			if (ImGui::Button(symbol))
 			{
-				timeSeries[0] = LoadSymbol(stbt, i, names, symbolIndex);
 				symbolIndex = i;
 				RequestReload();
 			}
@@ -104,6 +104,8 @@ namespace jv::bt
 
 	bool MI_Symbols::DrawFree(STBT& stbt, uint32_t& index)
 	{
+		if (reload)
+			return false;
 		TryRenderSymbol(stbt);
 		return false;
 	}
@@ -223,12 +225,12 @@ namespace jv::bt
 		return arr;
 	}
 
-	void MI_Symbols::RenderSymbolData(STBT& stbt)
+	Array<gr::GraphPoint> MI_Symbols::RenderSymbolData(STBT& stbt, Array<TimeSeries>& timeSeries,
+		const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, const bool normalizeGraph)
 	{
-		/*
 		std::time_t tFrom, tTo, tCurrent;
 		uint32_t length;
-		ClampDates(stbt, tFrom, tTo, tCurrent, length, 0);
+		ClampDates(stbt, tFrom, tTo, tCurrent, timeSeries, length, 0);
 
 		auto diff = difftime(tTo, tFrom);
 		diff = Min<double>(diff, (length - 1) * 60 * 60 * 24);
@@ -238,43 +240,45 @@ namespace jv::bt
 
 		// Get symbol index to normal index.
 		uint32_t sId = 0;
-		if (stbt.timeSeriesArr.length > 1)
+		if (timeSeries.length > 1)
 		{
-			for (uint32_t i = 0; i < stbt.enabledSymbols.length; i++)
+			for (uint32_t i = 0; i < names.length; i++)
 			{
-				if (!stbt.enabledSymbols[i])
+				if (!enabled[i])
 					continue;
-				if (i == stbt.symbolIndex)
+				if (i == symbolIndex)
 					break;
 				++sId;
 			}
 		}
 
-		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, stbt.timeSeriesArr.length);
-		for (uint32_t i = 0; i < stbt.timeSeriesArr.length; i++)
+		auto randColors = LoadRandColors(stbt.frameArena, 1);
+
+		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, timeSeries.length);
+		for (uint32_t i = 0; i < timeSeries.length; i++)
 		{
-			auto& timeSeries = stbt.timeSeriesArr[i];
+			auto& series = timeSeries[i];
 			auto& points = graphPoints[i] = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
 
 			for (uint32_t i = 0; i < daysDiff; i++)
 			{
 				const uint32_t index = daysDiff - i + daysOrgDiff - 1;
-				points[i].open = timeSeries.open[index];
-				points[i].close = timeSeries.close[index];
-				points[i].high = timeSeries.high[index];
-				points[i].low = timeSeries.low[index];
+				points[i].open = series.open[index];
+				points[i].close = series.close[index];
+				points[i].high = series.high[index];
+				points[i].low = series.low[index];
 			}
 
 			stbt.renderer.graphBorderThickness = 0;
 			stbt.renderer.SetLineWidth(1.f + (sId == i) * 1.f);
 
-			auto color = stbt.randColors[i];
+			auto color = randColors[i];
 			color *= .2f + .8f * (sId == i);
 
 			stbt.renderer.DrawGraph({ .5, 0 },
 				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
 				points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType),
-				true, stbt.normalizeGraph, color);
+				true, normalizeGraph, color);
 		}
 		stbt.renderer.SetLineWidth(1);
 
@@ -289,7 +293,7 @@ namespace jv::bt
 				for (uint32_t j = 0; j < stbt.ma; j++)
 				{
 					const uint32_t index = daysDiff - i + j + daysOrgDiff - 1;
-					v += stbt.timeSeriesArr[sId].close[index];
+					v += timeSeries[sId].close[index];
 				}
 				v /= stbt.ma;
 
@@ -302,11 +306,10 @@ namespace jv::bt
 			stbt.renderer.DrawGraph({ .5, 0 },
 				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
 				points.ptr, points.length, gr::GraphType::line,
-				true, stbt.normalizeGraph, glm::vec4(0, 1, 0, 1));
+				true, normalizeGraph, glm::vec4(0, 1, 0, 1));
 		}
 
-		stbt.graphPoints = graphPoints[sId];
-		*/
+		return graphPoints[sId];
 	}
 
 	void MI_Symbols::TryRenderSymbol(STBT& stbt)
@@ -314,7 +317,7 @@ namespace jv::bt
 		if (symbolIndex == -1)
 			return;
 
-		RenderSymbolData(stbt);
+		auto graphPoints = RenderSymbolData(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
 
 		ImGui::Begin("Settings", nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({ 400, 0 });
@@ -327,7 +330,7 @@ namespace jv::bt
 
 		if (ImGui::Button("Days"))
 		{
-			const int i = std::atoi(stbt.dayBuffer);
+			const int i = stbt.days;
 			if (i < 1)
 			{
 				stbt.output.Add() = "ERROR: Invalid number of days given.";
@@ -341,15 +344,25 @@ namespace jv::bt
 			}
 		}
 
-		ImGui::SameLine();
 		ImGui::PushItemWidth(40);
-		ImGui::InputText("##", stbt.dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal);
+
+		char dayBuffer[6];
+		snprintf(dayBuffer, sizeof(dayBuffer), "%i", stbt.days);
+
 		ImGui::SameLine();
-		ImGui::InputText("MA", stbt.buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
-		stbt.ma = std::atoi(stbt.buffer3);
+		if (ImGui::InputText("##", dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
+			stbt.days = std::atoi(dayBuffer);
+
+		char maBuffer[6];
+		snprintf(maBuffer, sizeof(maBuffer), "%i", stbt.ma);
+
+		ImGui::SameLine();
+		if (ImGui::InputText("MA", maBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
+			stbt.ma = std::atoi(maBuffer);
+
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
-		ImGui::Checkbox("Norm", &stbt.normalizeGraph);
+		ImGui::Checkbox("Norm", &normalizeGraph);
 		ImGui::SameLine();
 		if (ImGui::Button("Lifetime"))
 		{
@@ -360,33 +373,33 @@ namespace jv::bt
 		ImGui::End();
 
 		std::string title = "Details: ";
-		title += stbt.loadedSymbols[stbt.symbolIndex];
+		title += names[symbolIndex];
 		ImGui::Begin(title.c_str(), nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({ 400, 500 });
 		ImGui::SetWindowSize({ 400, 100 });
 
 		float min = FLT_MAX, max = 0;
 
-		for (uint32_t i = 0; i < stbt.graphPoints.length; i++)
+		for (uint32_t i = 0; i < graphPoints.length; i++)
 		{
-			const auto& point = stbt.graphPoints[i];
+			const auto& point = graphPoints[i];
 			min = Min<float>(min, point.low);
 			max = Max<float>(max, point.high);
 		}
 
-		if (stbt.graphPoints.length > 0)
+		if (graphPoints.length > 0)
 		{
-			auto str = std::format("{:.2f}", stbt.graphPoints[0].open);
+			auto str = std::format("{:.2f}", graphPoints[0].open);
 			str = "[Start] " + str;
 			ImGui::Text(str.c_str());
 			ImGui::SameLine();
 
-			str = std::format("{:.2f}", stbt.graphPoints[stbt.graphPoints.length - 1].close);
+			str = std::format("{:.2f}", graphPoints[graphPoints.length - 1].close);
 			str = "[End] " + str;
 			ImGui::Text(str.c_str());
 			ImGui::SameLine();
 
-			const float change = stbt.graphPoints[stbt.graphPoints.length - 1].close - stbt.graphPoints[0].open;
+			const float change = graphPoints[graphPoints.length - 1].close - graphPoints[0].open;
 			ImGui::PushStyleColor(ImGuiCol_Text, { 1.f * (change < 0), 1.f * (change >= 0), 0, 1 });
 			str = std::format("{:.2f}", change);
 			str = "[Change] " + str;

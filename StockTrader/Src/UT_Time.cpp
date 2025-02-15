@@ -22,15 +22,14 @@ namespace jv::bt
 	}
 
 	bool GetMaxTimeLength(STBT& stbt, std::time_t& tCurrent,
-		uint32_t& length, const uint32_t buffer)
+		const Array<TimeSeries>& timeSeries, uint32_t& length, const uint32_t buffer)
 	{
-		/*
 		length = UINT32_MAX;
 
-		for (uint32_t i = 0; i < stbt.timeSeriesArr.length; i++)
+		for (uint32_t i = 0; i < timeSeries.length; i++)
 		{
-			const auto& timeSeries = stbt.timeSeriesArr[i];
-			std::time_t current = timeSeries.date;
+			const auto& series = timeSeries[i];
+			std::time_t current = series.date;
 			if (i == 0)
 				tCurrent = current;
 			else if (tCurrent != current)
@@ -38,19 +37,18 @@ namespace jv::bt
 				stbt.output.Add() = "ERROR: Some symbol data is outdated.";
 				return false;
 			}
-			length = Min<uint32_t>(length, timeSeries.length);
+			length = Min<uint32_t>(length, series.length);
 		}
 		length = Max(buffer, length);
 		length -= buffer;
-		*/
+
 		return true;
 	}
 
 	void ClampDates(STBT& stbt, std::time_t& tFrom, std::time_t& tTo,
-		std::time_t& tCurrent, uint32_t& length, const uint32_t buffer)
+		std::time_t& tCurrent, const Array<TimeSeries>& timeSeries, uint32_t& length, const uint32_t buffer)
 	{
-		/*
-		if (!GetMaxLength(stbt, tCurrent, length, buffer))
+		if (!GetMaxTimeLength(stbt, tCurrent, timeSeries, length, buffer))
 			return;
 
 		tFrom = mktime(&stbt.from);
@@ -81,6 +79,5 @@ namespace jv::bt
 			tTo = tFrom;
 			tFrom = tTemp;
 		}
-		*/
 	}
 }

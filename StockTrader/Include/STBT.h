@@ -21,25 +21,20 @@ namespace jv::bt
 		Menu<STBT> menu;
 
 		char license[32];
+
+		tm from, to;
+		int graphType;
+		uint32_t days;
+		uint32_t ma;
 		
 		/*
 		uint32_t subMenuIndex;
 		uint64_t subScope;
 
-		Array<std::string> loadedSymbols;
-		uint32_t symbolIndex;
-
 		Array<std::string> scripts;
 		std::string activeScript;
 		lua_State* L;
 
-		tm from, to;
-		int graphType;
-		uint32_t ma;
-		Array<gr::GraphPoint> graphPoints;
-		bool normalizeGraph;
-
-		char dayBuffer[8];
 		char buffer3[8];
 		char buffBuffer[8];
 		char feeBuffer[8];
@@ -47,8 +42,6 @@ namespace jv::bt
 		bool randomizeDate, log;
 
 		Array<char*> buffArr;
-		Array<TimeSeries> timeSeriesArr;
-		Array<glm::vec4> randColors;
 
 		uint32_t runsQueued;
 		Array<uint32_t> portfolio;

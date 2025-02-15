@@ -2,5 +2,5 @@
 
 namespace jv::bt
 {
-	[[nodiscard]] Array<glm::vec4> LoadRandColors(STBT& stbt, uint32_t length);
+	[[nodiscard]] Array<glm::vec4> LoadRandColors(Arena& arena, uint32_t length);
 }

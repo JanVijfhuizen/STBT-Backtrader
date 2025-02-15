@@ -4,9 +4,9 @@
 
 namespace jv::bt
 {
-	Array<glm::vec4> LoadRandColors(STBT& stbt, const uint32_t length)
+	Array<glm::vec4> LoadRandColors(Arena& arena, const uint32_t length)
 	{
-		auto randColors = CreateArray<glm::vec4>(stbt.arena, length);
+		auto randColors = CreateArray<glm::vec4>(arena, length);
 
 		glm::vec4 predetermined[5]
 		{

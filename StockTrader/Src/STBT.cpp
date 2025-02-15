@@ -65,27 +65,23 @@ namespace jv::bt
 		menu.Init(stbt.arena, stbt);
 		menu.SetIndex(stbt.arena, stbt, 0);
 
-		/*
-		stbt.enabledSymbols = {};
-
 		auto t = GetTime();
 		stbt.to = *std::gmtime(&t);
 		t = GetTime(DAYS_DEFAULT);
 		stbt.from = *std::gmtime(&t);
 		stbt.graphType = 0;
+		stbt.ma = 0;
+		stbt.days = DAYS_DEFAULT;
+
+		/*
 		
 		stbt.L = nullptr;
 		snprintf(stbt.feeBuffer, sizeof(stbt.feeBuffer), "%f", 1e-3f);
 		snprintf(stbt.buffBuffer, sizeof(stbt.buffBuffer), "%i", 0);
-		snprintf(stbt.dayBuffer, sizeof(stbt.dayBuffer), "%i", DAYS_DEFAULT);
 		snprintf(stbt.runBuffer, sizeof(stbt.runBuffer), "%i", 1);
 		stbt.randomizeDate = false;
 		stbt.log = true;
 		stbt.runsQueued = 0;
-
-		stbt.graphType = 0;
-		stbt.ma = 30;
-		stbt.normalizeGraph = true;
 		*/
 		return stbt;
 	}

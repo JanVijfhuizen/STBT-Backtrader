@@ -11,7 +11,7 @@ namespace jv::bt
 		Array<std::string> names;
 		Array<bool> enabled;
 		char nameBuffer[6];
-		uint32_t index;
+		uint32_t symbolIndex = -1;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

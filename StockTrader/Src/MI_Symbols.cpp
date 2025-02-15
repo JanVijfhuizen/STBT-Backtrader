@@ -6,13 +6,16 @@
 
 namespace jv::bt
 {
+	const std::string ENABLED_PATH = "Symbols/enabled.txt";
+
 	void MI_Symbols::Load(STBT& stbt)
 	{
 		names = GetSymbolNames(stbt);
 		enabled = GetEnabled(stbt, names, enabled);
 		timeSeries = CreateArray<TimeSeries>(stbt.arena, 1);
 		timeSeriesColors = LoadRandColors(stbt, 1);
-		index = -1;
+		if (symbolIndex != -1 && symbolIndex >= names.length)
+			symbolIndex = -1;
 	}
 
 	bool MI_Symbols::DrawMainMenu(STBT& stbt, uint32_t& index)
@@ -35,30 +38,41 @@ namespace jv::bt
 	{
 		if (ImGui::Button("Add"))
 		{
+			std::string s{ nameBuffer };
+			for (auto& name : names)
+				if (name == s)
+				{
+					stbt.output.Add() = "ERROR: Symbol already present.";
+					return false;
+				}
+
 			const auto tempScope = stbt.tempArena.CreateScope();
 			const auto c = stbt.tracker.GetData(stbt.tempArena, nameBuffer, "Symbols/", stbt.license);
-			if (c[0] == '{')
-				stbt.output.Add() = "ERROR: Unable to download symbol data.";
-
 			stbt.tempArena.DestroyScope(tempScope);
+			if (c[0] == '{')
+			{
+				stbt.output.Add() = "ERROR: Unable to download symbol data.";	
+				return false;
+			}
 
-			uint32_t index = 0;
-			std::string s{ nameBuffer };
+			uint32_t lIndex = 0;
 			if (s != "")
 			{
 				for (auto& symbol : names)
-					index += symbol < s;
+					lIndex += symbol < s;
 
 				auto arr = CreateArray<bool>(stbt.arena, enabled.length + 1);
 				for (uint32_t i = 0; i < enabled.length; i++)
-					arr[i + (i >= index)] = enabled[i];
-				arr[index] = false;
+					arr[i + (i >= lIndex)] = enabled[i];
+				arr[lIndex] = false;
 				enabled = arr;
 			}
 
 			SaveEnabledSymbols(stbt, enabled);
 			RequestReload();
+			return false;
 		}
+
 		ImGui::SameLine();
 		ImGui::InputText("#", nameBuffer, 5, ImGuiInputTextFlags_CharsUppercase);
 
@@ -69,15 +83,15 @@ namespace jv::bt
 			ImGui::PopID();
 			ImGui::SameLine();
 
-			const bool selected = index == i;
+			const bool selected = symbolIndex == i;
 			if (selected)
 				ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
 
 			const auto symbol = names[i].c_str();
 			if (ImGui::Button(symbol))
 			{
-				timeSeries[0] = LoadSymbol(stbt, i, names, index);
-				index = i;
+				timeSeries[0] = LoadSymbol(stbt, i, names, symbolIndex);
+				symbolIndex = i;
 				RequestReload();
 			}
 
@@ -115,9 +129,7 @@ namespace jv::bt
 
 	void MI_Symbols::SaveEnabledSymbols(STBT& stbt, const Array<bool>& enabled)
 	{
-		const std::string path = "Symbols/enabled.txt";
-		std::ofstream fout(path);
-
+		std::ofstream fout(ENABLED_PATH);
 		for (const auto enabled : enabled)
 			fout << enabled << std::endl;
 		fout.close();
@@ -180,8 +192,7 @@ namespace jv::bt
 
 	Array<bool> MI_Symbols::GetEnabled(STBT& stbt, const Array<std::string>& names, Array<bool>& enabled)
 	{
-		const std::string path = "Symbols/enabled.txt";
-		std::ifstream fin(path);
+		std::ifstream fin(ENABLED_PATH);
 		std::string line;
 
 		if (!fin.good())
@@ -300,100 +311,98 @@ namespace jv::bt
 
 	void MI_Symbols::TryRenderSymbol(STBT& stbt)
 	{
-		/*
-		if (stbt.symbolIndex != -1)
+		if (symbolIndex == -1)
+			return;
+
+		RenderSymbolData(stbt);
+
+		ImGui::Begin("Settings", nullptr, WIN_FLAGS);
+		ImGui::SetWindowPos({ 400, 0 });
+		ImGui::SetWindowSize({ 400, 124 });
+		ImGui::DatePicker("Date 1", stbt.from);
+		ImGui::DatePicker("Date 2", stbt.to);
+
+		const char* items[]{ "Line","Candles" };
+		bool check = ImGui::Combo("Graph Type", &stbt.graphType, items, 2);
+
+		if (ImGui::Button("Days"))
 		{
-			RenderSymbolData(stbt);
-
-			ImGui::Begin("Settings", nullptr, WIN_FLAGS);
-			ImGui::SetWindowPos({ 400, 0 });
-			ImGui::SetWindowSize({ 400, 124 });
-			ImGui::DatePicker("Date 1", stbt.from);
-			ImGui::DatePicker("Date 2", stbt.to);
-
-			const char* items[]{ "Line","Candles" };
-			bool check = ImGui::Combo("Graph Type", &stbt.graphType, items, 2);
-
-			if (ImGui::Button("Days"))
+			const int i = std::atoi(stbt.dayBuffer);
+			if (i < 1)
 			{
-				const int i = std::atoi(stbt.dayBuffer);
-				if (i < 1)
-				{
-					stbt.output.Add() = "ERROR: Invalid number of days given.";
-				}
-				else
-				{
-					auto t = GetTime();
-					stbt.to = *std::gmtime(&t);
-					t = GetTime(i);
-					stbt.from = *std::gmtime(&t);
-				}
+				stbt.output.Add() = "ERROR: Invalid number of days given.";
 			}
-
-			ImGui::SameLine();
-			ImGui::PushItemWidth(40);
-			ImGui::InputText("##", stbt.dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal);
-			ImGui::SameLine();
-			ImGui::InputText("MA", stbt.buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
-			stbt.ma = std::atoi(stbt.buffer3);
-			ImGui::PopItemWidth();
-			ImGui::SameLine();
-			ImGui::Checkbox("Norm", &stbt.normalizeGraph);
-			ImGui::SameLine();
-			if (ImGui::Button("Lifetime"))
+			else
 			{
-				stbt.from = {};
 				auto t = GetTime();
 				stbt.to = *std::gmtime(&t);
+				t = GetTime(i);
+				stbt.from = *std::gmtime(&t);
 			}
-			ImGui::End();
-
-			std::string title = "Details: ";
-			title += stbt.loadedSymbols[stbt.symbolIndex];
-			ImGui::Begin(title.c_str(), nullptr, WIN_FLAGS);
-			ImGui::SetWindowPos({ 400, 500 });
-			ImGui::SetWindowSize({ 400, 100 });
-
-			float min = FLT_MAX, max = 0;
-
-			for (uint32_t i = 0; i < stbt.graphPoints.length; i++)
-			{
-				const auto& point = stbt.graphPoints[i];
-				min = Min<float>(min, point.low);
-				max = Max<float>(max, point.high);
-			}
-
-			if (stbt.graphPoints.length > 0)
-			{
-				auto str = std::format("{:.2f}", stbt.graphPoints[0].open);
-				str = "[Start] " + str;
-				ImGui::Text(str.c_str());
-				ImGui::SameLine();
-
-				str = std::format("{:.2f}", stbt.graphPoints[stbt.graphPoints.length - 1].close);
-				str = "[End] " + str;
-				ImGui::Text(str.c_str());
-				ImGui::SameLine();
-
-				const float change = stbt.graphPoints[stbt.graphPoints.length - 1].close - stbt.graphPoints[0].open;
-				ImGui::PushStyleColor(ImGuiCol_Text, { 1.f * (change < 0), 1.f * (change >= 0), 0, 1 });
-				str = std::format("{:.2f}", change);
-				str = "[Change] " + str;
-				ImGui::Text(str.c_str());
-				ImGui::PopStyleColor();
-
-				str = std::format("{:.2f}", max);
-				str = "[High] " + str;
-				ImGui::Text(str.c_str());
-				ImGui::SameLine();
-
-				str = std::format("{:.2f}", min);
-				str = "[Low] " + str;
-				ImGui::Text(str.c_str());
-			}
-
-			ImGui::End();
 		}
-		*/
+
+		ImGui::SameLine();
+		ImGui::PushItemWidth(40);
+		ImGui::InputText("##", stbt.dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal);
+		ImGui::SameLine();
+		ImGui::InputText("MA", stbt.buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
+		stbt.ma = std::atoi(stbt.buffer3);
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		ImGui::Checkbox("Norm", &stbt.normalizeGraph);
+		ImGui::SameLine();
+		if (ImGui::Button("Lifetime"))
+		{
+			stbt.from = {};
+			auto t = GetTime();
+			stbt.to = *std::gmtime(&t);
+		}
+		ImGui::End();
+
+		std::string title = "Details: ";
+		title += stbt.loadedSymbols[stbt.symbolIndex];
+		ImGui::Begin(title.c_str(), nullptr, WIN_FLAGS);
+		ImGui::SetWindowPos({ 400, 500 });
+		ImGui::SetWindowSize({ 400, 100 });
+
+		float min = FLT_MAX, max = 0;
+
+		for (uint32_t i = 0; i < stbt.graphPoints.length; i++)
+		{
+			const auto& point = stbt.graphPoints[i];
+			min = Min<float>(min, point.low);
+			max = Max<float>(max, point.high);
+		}
+
+		if (stbt.graphPoints.length > 0)
+		{
+			auto str = std::format("{:.2f}", stbt.graphPoints[0].open);
+			str = "[Start] " + str;
+			ImGui::Text(str.c_str());
+			ImGui::SameLine();
+
+			str = std::format("{:.2f}", stbt.graphPoints[stbt.graphPoints.length - 1].close);
+			str = "[End] " + str;
+			ImGui::Text(str.c_str());
+			ImGui::SameLine();
+
+			const float change = stbt.graphPoints[stbt.graphPoints.length - 1].close - stbt.graphPoints[0].open;
+			ImGui::PushStyleColor(ImGuiCol_Text, { 1.f * (change < 0), 1.f * (change >= 0), 0, 1 });
+			str = std::format("{:.2f}", change);
+			str = "[Change] " + str;
+			ImGui::Text(str.c_str());
+			ImGui::PopStyleColor();
+
+			str = std::format("{:.2f}", max);
+			str = "[High] " + str;
+			ImGui::Text(str.c_str());
+			ImGui::SameLine();
+
+			str = std::format("{:.2f}", min);
+			str = "[Low] " + str;
+			ImGui::Text(str.c_str());
+		}
+
+		ImGui::End();
 	}
 }

@@ -80,7 +80,7 @@ namespace jv
 		const auto ret = item->Update(t, i);
 		if (item->reload)
 		{
-			SetIndex(arena, t, i);
+			SetIndex(arena, t, index);
 			item->reload = false;
 		}
 			

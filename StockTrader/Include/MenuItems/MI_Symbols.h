@@ -15,6 +15,9 @@ namespace jv::bt
 		void Unload(STBT& stbt) override;
 
 		static void LoadSymbols(STBT& stbt);
+		[[nodiscard]] static TimeSeries LoadSymbol(STBT& stbt, const uint32_t i);
 		static void LoadEnabledSymbols(STBT& stbt);
+		static void RenderSymbolData(STBT& stbt);
+		void TryRenderSymbol(STBT& stbt);
 	};
 }

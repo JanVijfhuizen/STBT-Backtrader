@@ -20,6 +20,7 @@ namespace jv::bt
 
 		Menu<STBT> menu;
 		
+		/*
 		uint32_t subMenuIndex;
 		uint64_t subScope;
 
@@ -53,6 +54,7 @@ namespace jv::bt
 		uint32_t runsQueued;
 		Array<uint32_t> portfolio;
 		float liquidity;
+		*/
 
 		__declspec(dllexport) bool Update();
 	};

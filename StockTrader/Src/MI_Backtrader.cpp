@@ -6,6 +6,32 @@
 
 namespace jv::bt
 {
+	static void LoadScripts(STBT& stbt)
+	{
+		/*
+		stbt.arena.DestroyScope(stbt.subScope);
+
+		std::string path("Scripts/");
+		std::string ext(".lua");
+
+		uint32_t length = 0;
+		for (auto& p : std::filesystem::recursive_directory_iterator(path))
+			if (p.path().extension() == ext)
+				++length;
+
+		auto arr = jv::CreateArray<std::string>(stbt.arena, length);
+
+		length = 0;
+		for (auto& p : std::filesystem::recursive_directory_iterator(path))
+		{
+			if (p.path().extension() == ext)
+				arr[length++] = p.path().stem().string();
+		}
+
+		stbt.scripts = arr;
+		*/
+	}
+
 	void MI_Backtrader::Load(STBT& stbt)
 	{
 		/*

@@ -7,6 +7,7 @@ namespace jv::bt
 
 	void MI_Licensing::Load(STBT& stbt)
 	{
+		/*
 		std::ifstream f(LICENSE_FILE_PATH);
 		if (f.good())
 		{
@@ -18,6 +19,7 @@ namespace jv::bt
 		std::string strLicense = stbt.license;
 		if (strLicense == "")
 			stbt.output.Add() = "WARNING: Missing licensing.";
+			*/
 	}
 
 	bool MI_Licensing::DrawMainMenu(uint32_t& index)

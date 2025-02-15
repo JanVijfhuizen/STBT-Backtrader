@@ -6,6 +6,7 @@ namespace jv::bt
 {
 	void LoadRandColors(STBT& stbt)
 	{
+		/*
 		const uint32_t l = stbt.timeSeriesArr.length;
 		stbt.randColors = CreateArray<glm::vec4>(stbt.arena, l);
 
@@ -25,5 +26,6 @@ namespace jv::bt
 			else
 				stbt.randColors[i] = glm::vec4(RandF(0, 1), RandF(0, 1), RandF(0, 1), 1);
 		}
+		*/
 	}
 }

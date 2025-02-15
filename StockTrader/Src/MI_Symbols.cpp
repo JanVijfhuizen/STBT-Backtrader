@@ -7,16 +7,19 @@ namespace jv::bt
 {
 	static void SaveEnabledSymbols(STBT& stbt)
 	{
+		/*
 		const std::string path = "Symbols/enabled.txt";
 		std::ofstream fout(path);
 
 		for (const auto enabled : stbt.enabledSymbols)
 			fout << enabled << std::endl;
 		fout.close();
+		*/
 	}
 
 	static void SaveOrCreateEnabledSymbols(STBT& stbt)
 	{
+		/*
 		if (stbt.enabledSymbols.length != stbt.loadedSymbols.length)
 		{
 			stbt.enabledSymbols = jv::CreateArray<bool>(stbt.arena, stbt.loadedSymbols.length);
@@ -25,13 +28,16 @@ namespace jv::bt
 		}
 
 		SaveEnabledSymbols(stbt);
+		*/
 	}
 
 	void MI_Symbols::Load(STBT& stbt)
 	{
+		/*
 		LoadSymbols(stbt);
 		stbt.timeSeriesArr = CreateArray<TimeSeries>(stbt.arena, 1);
 		LoadRandColors(stbt);
+		*/
 	}
 
 	bool MI_Symbols::DrawMainMenu(uint32_t& index)
@@ -135,6 +141,7 @@ namespace jv::bt
 
 	void MI_Symbols::LoadSymbols(STBT& stbt)
 	{
+		/*
 		stbt.symbolIndex = -1;
 
 		std::string path("Symbols/");
@@ -156,9 +163,35 @@ namespace jv::bt
 
 		stbt.loadedSymbols = arr;
 		LoadEnabledSymbols(stbt);
+		*/
 	}
+
+	TimeSeries MI_Symbols::LoadSymbol(STBT& stbt, const uint32_t i)
+	{
+		/*
+		stbt.symbolIndex = i;
+
+		const auto str = stbt.tracker.GetData(stbt.tempArena, stbt.loadedSymbols[i].c_str(), "Symbols/", stbt.license);
+		// If the data is invalid.
+		if (str[0] == '{')
+		{
+			stbt.symbolIndex = -1;
+			stbt.output.Add() = "ERROR: No valid symbol data found.";
+		}
+		else
+		{
+			auto timeSeries = stbt.tracker.ConvertDataToTimeSeries(stbt.arena, str);
+			if (timeSeries.date != GetTime())
+				stbt.output.Add() = "WARNING: Symbol data is outdated.";
+			return timeSeries;
+		}
+		*/
+		return {};
+	}
+
 	void MI_Symbols::LoadEnabledSymbols(STBT& stbt)
 	{
+		/*
 		const std::string path = "Symbols/enabled.txt";
 		std::ifstream fin(path);
 		std::string line;
@@ -189,5 +222,191 @@ namespace jv::bt
 			arr[length++] = std::stoi(line);
 
 		stbt.enabledSymbols = arr;
+		*/
+	}
+
+	void MI_Symbols::RenderSymbolData(STBT& stbt)
+	{
+		/*
+		std::time_t tFrom, tTo, tCurrent;
+		uint32_t length;
+		ClampDates(stbt, tFrom, tTo, tCurrent, length, 0);
+
+		auto diff = difftime(tTo, tFrom);
+		diff = Min<double>(diff, (length - 1) * 60 * 60 * 24);
+		auto orgDiff = Max<double>(difftime(tCurrent, tTo), 0);
+		uint32_t daysDiff = diff / 60 / 60 / 24;
+		uint32_t daysOrgDiff = orgDiff / 60 / 60 / 24;
+
+		// Get symbol index to normal index.
+		uint32_t sId = 0;
+		if (stbt.timeSeriesArr.length > 1)
+		{
+			for (uint32_t i = 0; i < stbt.enabledSymbols.length; i++)
+			{
+				if (!stbt.enabledSymbols[i])
+					continue;
+				if (i == stbt.symbolIndex)
+					break;
+				++sId;
+			}
+		}
+
+		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, stbt.timeSeriesArr.length);
+		for (uint32_t i = 0; i < stbt.timeSeriesArr.length; i++)
+		{
+			auto& timeSeries = stbt.timeSeriesArr[i];
+			auto& points = graphPoints[i] = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
+
+			for (uint32_t i = 0; i < daysDiff; i++)
+			{
+				const uint32_t index = daysDiff - i + daysOrgDiff - 1;
+				points[i].open = timeSeries.open[index];
+				points[i].close = timeSeries.close[index];
+				points[i].high = timeSeries.high[index];
+				points[i].low = timeSeries.low[index];
+			}
+
+			stbt.renderer.graphBorderThickness = 0;
+			stbt.renderer.SetLineWidth(1.f + (sId == i) * 1.f);
+
+			auto color = stbt.randColors[i];
+			color *= .2f + .8f * (sId == i);
+
+			stbt.renderer.DrawGraph({ .5, 0 },
+				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
+				points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType),
+				true, stbt.normalizeGraph, color);
+		}
+		stbt.renderer.SetLineWidth(1);
+
+		// If it's not trying to get data from before this stock existed.
+		if (stbt.ma > 0 && daysOrgDiff + daysDiff + 1 + stbt.ma < length && stbt.ma < 10000)
+		{
+			auto points = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
+			for (uint32_t i = 0; i < daysDiff; i++)
+			{
+				float v = 0;
+
+				for (uint32_t j = 0; j < stbt.ma; j++)
+				{
+					const uint32_t index = daysDiff - i + j + daysOrgDiff - 1;
+					v += stbt.timeSeriesArr[sId].close[index];
+				}
+				v /= stbt.ma;
+
+				points[i].open = v;
+				points[i].close = v;
+				points[i].high = v;
+				points[i].low = v;
+			}
+
+			stbt.renderer.DrawGraph({ .5, 0 },
+				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
+				points.ptr, points.length, gr::GraphType::line,
+				true, stbt.normalizeGraph, glm::vec4(0, 1, 0, 1));
+		}
+
+		stbt.graphPoints = graphPoints[sId];
+		*/
+	}
+
+	void MI_Symbols::TryRenderSymbol(STBT& stbt)
+	{
+		/*
+		if (stbt.symbolIndex != -1)
+		{
+			RenderSymbolData(stbt);
+
+			ImGui::Begin("Settings", nullptr, WIN_FLAGS);
+			ImGui::SetWindowPos({ 400, 0 });
+			ImGui::SetWindowSize({ 400, 124 });
+			ImGui::DatePicker("Date 1", stbt.from);
+			ImGui::DatePicker("Date 2", stbt.to);
+
+			const char* items[]{ "Line","Candles" };
+			bool check = ImGui::Combo("Graph Type", &stbt.graphType, items, 2);
+
+			if (ImGui::Button("Days"))
+			{
+				const int i = std::atoi(stbt.dayBuffer);
+				if (i < 1)
+				{
+					stbt.output.Add() = "ERROR: Invalid number of days given.";
+				}
+				else
+				{
+					auto t = GetTime();
+					stbt.to = *std::gmtime(&t);
+					t = GetTime(i);
+					stbt.from = *std::gmtime(&t);
+				}
+			}
+
+			ImGui::SameLine();
+			ImGui::PushItemWidth(40);
+			ImGui::InputText("##", stbt.dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal);
+			ImGui::SameLine();
+			ImGui::InputText("MA", stbt.buffer3, 5, ImGuiInputTextFlags_CharsDecimal);
+			stbt.ma = std::atoi(stbt.buffer3);
+			ImGui::PopItemWidth();
+			ImGui::SameLine();
+			ImGui::Checkbox("Norm", &stbt.normalizeGraph);
+			ImGui::SameLine();
+			if (ImGui::Button("Lifetime"))
+			{
+				stbt.from = {};
+				auto t = GetTime();
+				stbt.to = *std::gmtime(&t);
+			}
+			ImGui::End();
+
+			std::string title = "Details: ";
+			title += stbt.loadedSymbols[stbt.symbolIndex];
+			ImGui::Begin(title.c_str(), nullptr, WIN_FLAGS);
+			ImGui::SetWindowPos({ 400, 500 });
+			ImGui::SetWindowSize({ 400, 100 });
+
+			float min = FLT_MAX, max = 0;
+
+			for (uint32_t i = 0; i < stbt.graphPoints.length; i++)
+			{
+				const auto& point = stbt.graphPoints[i];
+				min = Min<float>(min, point.low);
+				max = Max<float>(max, point.high);
+			}
+
+			if (stbt.graphPoints.length > 0)
+			{
+				auto str = std::format("{:.2f}", stbt.graphPoints[0].open);
+				str = "[Start] " + str;
+				ImGui::Text(str.c_str());
+				ImGui::SameLine();
+
+				str = std::format("{:.2f}", stbt.graphPoints[stbt.graphPoints.length - 1].close);
+				str = "[End] " + str;
+				ImGui::Text(str.c_str());
+				ImGui::SameLine();
+
+				const float change = stbt.graphPoints[stbt.graphPoints.length - 1].close - stbt.graphPoints[0].open;
+				ImGui::PushStyleColor(ImGuiCol_Text, { 1.f * (change < 0), 1.f * (change >= 0), 0, 1 });
+				str = std::format("{:.2f}", change);
+				str = "[Change] " + str;
+				ImGui::Text(str.c_str());
+				ImGui::PopStyleColor();
+
+				str = std::format("{:.2f}", max);
+				str = "[High] " + str;
+				ImGui::Text(str.c_str());
+				ImGui::SameLine();
+
+				str = std::format("{:.2f}", min);
+				str = "[Low] " + str;
+				ImGui::Text(str.c_str());
+			}
+
+			ImGui::End();
+		}
+		*/
 	}
 }

@@ -27,7 +27,6 @@ namespace jv::bt
 		uint64_t subScope;
 
 		Array<std::string> loadedSymbols;
-		Array<bool> enabledSymbols;
 		uint32_t symbolIndex;
 
 		Array<std::string> scripts;
@@ -40,7 +39,6 @@ namespace jv::bt
 		Array<gr::GraphPoint> graphPoints;
 		bool normalizeGraph;
 
-		char buffer[8];
 		char dayBuffer[8];
 		char buffer3[8];
 		char buffBuffer[8];

@@ -93,6 +93,8 @@ namespace jv::bt
 				ImGui::PopStyleColor();
 		}
 		*/
+		if (ImGui::Button("Back"))
+			index = 0;
 		return false;
 	}
 

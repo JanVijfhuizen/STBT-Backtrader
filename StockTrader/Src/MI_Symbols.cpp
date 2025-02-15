@@ -2,121 +2,95 @@
 #include "MenuItems/MI_Symbols.h"
 #include <JLib/ArrayUtils.h>
 #include <Utils/UT_Colors.h>
+#include <Utils/UT_Time.h>
 
 namespace jv::bt
 {
-	static void SaveEnabledSymbols(STBT& stbt)
-	{
-		/*
-		const std::string path = "Symbols/enabled.txt";
-		std::ofstream fout(path);
-
-		for (const auto enabled : stbt.enabledSymbols)
-			fout << enabled << std::endl;
-		fout.close();
-		*/
-	}
-
-	static void SaveOrCreateEnabledSymbols(STBT& stbt)
-	{
-		/*
-		if (stbt.enabledSymbols.length != stbt.loadedSymbols.length)
-		{
-			stbt.enabledSymbols = jv::CreateArray<bool>(stbt.arena, stbt.loadedSymbols.length);
-			for (auto& b : stbt.enabledSymbols)
-				b = true;
-		}
-
-		SaveEnabledSymbols(stbt);
-		*/
-	}
-
 	void MI_Symbols::Load(STBT& stbt)
 	{
-		/*
-		LoadSymbols(stbt);
-		stbt.timeSeriesArr = CreateArray<TimeSeries>(stbt.arena, 1);
-		LoadRandColors(stbt);
-		*/
+		names = GetSymbolNames(stbt);
+		enabled = GetEnabled(stbt, names, enabled);
+		timeSeries = CreateArray<TimeSeries>(stbt.arena, 1);
+		timeSeriesColors = LoadRandColors(stbt, 1);
+		index = -1;
 	}
 
 	bool MI_Symbols::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
-		/*
 		if (ImGui::Button("Enable All"))
-			for (auto& b : enabledSymbols)
+			for (auto& b : enabled)
 				b = true;
 		if (ImGui::Button("Disable All"))
-			for (auto& b : enabledSymbols)
+			for (auto& b : enabled)
 				b = false;
 		if (ImGui::Button("Save changes"))
-			SaveOrCreateEnabledSymbols(*this);
-		*/
+			SaveOrCreateEnabledSymbols(stbt, names, enabled);
+		if (ImGui::Button("Back"))
+			index = 0;
+
 		return false;
 	}
 
 	bool MI_Symbols::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
-		/*
-		ImGui::Begin("List of symbols", nullptr, WIN_FLAGS);
-		ImGui::SetWindowPos({ 200, 0 });
-		ImGui::SetWindowSize({ 200, 400 });
-
 		if (ImGui::Button("Add"))
 		{
-			const auto tempScope = tempArena.CreateScope();
-			const auto c = tracker.GetData(tempArena, buffer, "Symbols/", license);
+			const auto tempScope = stbt.tempArena.CreateScope();
+			const auto c = stbt.tracker.GetData(stbt.tempArena, nameBuffer, "Symbols/", stbt.license);
 			if (c[0] == '{')
-				output.Add() = "ERROR: Unable to download symbol data.";
+				stbt.output.Add() = "ERROR: Unable to download symbol data.";
 
-			tempArena.DestroyScope(tempScope);
+			stbt.tempArena.DestroyScope(tempScope);
 
 			uint32_t index = 0;
-			std::string s{ buffer };
+			std::string s{ nameBuffer };
 			if (s != "")
 			{
-				for (auto& symbol : loadedSymbols)
+				for (auto& symbol : names)
 					index += symbol < s;
 
-				auto arr = CreateArray<bool>(arena, enabledSymbols.length + 1);
-				for (uint32_t i = 0; i < enabledSymbols.length; i++)
-					arr[i + (i >= index)] = enabledSymbols[i];
+				auto arr = CreateArray<bool>(stbt.arena, enabled.length + 1);
+				for (uint32_t i = 0; i < enabled.length; i++)
+					arr[i + (i >= index)] = enabled[i];
 				arr[index] = false;
-				enabledSymbols = arr;
+				enabled = arr;
 			}
 
-			SaveEnabledSymbols(*this);
-			LoadSymbolSubMenu(*this);
+			SaveEnabledSymbols(stbt, enabled);
+			RequestReload();
 		}
 		ImGui::SameLine();
-		ImGui::InputText("#", buffer, 5, ImGuiInputTextFlags_CharsUppercase);
+		ImGui::InputText("#", nameBuffer, 5, ImGuiInputTextFlags_CharsUppercase);
 
-		for (uint32_t i = 0; i < loadedSymbols.length; i++)
+		for (uint32_t i = 0; i < names.length; i++)
 		{
 			ImGui::PushID(i);
-			ImGui::Checkbox("", &enabledSymbols[i]);
+			ImGui::Checkbox("", &enabled[i]);
 			ImGui::PopID();
 			ImGui::SameLine();
 
-			const bool selected = symbolIndex == i;
+			const bool selected = index == i;
 			if (selected)
 				ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
 
-			const auto symbol = loadedSymbols[i].c_str();
+			const auto symbol = names[i].c_str();
 			if (ImGui::Button(symbol))
 			{
-				LoadSymbolSubMenu(*this);
-				timeSeriesArr[0] = LoadSymbol(*this, i);
+				timeSeries[0] = LoadSymbol(stbt, i, names, index);
+				index = i;
+				RequestReload();
 			}
 
 			if (selected)
 				ImGui::PopStyleColor();
 		}
 
-		ImGui::End();
+		return false;
+	}
 
-		TryRenderSymbol(*this);
-		*/
+	bool MI_Symbols::DrawFree(STBT& stbt, uint32_t& index)
+	{
+		TryRenderSymbol(stbt);
 		return false;
 	}
 
@@ -139,11 +113,30 @@ namespace jv::bt
 	{
 	}
 
-	void MI_Symbols::LoadSymbols(STBT& stbt)
+	void MI_Symbols::SaveEnabledSymbols(STBT& stbt, const Array<bool>& enabled)
 	{
-		/*
-		stbt.symbolIndex = -1;
+		const std::string path = "Symbols/enabled.txt";
+		std::ofstream fout(path);
 
+		for (const auto enabled : enabled)
+			fout << enabled << std::endl;
+		fout.close();
+	}
+
+	void MI_Symbols::SaveOrCreateEnabledSymbols(STBT& stbt, const Array<std::string>& names, Array<bool>& enabled)
+	{
+		if (enabled.length != names.length)
+		{
+			enabled = jv::CreateArray<bool>(stbt.arena, names.length);
+			for (auto& b : enabled)
+				b = true;
+		}
+
+		SaveEnabledSymbols(stbt, enabled);
+	}
+
+	Array<std::string> MI_Symbols::GetSymbolNames(STBT& stbt)
+	{
 		std::string path("Symbols/");
 		std::string ext(".sym");
 
@@ -161,55 +154,50 @@ namespace jv::bt
 				arr[length++] = p.path().stem().string();
 		}
 
-		stbt.loadedSymbols = arr;
-		LoadEnabledSymbols(stbt);
-		*/
+		return arr;
 	}
 
-	TimeSeries MI_Symbols::LoadSymbol(STBT& stbt, const uint32_t i)
+	TimeSeries MI_Symbols::LoadSymbol(STBT& stbt, const uint32_t i, const Array<std::string>& names, uint32_t& index)
 	{
-		/*
-		stbt.symbolIndex = i;
-
-		const auto str = stbt.tracker.GetData(stbt.tempArena, stbt.loadedSymbols[i].c_str(), "Symbols/", stbt.license);
+		index = -1;
+		const auto str = stbt.tracker.GetData(stbt.tempArena, names[i].c_str(), "Symbols/", stbt.license);
 		// If the data is invalid.
 		if (str[0] == '{')
 		{
-			stbt.symbolIndex = -1;
 			stbt.output.Add() = "ERROR: No valid symbol data found.";
 		}
 		else
 		{
+			index = i;
 			auto timeSeries = stbt.tracker.ConvertDataToTimeSeries(stbt.arena, str);
 			if (timeSeries.date != GetTime())
 				stbt.output.Add() = "WARNING: Symbol data is outdated.";
 			return timeSeries;
 		}
-		*/
+
 		return {};
 	}
 
-	void MI_Symbols::LoadEnabledSymbols(STBT& stbt)
+	Array<bool> MI_Symbols::GetEnabled(STBT& stbt, const Array<std::string>& names, Array<bool>& enabled)
 	{
-		/*
 		const std::string path = "Symbols/enabled.txt";
 		std::ifstream fin(path);
 		std::string line;
 
 		if (!fin.good())
 		{
-			SaveOrCreateEnabledSymbols(stbt);
-			return;
+			SaveOrCreateEnabledSymbols(stbt, names, enabled);
+			return {};
 		}
 
 		uint32_t length = 0;
 		while (std::getline(fin, line))
 			++length;
 
-		if (length != stbt.loadedSymbols.length)
+		if (length != names.length)
 		{
-			SaveOrCreateEnabledSymbols(stbt);
-			return;
+			SaveOrCreateEnabledSymbols(stbt, names, enabled);
+			return {};
 		}
 
 		fin.clear();
@@ -221,8 +209,7 @@ namespace jv::bt
 		while (std::getline(fin, line))
 			arr[length++] = std::stoi(line);
 
-		stbt.enabledSymbols = arr;
-		*/
+		return arr;
 	}
 
 	void MI_Symbols::RenderSymbolData(STBT& stbt)

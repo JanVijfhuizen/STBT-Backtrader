@@ -4,11 +4,9 @@
 
 namespace jv::bt
 {
-	void LoadRandColors(STBT& stbt)
+	Array<glm::vec4> LoadRandColors(STBT& stbt, const uint32_t length)
 	{
-		/*
-		const uint32_t l = stbt.timeSeriesArr.length;
-		stbt.randColors = CreateArray<glm::vec4>(stbt.arena, l);
+		auto randColors = CreateArray<glm::vec4>(stbt.arena, length);
 
 		glm::vec4 predetermined[5]
 		{
@@ -19,13 +17,14 @@ namespace jv::bt
 			glm::vec4(1, 0, 1, 1)
 		};
 
-		for (uint32_t i = 0; i < l; i++)
+		for (uint32_t i = 0; i < length; i++)
 		{
 			if (i < (sizeof(predetermined) / sizeof(glm::vec4)))
-				stbt.randColors[i] = predetermined[i];
+				randColors[i] = predetermined[i];
 			else
-				stbt.randColors[i] = glm::vec4(RandF(0, 1), RandF(0, 1), RandF(0, 1), 1);
+				randColors[i] = glm::vec4(RandF(0, 1), RandF(0, 1), RandF(0, 1), 1);
 		}
-		*/
+
+		return randColors;
 	}
 }

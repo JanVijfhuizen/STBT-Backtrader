@@ -27,6 +27,8 @@ namespace jv::bt
 
 	bool MI_Licensing::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
+		if (ImGui::Button("Back"))
+			index = 0;
 		return false;
 	}
 

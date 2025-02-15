@@ -22,7 +22,7 @@ namespace jv::bt
 
 	bool STBT::Update()
 	{
-		bool quit = menu.Update(*this);
+		bool quit = menu.Update(arena, *this);
 		if (quit)
 			return true;
 

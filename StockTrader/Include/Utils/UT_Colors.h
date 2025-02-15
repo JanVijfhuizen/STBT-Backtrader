@@ -2,5 +2,5 @@
 
 namespace jv::bt
 {
-	void LoadRandColors(STBT& stbt);
+	[[nodiscard]] Array<glm::vec4> LoadRandColors(STBT& stbt, uint32_t length);
 }

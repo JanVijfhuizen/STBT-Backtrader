@@ -17,9 +17,6 @@ namespace jv::bt
 		if (quit)
 			return true;
 
-		if (index != 0 && ImGui::Button("Back"))
-			index = 0;
-
 		ImGui::End();
 
 		if (auto subMenuTitle = GetSubMenuTitle())
@@ -33,12 +30,19 @@ namespace jv::bt
 			ImGui::End();
 		}
 
-		return false;
+		return DrawFree(stbt, index);
 	}
+
 	bool MI_Main::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
 		return false;
 	}
+
+	bool MI_Main::DrawFree(STBT& stbt, uint32_t& index)
+	{
+		return false;
+	}
+
 	const char* MI_Main::GetSubMenuTitle()
 	{
 		return nullptr;

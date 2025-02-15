@@ -8,10 +8,13 @@ namespace jv
 	class MenuItem
 	{
 	public:
+		bool reload = false;
+
 		virtual void Init(Arena& arena, T& t) {};
 		virtual void Load(T& t) {};
 		virtual bool Update(T& t, uint32_t& index) = 0;
 		virtual void Unload(T& t) {};
+		void RequestReload();
 	};
 
 	template <typename T>
@@ -26,7 +29,7 @@ namespace jv
 		MenuItem<T>*& Add();
 		void Init(Arena& arena, T& t);
 		void SetIndex(Arena& arena, T& t, uint32_t i);
-		bool Update(T& t);
+		bool Update(Arena& arena, T& t);
 		[[nodiscard]] uint32_t GetIndex() const;
 		void ClearItemScope(Arena& arena);
 
@@ -68,11 +71,22 @@ namespace jv
 	}
 
 	template<typename T>
-	bool Menu<T>::Update(T& t)
+	bool Menu<T>::Update(Arena& arena, T& t)
 	{
 		if (index == -1)
 			return false;
-		return items[index]->Update(t, index);
+		uint32_t i = -1;
+		auto item = items[index];
+		const auto ret = item->Update(t, i);
+		if (item->reload)
+		{
+			SetIndex(arena, t, i);
+			item->reload = false;
+		}
+			
+		if (i != -1)
+			SetIndex(arena, t, i);
+		return ret;
 	}
 
 	template<typename T>
@@ -96,9 +110,16 @@ namespace jv
 		menu.index = -1;
 		return menu;
 	}
+
 	template<typename T>
 	void Menu<T>::DestroyMenu(Arena& arena, Menu<T>& menu)
 	{
 		arena.DestroyScope(menu.scope);
+	}
+
+	template<typename T>
+	void MenuItem<T>::RequestReload()
+	{
+		reload = true;
 	}
 }

@@ -21,13 +21,6 @@ extern "C"
 #include "lauxlib.h"
 }
 
-constexpr const int32_t DAY_MUL = 60 * 60 * 24;
-constexpr const glm::ivec2 RESOLUTION{ 600, 400 };
-constexpr const uint32_t MENU_WIDTH = 200;
-const glm::ivec2 MENU_RESOLUTION_SMALL{ MENU_WIDTH, 100 };
-const glm::ivec2 MENU_RESOLUTION = MENU_RESOLUTION_SMALL * glm::ivec2(1, 2);
-const glm::ivec2 MENU_RESOLUTION_LARGE = MENU_RESOLUTION_SMALL * glm::ivec2(1, 4);
-
 #include "Ext/ImGuiDatePicker.h"
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -36,6 +29,16 @@ const glm::ivec2 MENU_RESOLUTION_LARGE = MENU_RESOLUTION_SMALL * glm::ivec2(1, 4
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+
+const int32_t DAY_MUL = 60 * 60 * 24;
+const glm::ivec2 RESOLUTION{ 600, 400 };
+const uint32_t MENU_WIDTH = 200;
+const glm::vec2 MENU_RESOLUTION_SMALL{ MENU_WIDTH, 100 };
+const glm::vec2 MENU_RESOLUTION = MENU_RESOLUTION_SMALL * glm::vec2(1, 2);
+const glm::vec2 MENU_RESOLUTION_LARGE = MENU_RESOLUTION_SMALL * glm::vec2(1, 4);
+
+const auto WIN_FLAGS = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+const uint32_t DAYS_DEFAULT = 28;
 
 #include <Jlib/Arena.h>
 #include <JLib/Iterator.h>

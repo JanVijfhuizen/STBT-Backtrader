@@ -172,6 +172,7 @@
     <ClInclude Include="Include\JLib\QueueUtils.h" />
     <ClInclude Include="Include\JLib\Vector.h" />
     <ClInclude Include="Include\JLib\VectorUtils.h" />
+    <ClInclude Include="Include\MenuItems\MI_Main.h" />
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\Graphics\Shader.h" />
     <ClInclude Include="Include\TimeSeries.h" />
@@ -182,10 +183,14 @@
     <ClInclude Include="Include\MenuItems\MI_Symbols.h" />
     <ClInclude Include="Include\MenuItems\MI_Backtrader.h" />
     <ClInclude Include="Include\MenuItems\MI_Licensing.h" />
-    <ClInclude Include="Include\MenuItems\MI_Utils.h" />
+    <ClInclude Include="Include\Utils\UT_Colors.h" />
+    <ClInclude Include="Include\MenuItems\MI_MainMenu.h" />
+    <ClInclude Include="Include\Utils\UT_Time.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Src\MI_Utils.cpp" />
+    <ClCompile Include="Src\MI_MainMenu.cpp" />
+    <ClCompile Include="Src\MI_Main.cpp" />
+    <ClCompile Include="Src\UT_Colors.cpp" />
     <ClCompile Include="Src\MI_Backtrader.cpp" />
     <ClCompile Include="Src\MI_Licensing.cpp" />
     <ClCompile Include="Src\MI_Symbols.cpp" />
@@ -204,6 +209,7 @@
     <ClCompile Include="Src\TimeSeries.cpp" />
     <ClCompile Include="Src\Tracker.cpp" />
     <ClCompile Include="Src\STBT.cpp" />
+    <ClCompile Include="Src\UT_Time.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

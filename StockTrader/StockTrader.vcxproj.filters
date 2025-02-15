@@ -111,7 +111,16 @@
     <ClInclude Include="Include\MenuItems\MI_Backtrader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\MenuItems\MI_Utils.h">
+    <ClInclude Include="Include\Utils\UT_Colors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MenuItems\MI_Main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MenuItems\MI_MainMenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Utils\UT_Time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -164,7 +173,16 @@
     <ClCompile Include="Src\MI_Backtrader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\MI_Utils.cpp">
+    <ClCompile Include="Src\UT_Colors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\MI_Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\MI_MainMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\UT_Time.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

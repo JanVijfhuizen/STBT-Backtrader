@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "MenuItems/MI_Symbols.h"
 #include <JLib/ArrayUtils.h>
-#include <MenuItems/MI_Utils.h>
+#include <Utils/UT_Colors.h>
 
 namespace jv::bt
 {
@@ -34,13 +34,105 @@ namespace jv::bt
 		LoadRandColors(stbt);
 	}
 
-	void MI_Symbols::Update(STBT& stbt)
+	bool MI_Symbols::DrawMainMenu(uint32_t& index)
 	{
+		/*
+		if (ImGui::Button("Enable All"))
+			for (auto& b : enabledSymbols)
+				b = true;
+		if (ImGui::Button("Disable All"))
+			for (auto& b : enabledSymbols)
+				b = false;
+		if (ImGui::Button("Save changes"))
+			SaveOrCreateEnabledSymbols(*this);
+		*/
+		return false;
+	}
+
+	bool MI_Symbols::DrawSubMenu(uint32_t& index)
+	{
+		/*
+		ImGui::Begin("List of symbols", nullptr, WIN_FLAGS);
+		ImGui::SetWindowPos({ 200, 0 });
+		ImGui::SetWindowSize({ 200, 400 });
+
+		if (ImGui::Button("Add"))
+		{
+			const auto tempScope = tempArena.CreateScope();
+			const auto c = tracker.GetData(tempArena, buffer, "Symbols/", license);
+			if (c[0] == '{')
+				output.Add() = "ERROR: Unable to download symbol data.";
+
+			tempArena.DestroyScope(tempScope);
+
+			uint32_t index = 0;
+			std::string s{ buffer };
+			if (s != "")
+			{
+				for (auto& symbol : loadedSymbols)
+					index += symbol < s;
+
+				auto arr = CreateArray<bool>(arena, enabledSymbols.length + 1);
+				for (uint32_t i = 0; i < enabledSymbols.length; i++)
+					arr[i + (i >= index)] = enabledSymbols[i];
+				arr[index] = false;
+				enabledSymbols = arr;
+			}
+
+			SaveEnabledSymbols(*this);
+			LoadSymbolSubMenu(*this);
+		}
+		ImGui::SameLine();
+		ImGui::InputText("#", buffer, 5, ImGuiInputTextFlags_CharsUppercase);
+
+		for (uint32_t i = 0; i < loadedSymbols.length; i++)
+		{
+			ImGui::PushID(i);
+			ImGui::Checkbox("", &enabledSymbols[i]);
+			ImGui::PopID();
+			ImGui::SameLine();
+
+			const bool selected = symbolIndex == i;
+			if (selected)
+				ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+
+			const auto symbol = loadedSymbols[i].c_str();
+			if (ImGui::Button(symbol))
+			{
+				LoadSymbolSubMenu(*this);
+				timeSeriesArr[0] = LoadSymbol(*this, i);
+			}
+
+			if (selected)
+				ImGui::PopStyleColor();
+		}
+
+		ImGui::End();
+
+		TryRenderSymbol(*this);
+		*/
+		return false;
+	}
+
+	const char* MI_Symbols::GetMenuTitle()
+	{
+		return "Symbols";
+	}
+
+	const char* MI_Symbols::GetSubMenuTitle()
+	{
+		return "List of Symbols";
+	}
+
+	const char* MI_Symbols::GetDescription()
+	{
+		return "Debug symbols, (un)load \nthem and add new ones.";
 	}
 
 	void MI_Symbols::Unload(STBT& stbt)
 	{
 	}
+
 	void MI_Symbols::LoadSymbols(STBT& stbt)
 	{
 		stbt.symbolIndex = -1;

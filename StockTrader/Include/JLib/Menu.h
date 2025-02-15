@@ -7,8 +7,9 @@ namespace jv
 	template <typename T>
 	class MenuItem
 	{
+	public:
 		virtual void Load(T& t) {};
-		virtual void Update(T& t) = 0;
+		virtual bool Update(T& t, uint32_t& index) = 0;
 		virtual void Unload(T& t) {};
 	};
 
@@ -23,7 +24,7 @@ namespace jv
 
 		MenuItem<T>*& Add();
 		void SetIndex(Arena& arena, T& t, uint32_t i);
-		void Update(T& t);
+		bool Update(T& t);
 		[[nodiscard]] uint32_t GetIndex() const;
 		void ClearItemScope(Arena& arena);
 
@@ -58,17 +59,17 @@ namespace jv
 	}
 
 	template<typename T>
-	void Menu<T>::Update(T& t)
+	bool Menu<T>::Update(T& t)
 	{
 		if (index == -1)
-			return;
-		items[index]->Update(t);
+			return false;
+		return items[index]->Update(t, index);
 	}
 
 	template<typename T>
 	uint32_t Menu<T>::GetIndex() const
 	{
-		return index + 1;
+		return index;
 	}
 
 	template<typename T>

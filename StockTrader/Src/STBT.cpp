@@ -2,23 +2,14 @@
 #include "STBT.h"
 #include <Jlib/ArrayUtils.h>
 #include "JLib/QueueUtils.h"
+#include <MenuItems/MI_MainMenu.h>
 #include <MenuItems/MI_Symbols.h>
 #include <MenuItems/MI_Licensing.h>
 #include <MenuItems/MI_Backtrader.h>
+#include <Utils/UT_Time.h>
 
 namespace jv::bt
 {
-	const auto WIN_FLAGS = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-	const uint32_t DAYS_DEFAULT = 28;
-
-	enum MenuIndex 
-	{
-		miMain,
-		miLicense,
-		miSymbols,
-		miBacktrader
-	};
-
 	enum BTMenuIndex
 	{
 		btmiPortfolio,
@@ -29,27 +20,10 @@ namespace jv::bt
 	{
 		return malloc(size);
 	}
+
 	void MFree(void* ptr)
 	{
 		return free(ptr);
-	}
-
-	static std::time_t GetT(const uint32_t days = 0)
-	{
-		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-
-		using namespace std::chrono_literals;
-		auto offset = 60s * 60 * 24 * days;
-		now -= offset;
-
-		std::time_t tCurrent = std::chrono::system_clock::to_time_t(now);
-
-		auto lt = std::localtime(&tCurrent);
-		lt->tm_hour = 0;
-		lt->tm_min = 0;
-		lt->tm_sec = 0;
-		tCurrent = mktime(lt);
-		return tCurrent;
 	}
 
 	static void LoadScripts(STBT& stbt)
@@ -90,7 +64,7 @@ namespace jv::bt
 		else
 		{
 			auto timeSeries = stbt.tracker.ConvertDataToTimeSeries(stbt.arena, str);
-			if (timeSeries.date != GetT())
+			if (timeSeries.date != GetTime())
 				stbt.output.Add() = "WARNING: Symbol data is outdated.";
 			return timeSeries;
 		}
@@ -264,9 +238,9 @@ namespace jv::bt
 				}
 				else
 				{
-					auto t = GetT();
+					auto t = GetTime();
 					stbt.to = *std::gmtime(&t);
-					t = GetT(i);
+					t = GetTime(i);
 					stbt.from = *std::gmtime(&t);
 				}
 			}
@@ -284,7 +258,7 @@ namespace jv::bt
 			if (ImGui::Button("Lifetime"))
 			{
 				stbt.from = {};
-				auto t = GetT();
+				auto t = GetTime();
 				stbt.to = *std::gmtime(&t);
 			}
 			ImGui::End();
@@ -336,7 +310,7 @@ namespace jv::bt
 			ImGui::End();
 		}
 	}
-
+	/*
 	STBT* gSTBT;
 	int gId;
 
@@ -513,9 +487,11 @@ namespace jv::bt
 
 		ImGui::End();
 	}
+	*/
 
 	bool STBT::Update()
 	{
+		/*
 		if (runsQueued > 0)
 		{
 			ExecuteRun(*this);
@@ -524,307 +500,11 @@ namespace jv::bt
 			frameArena.Clear();
 			return ret;
 		}
+		*/
 
-		ImGui::Begin("Menu", nullptr, WIN_FLAGS);
-		ImGui::SetWindowPos({0, 0});
-		ImGui::SetWindowSize({200, 400});
-
-		const char* title = "DEFAULT";
-		const char* description = "";
-		switch (menu.GetIndex())
-		{
-		case miMain:
-			title = "Main Menu";
-			description = "This tool can be used to \ntrain, test and use stock \ntrade algorithms in \nrealtime.";
-			break;
-		case miLicense:
-			title = "Licensing";
-			description = "NOTE THAT THIS PROGRAM DOES \nNOT REQUIRE ANY LICENSING. \nLicenses however, are \nrequired for some external \nAPI calls.";
-			break;
-		case miSymbols:
-			title = "Symbols";
-			description = "Debug symbols, (un)load \nthem and add new ones.";
-			break;
-		case miBacktrader:
-			title = "Backtrader";
-			description = "Test trade algorithms \nin paper trading.";
-			break;
-		}
-		ImGui::Text(title);
-		ImGui::Text(description);
-		ImGui::Dummy({ 0, 20 });
-
-		if (menu.GetIndex() == miMain)
-		{
-			if (ImGui::Button("Symbols"))
-			{
-				menu.SetIndex(arena, *this, miSymbols);
-				LoadSymbolSubMenu(*this);
-			}
-			if (ImGui::Button("Backtrader"))
-			{	
-				menu.SetIndex(arena, *this, miBacktrader);
-				LoadBacktraderSubMenu(*this);
-			}
-			if (ImGui::Button("Licensing"))
-				menu.SetIndex(arena, *this, miLicense);
-			if (ImGui::Button("Exit"))
-				return true;
-		}
-		else
-			menu.Update(*this);
-		{
-			if (menuIndex == miLicense)
-			{
-				ImGui::Text("Alpha Vantage");
-				if (ImGui::InputText("##", license, 17))
-				{
-					std::ofstream outFile(LICENSE_FILE_PATH); //"7HIFX74MVML11CUF"
-					outFile << license << std::endl;
-				}
-			}
-			if (menuIndex == miSymbols)
-			{
-				if (ImGui::Button("Reload"))
-					LoadSymbolSubMenu(*this);
-				if (ImGui::Button("Enable All"))
-					for (auto& b : enabledSymbols)
-						b = true;
-				if(ImGui::Button("Disable All"))
-					for (auto& b : enabledSymbols)
-						b = false;
-				if (ImGui::Button("Save changes"))
-					SaveOrCreateEnabledSymbols(*this);
-			}
-			if (menuIndex == miBacktrader)
-			{
-				const char* buttons[]
-				{
-					"Environment",
-					"Run Info"
-				};
-
-				for (uint32_t i = 0; i < 2; i++)
-				{
-					const bool selected = subMenuIndex == i;
-					if (selected)
-						ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
-					if (ImGui::Button(buttons[i]))
-					{
-						LoadScripts(*this);
-						subMenuIndex = i;
-					}
-					if (selected)
-						ImGui::PopStyleColor();
-				}
-			}
-
-			if (ImGui::Button("Back"))
-				menuIndex = miMain;
-		}
-		
-		ImGui::End();
-
-		if (menuIndex == miBacktrader)
-		{
-			if (subMenuIndex == btmiPortfolio)
-			{
-				ImGui::Begin("Portfolio", nullptr, WIN_FLAGS);
-				ImGui::SetWindowPos({ 200, 0 });
-				ImGui::SetWindowSize({ 200, 400 });
-
-				uint32_t index = 0;
-				ImGui::InputText("Cash", buffArr[0], 9, ImGuiInputTextFlags_CharsScientific);
-
-				for (uint32_t i = 0; i < loadedSymbols.length; i++)
-				{
-					if (!enabledSymbols[i])
-						continue;
-					++index;
-
-					ImGui::PushID(i);
-					if (ImGui::InputText("##", buffArr[index], 9, ImGuiInputTextFlags_CharsDecimal))
-					{
-						int32_t n = std::atoi(buffArr[index]);
-						if(n < 0)
-							snprintf(buffArr[index], sizeof(buffArr[index]), "%i", 0);
-					}
-					ImGui::PopID();
-					ImGui::SameLine();
-
-					const bool selected = symbolIndex == i;
-					if (selected)
-						ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
-
-					const auto symbol = loadedSymbols[i].c_str();
-					if (ImGui::Button(symbol))
-						symbolIndex = i;
-
-					if (selected)
-						ImGui::PopStyleColor();
-				}
-
-				ImGui::End();
-				TryRenderSymbol(*this);
-			}
-			if (subMenuIndex == btmiScripts)
-			{
-				ImGui::Begin("Scripts", nullptr, WIN_FLAGS);
-				ImGui::SetWindowPos({ 200, 200 });
-				ImGui::SetWindowSize({ 200, 200 });
-
-				std::string s = "Active: " + (L ? activeScript : "none");
-				ImGui::Text(s.c_str());
-
-				for (uint32_t i = 0; i < scripts.length; i++)
-				{
-					if (ImGui::Button(scripts[i].c_str())) 
-					{
-						activeScript = scripts[i];
-						OpenLua(*this);
-					}
-				}
-
-				ImGui::End();
-
-				ImGui::Begin("Run Info", nullptr, WIN_FLAGS);
-				ImGui::SetWindowPos({ 200, 0 });
-				ImGui::SetWindowSize({ 200, 200 });
-
-				ImGui::Checkbox("Randomize date", &randomizeDate);
-
-				if (randomizeDate)
-				{
-					ImGui::InputText("Days", dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal);
-				}
-				else
-				{
-					ImGui::DatePicker("##", from);
-					ImGui::SameLine();
-					ImGui::Text("Date 1");
-					ImGui::DatePicker("##2", to);
-					ImGui::SameLine();
-					ImGui::Text("Date 2");
-
-					std::time_t tFrom = mktime(&from), tTo = mktime(&to), tCurrent;
-					uint32_t tLength;
-					ClampDates(*this, tFrom, tTo, tCurrent, tLength, std::atoi(buffBuffer));
-				}
-
-				ImGui::InputText("Buffer", buffBuffer, 4, ImGuiInputTextFlags_CharsDecimal);
-				ImGui::InputText("Fee", feeBuffer, 5, ImGuiInputTextFlags_CharsScientific);
-
-				ImGui::PushItemWidth(40);
-				if (ImGui::InputText("Runs", runBuffer, 5, ImGuiInputTextFlags_CharsScientific))
-				{
-					int32_t n = std::atoi(runBuffer);
-					if (n < 1)
-						snprintf(runBuffer, sizeof(runBuffer), "%i", 1);
-				}
-
-				ImGui::PopItemWidth();
-				ImGui::SameLine();
-				ImGui::Checkbox("Log", &log);
-
-				if (ImGui::Button("Run Script"))
-				{
-					if (activeScript == "")
-					{
-						output.Add() = "ERROR: No script selected.";
-					}
-					else 
-					{
-						bool valid = true;
-						if (randomizeDate)
-						{
-							time_t current;
-							uint32_t length;
-							uint32_t buffer = std::atoi(buffBuffer);
-							const auto days = std::atoi(dayBuffer);
-
-							if (!GetMaxLength(*this, current, length, buffer) || days > length)
-							{
-								output.Add() = "ERROR: Can't start run.";
-								valid = false;
-							}
-						}
-						if (valid)
-							runsQueued = std::atoi(runBuffer);
-					}
-				}
-
-				if (difftime(mktime(&from), mktime(&to)) > 0)
-				{
-					auto temp = to;
-					to = from;
-					from = to;
-				}
-
-				ImGui::End();
-			}
-		}
-
-		if (menuIndex == miSymbols)
-		{
-			ImGui::Begin("List of symbols", nullptr, WIN_FLAGS);
-			ImGui::SetWindowPos({ 200, 0 });
-			ImGui::SetWindowSize({ 200, 400 });
-
-			if (ImGui::Button("Add")) 
-			{
-				const auto tempScope = tempArena.CreateScope();
-				const auto c = tracker.GetData(tempArena, buffer, "Symbols/", license);
-				if (c[0] == '{')
-					output.Add() = "ERROR: Unable to download symbol data.";
-
-				tempArena.DestroyScope(tempScope);
-
-				uint32_t index = 0;
-				std::string s{ buffer };
-				if (s != "")
-				{
-					for (auto& symbol : loadedSymbols)
-						index += symbol < s;
-
-					auto arr = CreateArray<bool>(arena, enabledSymbols.length + 1);
-					for (uint32_t i = 0; i < enabledSymbols.length; i++)
-						arr[i + (i >= index)] = enabledSymbols[i];
-					arr[index] = false;
-					enabledSymbols = arr;
-				}
-				
-				SaveEnabledSymbols(*this);
-				LoadSymbolSubMenu(*this);
-			}
-			ImGui::SameLine();
-			ImGui::InputText("#", buffer, 5, ImGuiInputTextFlags_CharsUppercase);
-
-			for (uint32_t i = 0; i < loadedSymbols.length; i++)
-			{
-				ImGui::PushID(i);
-				ImGui::Checkbox("", &enabledSymbols[i]);
-				ImGui::PopID();
-				ImGui::SameLine();
-
-				const bool selected = symbolIndex == i;
-				if (selected)
-					ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
-
-				const auto symbol = loadedSymbols[i].c_str();
-				if (ImGui::Button(symbol))
-				{
-					LoadSymbolSubMenu(*this);
-					timeSeriesArr[0] = LoadSymbol(*this, i);
-				}
-
-				if(selected)
-					ImGui::PopStyleColor();
-			}
-
-			ImGui::End();
-
-			TryRenderSymbol(*this);
-		}
+		bool quit = menu.Update(*this);
+		if (quit)
+			return true;
 
 		ImGui::Begin("Output", nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({ 0, 400 });
@@ -859,27 +539,13 @@ namespace jv::bt
 		stbt.frameArena = Arena::Create(arenaCreateInfo);
 
 		stbt.output = CreateQueue<const char*>(stbt.arena, 50);
-
-		stbt.currentScope = stbt.arena.CreateScope();
 		stbt.enabledSymbols = {};
 
-		auto t = GetT();
+		auto t = GetTime();
 		stbt.to = *std::gmtime(&t);
-		t = GetT(DAYS_DEFAULT);
+		t = GetTime(DAYS_DEFAULT);
 		stbt.from = *std::gmtime(&t);
 		stbt.graphType = 0;
-
-		std::ifstream f(LICENSE_FILE_PATH);
-		if (f.good())
-		{
-			std::string line;
-			getline(f, line);
-			memcpy(stbt.license, line.c_str(), line.length());
-		}
-
-		std::string strLicense = stbt.license;
-		if(strLicense == "")
-			stbt.output.Add() = "WARNING: Missing licensing.";
 		
 		stbt.L = nullptr;
 		snprintf(stbt.feeBuffer, sizeof(stbt.feeBuffer), "%f", 1e-3f);
@@ -890,16 +556,16 @@ namespace jv::bt
 		stbt.log = true;
 		stbt.runsQueued = 0;
 
-		auto& menu = stbt.menu = Menu<STBT>::CreateMenu(stbt.arena, 3);
+		auto& menu = stbt.menu = Menu<STBT>::CreateMenu(stbt.arena, 4);
+		menu.Add() = stbt.arena.New<MI_MainMenu>();
 		menu.Add() = stbt.arena.New<MI_Symbols>();
 		menu.Add() = stbt.arena.New<MI_Backtrader>();
 		menu.Add() = stbt.arena.New<MI_Licensing>();
+		menu.SetIndex(stbt.arena, stbt, 0);
 		return stbt;
 	}
 	void DestroySTBT(STBT& stbt)
 	{
-		stbt.arena.DestroyScope(stbt.currentScope);
-
 		Arena::Destroy(stbt.frameArena);
 		Arena::Destroy(stbt.tempArena);
 		Arena::Destroy(stbt.arena);

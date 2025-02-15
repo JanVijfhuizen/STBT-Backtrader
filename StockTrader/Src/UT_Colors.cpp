@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "MenuItems/MI_Utils.h"
+#include "Utils/UT_Colors.h"
 #include <Jlib/ArrayUtils.h>
 
 namespace jv::bt
 {
-	static void LoadRandColors(STBT& stbt)
+	void LoadRandColors(STBT& stbt)
 	{
 		const uint32_t l = stbt.timeSeriesArr.length;
 		stbt.randColors = CreateArray<glm::vec4>(stbt.arena, l);

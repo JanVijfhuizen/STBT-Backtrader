@@ -13,7 +13,7 @@ namespace jv::bt
 		ImGui::Text(GetDescription());
 		ImGui::Dummy({ 0, 20 });
 
-		bool quit = DrawMainMenu(index);
+		bool quit = DrawMainMenu(stbt, index);
 		if (quit)
 			return true;
 
@@ -27,7 +27,7 @@ namespace jv::bt
 			ImGui::Begin(subMenuTitle, nullptr, WIN_FLAGS);
 			ImGui::SetWindowPos({ MENU_WIDTH, 0 });
 			ImGui::SetWindowSize({ MENU_RESOLUTION_LARGE.x, MENU_RESOLUTION_LARGE.y });
-			quit = DrawSubMenu(index);
+			quit = DrawSubMenu(stbt, index);
 			if (quit)
 				return true;
 			ImGui::End();
@@ -35,8 +35,12 @@ namespace jv::bt
 
 		return false;
 	}
-	bool MI_Main::DrawSubMenu(uint32_t& index)
+	bool MI_Main::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
 		return false;
+	}
+	const char* MI_Main::GetSubMenuTitle()
+	{
+		return nullptr;
 	}
 }

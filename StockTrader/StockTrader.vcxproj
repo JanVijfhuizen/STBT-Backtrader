@@ -175,6 +175,7 @@
     <ClInclude Include="Include\MenuItems\MI_Main.h" />
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\Graphics\Shader.h" />
+    <ClInclude Include="Include\templua.h" />
     <ClInclude Include="Include\TimeSeries.h" />
     <ClInclude Include="Include\Tracker.h" />
     <ClInclude Include="Include\Graphics\Mesh.h" />

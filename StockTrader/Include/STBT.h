@@ -16,9 +16,11 @@ namespace jv::bt
 		Tracker tracker;
 
 		Arena arena, tempArena, frameArena;
-		Queue<const char*> output;
 
+		Queue<const char*> output;
 		Menu<STBT> menu;
+
+		char license[32];
 		
 		/*
 		uint32_t subMenuIndex;
@@ -44,7 +46,6 @@ namespace jv::bt
 		char buffBuffer[8];
 		char feeBuffer[8];
 		char runBuffer[8];
-		char license[32];
 		bool randomizeDate, log;
 
 		Array<char*> buffArr;

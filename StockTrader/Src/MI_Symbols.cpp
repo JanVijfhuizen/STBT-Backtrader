@@ -40,7 +40,7 @@ namespace jv::bt
 		*/
 	}
 
-	bool MI_Symbols::DrawMainMenu(uint32_t& index)
+	bool MI_Symbols::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
 		/*
 		if (ImGui::Button("Enable All"))
@@ -55,7 +55,7 @@ namespace jv::bt
 		return false;
 	}
 
-	bool MI_Symbols::DrawSubMenu(uint32_t& index)
+	bool MI_Symbols::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
 		/*
 		ImGui::Begin("List of symbols", nullptr, WIN_FLAGS);

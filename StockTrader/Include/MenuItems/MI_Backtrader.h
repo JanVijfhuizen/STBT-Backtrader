@@ -7,8 +7,8 @@ namespace jv::bt
 	{
 	public:
 		void Load(STBT& stbt) override;
-		bool DrawMainMenu(uint32_t& index);
-		bool DrawSubMenu(uint32_t& index);
+		bool DrawMainMenu(STBT& stbt, uint32_t& index);
+		bool DrawSubMenu(STBT& stbt, uint32_t& index);
 		const char* GetMenuTitle();
 		const char* GetSubMenuTitle();
 		const char* GetDescription();

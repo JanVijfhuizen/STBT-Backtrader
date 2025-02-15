@@ -6,6 +6,14 @@
 
 namespace jv::bt
 {
+	/*
+	enum BTMenuIndex
+	{
+		btmiPortfolio,
+		btmiScripts
+	};
+	*/
+
 	static void LoadScripts(STBT& stbt)
 	{
 		/*
@@ -62,7 +70,7 @@ namespace jv::bt
 		*/
 	}
 
-	bool MI_Backtrader::DrawMainMenu(uint32_t& index)
+	bool MI_Backtrader::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
 		/*
 		const char* buttons[]
@@ -88,7 +96,7 @@ namespace jv::bt
 		return false;
 	}
 
-	bool MI_Backtrader::DrawSubMenu(uint32_t& index)
+	bool MI_Backtrader::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
 		/*
 		if (subMenuIndex == btmiPortfolio)

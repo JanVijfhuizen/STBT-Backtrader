@@ -123,6 +123,9 @@
     <ClInclude Include="Include\Utils\UT_Time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\templua.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\dllmain.cpp">

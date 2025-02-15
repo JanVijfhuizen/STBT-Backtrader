@@ -8,6 +8,7 @@ namespace jv
 	class MenuItem
 	{
 	public:
+		virtual void Init(Arena& arena, T& t) {};
 		virtual void Load(T& t) {};
 		virtual bool Update(T& t, uint32_t& index) = 0;
 		virtual void Unload(T& t) {};
@@ -23,6 +24,7 @@ namespace jv
 		uint32_t index;
 
 		MenuItem<T>*& Add();
+		void Init(Arena& arena, T& t);
 		void SetIndex(Arena& arena, T& t, uint32_t i);
 		bool Update(T& t);
 		[[nodiscard]] uint32_t GetIndex() const;
@@ -37,6 +39,13 @@ namespace jv
 	{
 		assert(items.count < items.length);
 		return items.Add();
+	}
+
+	template<typename T>
+	void Menu<T>::Init(Arena& arena, T& t)
+	{
+		for (auto item : items)
+			item->Init(arena, t);
 	}
 
 	template<typename T>

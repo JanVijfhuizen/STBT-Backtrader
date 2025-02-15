@@ -5,9 +5,8 @@ namespace jv::bt
 {
 	const char* LICENSE_FILE_PATH = "license.txt";
 
-	void MI_Licensing::Load(STBT& stbt)
+	void MI_Licensing::Init(Arena& arena, STBT& stbt)
 	{
-		/*
 		std::ifstream f(LICENSE_FILE_PATH);
 		if (f.good())
 		{
@@ -19,24 +18,27 @@ namespace jv::bt
 		std::string strLicense = stbt.license;
 		if (strLicense == "")
 			stbt.output.Add() = "WARNING: Missing licensing.";
-			*/
 	}
 
-	bool MI_Licensing::DrawMainMenu(uint32_t& index)
+	void MI_Licensing::Load(STBT& stbt)
+	{
+		
+	}
+
+	bool MI_Licensing::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
 		return false;
 	}
 
-	bool MI_Licensing::DrawSubMenu(uint32_t& index)
+	bool MI_Licensing::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
-		/*
 		ImGui::Text("Alpha Vantage");
 		if (ImGui::InputText("##", stbt.license, 17))
 		{
 			std::ofstream outFile(LICENSE_FILE_PATH); //"7HIFX74MVML11CUF"
 			outFile << stbt.license << std::endl;
 		}
-		*/
+
 		return false;
 	}
 
@@ -47,7 +49,7 @@ namespace jv::bt
 
 	const char* MI_Licensing::GetSubMenuTitle()
 	{
-		return nullptr;
+		return "Licenses";
 	}
 
 	const char* MI_Licensing::GetDescription()

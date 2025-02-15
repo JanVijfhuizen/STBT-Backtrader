@@ -11,7 +11,7 @@ namespace jv::bt
 		miLicense
 	};
 
-	bool MI_MainMenu::DrawMainMenu(uint32_t& index)
+	bool MI_MainMenu::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
 		if (ImGui::Button("Symbols"))
 			index = miSymbols;
@@ -27,11 +27,6 @@ namespace jv::bt
 	const char* MI_MainMenu::GetMenuTitle()
 	{
 		return "Main Menu";
-	}
-
-	const char* MI_MainMenu::GetSubMenuTitle()
-	{
-		return nullptr;
 	}
 
 	const char* MI_MainMenu::GetDescription()

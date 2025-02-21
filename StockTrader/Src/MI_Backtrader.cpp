@@ -6,18 +6,15 @@
 
 namespace jv::bt
 {
-	/*
 	enum BTMenuIndex
 	{
 		btmiPortfolio,
 		btmiScripts
 	};
-	*/
 
-	static void LoadScripts(STBT& stbt)
+	static void LoadScripts(MI_Backtrader& bt, STBT& stbt)
 	{
-		/*
-		stbt.arena.DestroyScope(stbt.subScope);
+		stbt.arena.DestroyScope(bt.subScope);
 
 		std::string path("Scripts/");
 		std::string ext(".lua");
@@ -36,43 +33,50 @@ namespace jv::bt
 				arr[length++] = p.path().stem().string();
 		}
 
-		stbt.scripts = arr;
-		*/
+		bt.scripts = arr;
 	}
 
 	void MI_Backtrader::Load(STBT& stbt)
 	{
-		/*
-		MI_Symbols::LoadSymbols(stbt);
+		const auto tempScope = stbt.tempArena.CreateScope();
+
+		names = MI_Symbols::GetSymbolNames(stbt);
+		enabled = MI_Symbols::GetEnabled(stbt, names, enabled);
+
 		uint32_t c = 0;
-		for (uint32_t i = 0; i < stbt.loadedSymbols.length; i++)
-			c += stbt.enabledSymbols[i];
-		stbt.buffArr = CreateArray<char*>(stbt.arena, c + 1);
-		for (uint32_t i = 0; i < stbt.buffArr.length; i++)
-			stbt.buffArr[i] = stbt.arena.New<char>(16);
-		stbt.timeSeriesArr = CreateArray<TimeSeries>(stbt.arena, c);
+		for (uint32_t i = 0; i < names.length; i++)
+			c += enabled[i];
+
+		buffers = CreateArray<char*>(stbt.arena, c + 1);
+		for (uint32_t i = 0; i < buffers.length; i++)
+			buffers[i] = stbt.arena.New<char>(16);
+		timeSeries = CreateArray<TimeSeries>(stbt.arena, c);
 
 		uint32_t index = 0;
-		for (size_t i = 0; i < stbt.enabledSymbols.length; i++)
+		for (size_t i = 0; i < enabled.length; i++)
 		{
-			if (!stbt.enabledSymbols[i])
+			if (!enabled[i])
 				continue;
-			stbt.timeSeriesArr[index++] = LoadSymbol(stbt, i);
+			uint32_t _;
+			timeSeries[index++] = MI_Symbols::LoadSymbol(stbt, i, names, _);
 		}
 
-		LoadRandColors(stbt);
-		stbt.subScope = stbt.arena.CreateScope();
-		stbt.subMenuIndex = 0;
-		if (c > 0)
-			stbt.symbolIndex = 0;
+		auto namesCharPtrs = CreateArray<const char*>(stbt.tempArena, names.length);
+		for (uint32_t i = 0; i < names.length; i++)
+			namesCharPtrs[i] = names[i].c_str();
 
-		stbt.portfolio = CreateArray<uint32_t>(stbt.arena, index);
-		*/
+		portfolio = Portfolio::Create(stbt.arena, namesCharPtrs.ptr, names.length);
+
+		subIndex = 0;
+		symbolIndex = -1;
+		normalizeGraph = false;
+
+		stbt.tempArena.DestroyScope(tempScope);
+		subScope = stbt.arena.CreateScope();
 	}
 
 	bool MI_Backtrader::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
-		/*
 		const char* buttons[]
 		{
 			"Environment",
@@ -81,18 +85,18 @@ namespace jv::bt
 
 		for (uint32_t i = 0; i < 2; i++)
 		{
-			const bool selected = subMenuIndex == i;
+			const bool selected = subIndex == i;
 			if (selected)
 				ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
 			if (ImGui::Button(buttons[i]))
 			{
-				LoadScripts(*this);
-				subMenuIndex = i;
+				LoadScripts(*this, stbt);
+				subIndex = i;
 			}
 			if (selected)
 				ImGui::PopStyleColor();
 		}
-		*/
+
 		if (ImGui::Button("Back"))
 			index = 0;
 		return false;
@@ -100,28 +104,27 @@ namespace jv::bt
 
 	bool MI_Backtrader::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
-		/*
-		if (subMenuIndex == btmiPortfolio)
+		if (subIndex == btmiPortfolio)
 		{
 			ImGui::Begin("Portfolio", nullptr, WIN_FLAGS);
 			ImGui::SetWindowPos({ 200, 0 });
 			ImGui::SetWindowSize({ 200, 400 });
 
 			uint32_t index = 0;
-			ImGui::InputText("Cash", buffArr[0], 9, ImGuiInputTextFlags_CharsScientific);
+			ImGui::InputText("Cash", buffers[0], 9, ImGuiInputTextFlags_CharsScientific);
 
-			for (uint32_t i = 0; i < loadedSymbols.length; i++)
+			for (uint32_t i = 0; i < names.length; i++)
 			{
-				if (!enabledSymbols[i])
+				if (!enabled[i])
 					continue;
 				++index;
 
 				ImGui::PushID(i);
-				if (ImGui::InputText("##", buffArr[index], 9, ImGuiInputTextFlags_CharsDecimal))
+				if (ImGui::InputText("##", buffers[index], 9, ImGuiInputTextFlags_CharsDecimal))
 				{
-					int32_t n = std::atoi(buffArr[index]);
+					int32_t n = std::atoi(buffers[index]);
 					if (n < 0)
-						snprintf(buffArr[index], sizeof(buffArr[index]), "%i", 0);
+						snprintf(buffers[index], sizeof(buffers[index]), "%i", 0);
 				}
 				ImGui::PopID();
 				ImGui::SameLine();
@@ -130,7 +133,7 @@ namespace jv::bt
 				if (selected)
 					ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
 
-				const auto symbol = loadedSymbols[i].c_str();
+				const auto symbol = names[i].c_str();
 				if (ImGui::Button(symbol))
 					symbolIndex = i;
 
@@ -139,9 +142,10 @@ namespace jv::bt
 			}
 
 			ImGui::End();
-			TryRenderSymbol(*this);
+			MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
 		}
-		if (subMenuIndex == btmiScripts)
+		/*
+		if (subIndex == btmiScripts)
 		{
 			ImGui::Begin("Scripts", nullptr, WIN_FLAGS);
 			ImGui::SetWindowPos({ 200, 200 });
@@ -155,7 +159,7 @@ namespace jv::bt
 				if (ImGui::Button(scripts[i].c_str()))
 				{
 					activeScript = scripts[i];
-					OpenLua(*this);
+					//OpenLua(*this);
 				}
 			}
 
@@ -247,7 +251,7 @@ namespace jv::bt
 
 	const char* MI_Backtrader::GetSubMenuTitle()
 	{
-		return nullptr;
+		return "Details";
 	}
 
 	const char* MI_Backtrader::GetDescription()

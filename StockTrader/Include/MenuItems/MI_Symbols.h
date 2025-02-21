@@ -30,6 +30,7 @@ namespace jv::bt
 		[[nodiscard]] static Array<bool> GetEnabled(STBT& stbt, const Array<std::string>& names, Array<bool>& enabled);
 		[[nodiscard]] static Array<gr::GraphPoint> RenderSymbolData(STBT& stbt, Array<TimeSeries>& timeSeries, 
 			const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, const bool normalizeGraph);
-		void TryRenderSymbol(STBT& stbt);
+		static void TryRenderSymbol(STBT& stbt, Array<TimeSeries>& timeSeries,
+			const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, bool& normalizeGraph);
 	};
 }

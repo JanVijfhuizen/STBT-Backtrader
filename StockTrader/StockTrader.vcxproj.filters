@@ -126,6 +126,9 @@
     <ClInclude Include="Include\templua.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Portfolio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\dllmain.cpp">
@@ -186,6 +189,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\UT_Time.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Portfolio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

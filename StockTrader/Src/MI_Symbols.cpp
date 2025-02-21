@@ -106,7 +106,7 @@ namespace jv::bt
 	{
 		if (reload)
 			return false;
-		TryRenderSymbol(stbt);
+		TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
 		return false;
 	}
 
@@ -252,7 +252,7 @@ namespace jv::bt
 			}
 		}
 
-		auto randColors = LoadRandColors(stbt.frameArena, 1);
+		auto randColors = LoadRandColors(stbt.frameArena, timeSeries.length);
 
 		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, timeSeries.length);
 		for (uint32_t i = 0; i < timeSeries.length; i++)
@@ -312,7 +312,8 @@ namespace jv::bt
 		return graphPoints[sId];
 	}
 
-	void MI_Symbols::TryRenderSymbol(STBT& stbt)
+	void MI_Symbols::TryRenderSymbol(STBT& stbt, Array<TimeSeries>& timeSeries,
+		const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, bool& normalizeGraph)
 	{
 		if (symbolIndex == -1)
 			return;

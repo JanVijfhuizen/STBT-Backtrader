@@ -250,6 +250,16 @@ namespace jv::bt
 					break;
 				++sId;
 			}
+			if (sId == timeSeries.length)
+			{
+				sId = 0;
+				for (uint32_t j = 0; j < length; j++)
+					if (enabled[j])
+					{
+						symbolIndex = j;
+						break;
+					}
+			}
 		}
 
 		auto randColors = LoadRandColors(stbt.frameArena, timeSeries.length);

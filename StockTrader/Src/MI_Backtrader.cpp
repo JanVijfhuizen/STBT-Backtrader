@@ -69,6 +69,9 @@ namespace jv::bt
 
 		subIndex = 0;
 		symbolIndex = -1;
+		if (enabled.length > 0)
+			symbolIndex = 0;
+
 		normalizeGraph = false;
 
 		stbt.tempArena.DestroyScope(tempScope);
@@ -97,6 +100,8 @@ namespace jv::bt
 				ImGui::PopStyleColor();
 		}
 
+		MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
+
 		if (ImGui::Button("Back"))
 			index = 0;
 		return false;
@@ -106,9 +111,7 @@ namespace jv::bt
 	{
 		if (subIndex == btmiPortfolio)
 		{
-			ImGui::Begin("Portfolio", nullptr, WIN_FLAGS);
-			ImGui::SetWindowPos({ 200, 0 });
-			ImGui::SetWindowSize({ 200, 400 });
+			ImGui::Text("Portfolio");
 
 			uint32_t index = 0;
 			ImGui::InputText("Cash", buffers[0], 9, ImGuiInputTextFlags_CharsScientific);
@@ -140,9 +143,6 @@ namespace jv::bt
 				if (selected)
 					ImGui::PopStyleColor();
 			}
-
-			ImGui::End();
-			MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
 		}
 		/*
 		if (subIndex == btmiScripts)

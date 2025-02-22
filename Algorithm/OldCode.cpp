@@ -248,3 +248,29 @@ int main()
 	//bte.backTrader.PrintAdvice(bte.arena, bte.tempArena, StockAlgorithm, "jan", true, &nnet);
 	return 0;
 }
+
+/*
+	static void LoadScripts(MI_Backtrader& bt, STBT& stbt)
+	{
+		stbt.arena.DestroyScope(bt.subScope);
+
+		std::string path("Scripts/");
+		std::string ext(".lua");
+
+		uint32_t length = 0;
+		for (auto& p : std::filesystem::recursive_directory_iterator(path))
+			if (p.path().extension() == ext)
+				++length;
+
+		auto arr = jv::CreateArray<std::string>(stbt.arena, length);
+
+		length = 0;
+		for (auto& p : std::filesystem::recursive_directory_iterator(path))
+		{
+			if (p.path().extension() == ext)
+				arr[length++] = p.path().stem().string();
+		}
+
+		bt.scripts = arr;
+	}
+*/

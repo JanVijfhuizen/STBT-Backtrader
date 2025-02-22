@@ -13,30 +13,6 @@ namespace jv::bt
 		btmiRunInfo
 	};
 
-	static void LoadScripts(MI_Backtrader& bt, STBT& stbt)
-	{
-		stbt.arena.DestroyScope(bt.subScope);
-
-		std::string path("Scripts/");
-		std::string ext(".lua");
-
-		uint32_t length = 0;
-		for (auto& p : std::filesystem::recursive_directory_iterator(path))
-			if (p.path().extension() == ext)
-				++length;
-
-		auto arr = jv::CreateArray<std::string>(stbt.arena, length);
-
-		length = 0;
-		for (auto& p : std::filesystem::recursive_directory_iterator(path))
-		{
-			if (p.path().extension() == ext)
-				arr[length++] = p.path().stem().string();
-		}
-
-		bt.scripts = arr;
-	}
-
 	void MI_Backtrader::Load(STBT& stbt)
 	{
 		const auto tempScope = stbt.tempArena.CreateScope();
@@ -76,6 +52,9 @@ namespace jv::bt
 
 		algoIndex = -1;
 
+		uint32_t n = 1;
+		snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
+
 		stbt.tempArena.DestroyScope(tempScope);
 		subScope = stbt.arena.CreateScope();
 	}
@@ -95,10 +74,7 @@ namespace jv::bt
 			if (selected)
 				ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
 			if (ImGui::Button(buttons[i]))
-			{
-				LoadScripts(*this, stbt);
 				subIndex = i;
-			}
 			if (selected)
 				ImGui::PopStyleColor();
 		}
@@ -170,7 +146,82 @@ namespace jv::bt
 		}
 		if (subIndex == btmiRunInfo)
 		{
+			if (ImGui::InputText("Buffer", buffBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
+			{
+				int32_t n = std::atoi(buffBuffer);
+				n = Max(n, 0);
+				snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
+			}
 
+			if (ImGui::InputText("Fee", feeBuffer, 8, ImGuiInputTextFlags_CharsDecimal))
+			{
+				float n = std::atof(feeBuffer);
+				n = Max(n, 0.f);
+				snprintf(feeBuffer, sizeof(feeBuffer), "%f", n);
+			}
+
+			if (ImGui::InputText("Runs", runCountBuffer, 4, ImGuiInputTextFlags_CharsDecimal))
+			{
+				int32_t n = std::atoi(runCountBuffer);
+				n = Max(n, 1);
+				snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
+			}
+
+			ImGui::Checkbox("Log", &log);
+			ImGui::Checkbox("Randomize Date", &randomizeDate);
+
+			if (randomizeDate)
+			{
+				if (ImGui::InputText("Length", lengthBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
+				{
+					int32_t n = std::atoi(lengthBuffer);
+					n = Max(n, 0);
+					snprintf(lengthBuffer, sizeof(lengthBuffer), "%i", n);
+				}
+			}
+
+			if (ImGui::Button("Run"))
+			{
+				bool valid = true;
+				if (algoIndex == -1)
+				{
+					valid = false;
+					stbt.output.Add() = "ERROR: No algorithm selected!";
+				}
+
+				if (symbolIndex == -1)
+				{
+					valid = false;
+					stbt.output.Add() = "ERROR: No symbols available!";
+				}
+
+				if (valid)
+				{
+					// check buffer w/ min date
+					const int32_t buffer = std::atoi(buffBuffer);
+					const int32_t length = std::atoi(lengthBuffer);
+
+					const auto tFrom = mktime(&stbt.from);
+					const auto tTo = mktime(&stbt.to);
+
+					const auto diff = difftime(tTo, tFrom);
+					const uint32_t daysDiff = diff / 60 / 60 / 24;
+
+					if (daysDiff < buffer + 1)
+					{
+						valid = false;
+						stbt.output.Add() = "ERROR: Buffer range is out of scope!";
+					}
+
+					if (randomizeDate && daysDiff < buffer + length)
+					{
+						valid = false;
+						stbt.output.Add() = "ERROR: Length is out of scope!";
+					}
+
+					// check if randomize if length < total
+				}
+			}
 		}
 		return false;
 	}

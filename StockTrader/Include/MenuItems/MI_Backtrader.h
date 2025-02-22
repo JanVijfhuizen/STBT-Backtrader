@@ -21,6 +21,12 @@ namespace jv::bt
 		Array<std::string> scripts;
 
 		uint32_t algoIndex;
+		bool randomizeDate;
+		char buffBuffer[8];
+		char lengthBuffer[8];
+		char feeBuffer[8];
+		char runCountBuffer[8];
+		bool log;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

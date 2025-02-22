@@ -20,6 +20,8 @@ namespace jv::bt
 
 		Array<std::string> scripts;
 
+		uint32_t algoIndex;
+
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);
 		bool DrawSubMenu(STBT& stbt, uint32_t& index);

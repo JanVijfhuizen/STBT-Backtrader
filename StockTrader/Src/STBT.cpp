@@ -39,7 +39,8 @@ namespace jv::bt
 		frameArena.Clear();
 		return ret;
 	}
-	STBT CreateSTBT()
+
+	STBT CreateSTBT(STBTBot* bots, const uint32_t botCount)
 	{
 		STBT stbt{};
 		stbt.tracker = {};
@@ -56,6 +57,9 @@ namespace jv::bt
 		stbt.frameArena = Arena::Create(arenaCreateInfo);
 
 		stbt.output = CreateQueue<const char*>(stbt.arena, 50);
+		stbt.bots = CreateArray<STBTBot>(stbt.arena, botCount);
+		for (uint32_t i = 0; i < botCount; i++)
+			stbt.bots[i] = bots[i];
 
 		auto& menu = stbt.menu = Menu<STBT>::CreateMenu(stbt.arena, 4);
 		menu.Add() = stbt.arena.New<MI_MainMenu>();
@@ -73,23 +77,35 @@ namespace jv::bt
 		stbt.ma = 0;
 		stbt.days = DAYS_DEFAULT;
 
-		/*
-		
-		stbt.L = nullptr;
-		snprintf(stbt.feeBuffer, sizeof(stbt.feeBuffer), "%f", 1e-3f);
-		snprintf(stbt.buffBuffer, sizeof(stbt.buffBuffer), "%i", 0);
-		snprintf(stbt.runBuffer, sizeof(stbt.runBuffer), "%i", 1);
-		stbt.randomizeDate = false;
-		stbt.log = true;
-		stbt.runsQueued = 0;
-		*/
 		return stbt;
 	}
+
 	void DestroySTBT(STBT& stbt)
 	{
 		Arena::Destroy(stbt.frameArena);
 		Arena::Destroy(stbt.tempArena);
 		Arena::Destroy(stbt.arena);
 		DestroyRenderer(stbt.renderer);
+	}
+
+	float STBTScope::GetLiquidity() const
+	{
+		return portfolio->liquidity;
+	}
+
+	uint32_t STBTScope::GetNInPort(const uint32_t index) const
+	{
+		return portfolio->stocks[index].count;
+	}
+
+	TimeSeries STBTScope::GetTimeSeries(const uint32_t index) const
+	{
+		return timeSeries[index];
+	}
+
+	uint32_t STBTScope::GetLength() const
+	{
+		assert(timeSeries.length > 0);
+		return timeSeries[0].length;
 	}
 }

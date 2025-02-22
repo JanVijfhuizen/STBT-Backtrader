@@ -9,7 +9,8 @@ namespace jv::bt
 	enum BTMenuIndex
 	{
 		btmiPortfolio,
-		btmiScripts
+		btmiAlgorithms,
+		btmiRunInfo
 	};
 
 	static void LoadScripts(MI_Backtrader& bt, STBT& stbt)
@@ -71,8 +72,9 @@ namespace jv::bt
 		symbolIndex = -1;
 		if (enabled.length > 0)
 			symbolIndex = 0;
-
 		normalizeGraph = false;
+
+		algoIndex = -1;
 
 		stbt.tempArena.DestroyScope(tempScope);
 		subScope = stbt.arena.CreateScope();
@@ -83,10 +85,11 @@ namespace jv::bt
 		const char* buttons[]
 		{
 			"Environment",
+			"Algorithms",
 			"Run Info"
 		};
 
-		for (uint32_t i = 0; i < 2; i++)
+		for (uint32_t i = 0; i < 3; i++)
 		{
 			const bool selected = subIndex == i;
 			if (selected)
@@ -126,8 +129,8 @@ namespace jv::bt
 				if (ImGui::InputText("##", buffers[index], 9, ImGuiInputTextFlags_CharsDecimal))
 				{
 					int32_t n = std::atoi(buffers[index]);
-					if (n < 0)
-						snprintf(buffers[index], sizeof(buffers[index]), "%i", 0);
+					n = Max(n, 0);
+					snprintf(buffers[index], sizeof(buffers[index]), "%i", n);
 				}
 				ImGui::PopID();
 				ImGui::SameLine();
@@ -144,103 +147,31 @@ namespace jv::bt
 					ImGui::PopStyleColor();
 			}
 		}
-		/*
-		if (subIndex == btmiScripts)
+		if (subIndex == btmiAlgorithms)
 		{
-			ImGui::Begin("Scripts", nullptr, WIN_FLAGS);
-			ImGui::SetWindowPos({ 200, 200 });
-			ImGui::SetWindowSize({ 200, 200 });
-
-			std::string s = "Active: " + (L ? activeScript : "none");
-			ImGui::Text(s.c_str());
-
-			for (uint32_t i = 0; i < scripts.length; i++)
+			for (uint32_t i = 0; i < stbt.bots.length; i++)
 			{
-				if (ImGui::Button(scripts[i].c_str()))
+				auto& bot = stbt.bots[i];
+				const bool selected = i == algoIndex;
+
+				if (selected)
+					ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
+				if (ImGui::Button(bot.name))
+					algoIndex = i;
+				if (selected)
+					ImGui::PopStyleColor();
+
+				if (selected)
 				{
-					activeScript = scripts[i];
-					//OpenLua(*this);
+					ImGui::Text(bot.author);
+					ImGui::Text(bot.description);
 				}
 			}
-
-			ImGui::End();
-
-			ImGui::Begin("Run Info", nullptr, WIN_FLAGS);
-			ImGui::SetWindowPos({ 200, 0 });
-			ImGui::SetWindowSize({ 200, 200 });
-
-			ImGui::Checkbox("Randomize date", &randomizeDate);
-
-			if (randomizeDate)
-			{
-				ImGui::InputText("Days", dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal);
-			}
-			else
-			{
-				ImGui::DatePicker("##", from);
-				ImGui::SameLine();
-				ImGui::Text("Date 1");
-				ImGui::DatePicker("##2", to);
-				ImGui::SameLine();
-				ImGui::Text("Date 2");
-
-				std::time_t tFrom = mktime(&from), tTo = mktime(&to), tCurrent;
-				uint32_t tLength;
-				ClampDates(*this, tFrom, tTo, tCurrent, tLength, std::atoi(buffBuffer));
-			}
-
-			ImGui::InputText("Buffer", buffBuffer, 4, ImGuiInputTextFlags_CharsDecimal);
-			ImGui::InputText("Fee", feeBuffer, 5, ImGuiInputTextFlags_CharsScientific);
-
-			ImGui::PushItemWidth(40);
-			if (ImGui::InputText("Runs", runBuffer, 5, ImGuiInputTextFlags_CharsScientific))
-			{
-				int32_t n = std::atoi(runBuffer);
-				if (n < 1)
-					snprintf(runBuffer, sizeof(runBuffer), "%i", 1);
-			}
-
-			ImGui::PopItemWidth();
-			ImGui::SameLine();
-			ImGui::Checkbox("Log", &log);
-
-			if (ImGui::Button("Run Script"))
-			{
-				if (activeScript == "")
-				{
-					output.Add() = "ERROR: No script selected.";
-				}
-				else
-				{
-					bool valid = true;
-					if (randomizeDate)
-					{
-						time_t current;
-						uint32_t length;
-						uint32_t buffer = std::atoi(buffBuffer);
-						const auto days = std::atoi(dayBuffer);
-
-						if (!GetMaxLength(*this, current, length, buffer) || days > length)
-						{
-							output.Add() = "ERROR: Can't start run.";
-							valid = false;
-						}
-					}
-					if (valid)
-						runsQueued = std::atoi(runBuffer);
-				}
-			}
-
-			if (difftime(mktime(&from), mktime(&to)) > 0)
-			{
-				auto temp = to;
-				to = from;
-				from = to;
-			}
-
-			ImGui::End();
 		}
-		*/
+		if (subIndex == btmiRunInfo)
+		{
+
+		}
 		return false;
 	}
 

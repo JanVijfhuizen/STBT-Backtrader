@@ -12,6 +12,7 @@ namespace jv::bt
 	{
 		uint64_t scope;
 		Array<PortfolioStock> stocks;
+		float liquidity;
 
 		[[nodiscard]] static Portfolio Create(Arena& arena, const char** symbols, uint32_t length);
 		static void Destroy(Arena& arena, const Portfolio& portfolio);

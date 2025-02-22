@@ -14,6 +14,7 @@ namespace jv::bt
 			stock.symbol = symbols[i];
 			stock.count = 0;
 		}
+		portfolio.liquidity = 0;
 		return portfolio;
 	}
 

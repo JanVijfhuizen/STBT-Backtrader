@@ -1,6 +1,12 @@
 #pragma once
 #include <imgui_internal.h>
 
+/*
+
+Source: https://github.com/ocornut/imgui/issues/1901
+
+*/
+
 namespace ImGui {
 
     bool BufferingBar(const char* label, float value, const ImVec2& size_arg, const ImU32& bg_col, const ImU32& fg_col) {

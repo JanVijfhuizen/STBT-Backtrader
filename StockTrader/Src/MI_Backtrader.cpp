@@ -3,6 +3,7 @@
 #include "MenuItems/MI_Symbols.h"
 #include <JLib/ArrayUtils.h>
 #include <Utils/UT_Colors.h>
+#include <Ext/ImGuiLoadBar.h>
 
 namespace jv::bt
 {
@@ -51,6 +52,7 @@ namespace jv::bt
 		normalizeGraph = false;
 
 		algoIndex = -1;
+		running = false;
 
 		uint32_t n = 1;
 		snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
@@ -79,10 +81,9 @@ namespace jv::bt
 				ImGui::PopStyleColor();
 		}
 
-		MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
-
 		if (ImGui::Button("Back"))
 			index = 0;
+
 		return false;
 	}
 
@@ -219,8 +220,38 @@ namespace jv::bt
 						stbt.output.Add() = "ERROR: Length is out of scope!";
 					}
 
-					// check if randomize if length < total
+					running = true;
 				}
+			}
+		}
+		return false;
+	}
+
+	bool MI_Backtrader::DrawFree(STBT& stbt, uint32_t& index)
+	{
+		MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
+
+		if (running)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			glm::vec2 size = { 240, 120 };
+			ImGui::SetNextWindowSize({ size.x, size.y });
+			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			ImGui::OpenPopup("name");
+			if (ImGui::BeginPopup("name"))
+			{
+				const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+				const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+
+				ImGui::Spinner("##spinner", 15, 6, col);
+
+				ImGui::Text("Run 1/240, Day 56/213");
+				ImGui::Text("Est. 1 min 54 sec remaining");
+
+				ImGui::BufferingBar("##buffer_bar", 0.7f, ImVec2(200, 6), bg, col);
+				ImGui::Text("Calculating MA");
+
+				ImGui::End();
 			}
 		}
 		return false;

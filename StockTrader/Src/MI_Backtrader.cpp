@@ -226,8 +226,6 @@ namespace jv::bt
 					if (valid)
 					{
 						running = true;
-						runPortfolio = portfolio;
-						runScope = STBTScope::Create(&runPortfolio, timeSeries);
 						runIndex = -1;
 					}
 				}
@@ -242,24 +240,21 @@ namespace jv::bt
 
 		if (running)
 		{
-			const int32_t buffer = std::atoi(buffBuffer);
-			int32_t length = std::atoi(lengthBuffer);
-
 			const auto tFrom = mktime(&stbt.from);
 			const auto tTo = mktime(&stbt.to);
 
 			const auto diff = difftime(tTo, tFrom);
 			const uint32_t daysDiff = diff / 60 / 60 / 24;
 
+			const int32_t length = std::atoi(runCountBuffer);
+			const uint32_t runLength = randomizeDate ? std::atoi(lengthBuffer) : daysDiff;
 			auto& bot = stbt.bots[algoIndex];
-
-			if (!randomizeDate)
-				length = daysDiff - buffer;
 
 			ImGuiIO& io = ImGui::GetIO();
 			glm::vec2 size = { 240, 120 };
 			ImGui::SetNextWindowSize({ size.x, size.y });
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, 
+				io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 			ImGui::OpenPopup("run");
 			ImGui::BeginPopup("run");
 
@@ -269,15 +264,16 @@ namespace jv::bt
 			std::string runText = "Run " + std::to_string(runIndex);
 			runText += "/";
 			runText += std::to_string(length);
-			runText += " Epoch " + std::to_string(runIndex);
-			runText += "/";
-			runText += std::to_string(length);
-			runText += " Day " + std::to_string(runIndex);
-			runText += "/";
-			runText += std::to_string(length);
 
+			if (runDayIndex != -1)
+			{
+				runText += " Day " + std::to_string(runDayIndex);
+				runText += "/";
+				runText += std::to_string(runLength);
+			}
 			if (runIndex == -1)
 				runText = "Preprocessing data.";
+
 			ImGui::Text(runText.c_str());
 
 			ImGui::Spinner("##spinner", 15, 6, col);
@@ -296,16 +292,11 @@ namespace jv::bt
 			*/
 			if (runIndex == -1)
 			{
-				if(bot.init)
-					bot.init(runScope, bot.userPtr);
 				runIndex = 0;
-				runEpochIndex = 0;
 				runDayIndex = -1;
 			}
 			else if (runIndex >= length)
-			{
-				if(bot.cleanup)
-					bot.cleanup(runScope, bot.userPtr);
+			{	
 				running = false;
 			}
 			else
@@ -314,33 +305,41 @@ namespace jv::bt
 				{
 					// If random, decide on day.
 					const int32_t buffer = std::atoi(buffBuffer);
-					const int32_t length = std::atoi(lengthBuffer);
-
 					const auto tCurrent = GetTime(0);
-					const auto tFrom = mktime(&stbt.from);
-					const auto tTo = mktime(&stbt.to);
-
-					const auto diff = difftime(tTo, tFrom);
-					const uint32_t daysDiff = diff / 60 / 60 / 24;
-
 					const auto cdiff = difftime(tCurrent, tFrom);
 					const uint32_t cdaysDiff = cdiff / 60 / 60 / 24;
 
 					const uint32_t maxDiff = daysDiff - buffer - length;
-					const uint32_t randOffset = rand() % maxDiff;
 
 					if (randomizeDate)
+					{
+						const uint32_t randOffset = rand() % maxDiff;
 						runOffset = cdaysDiff - randOffset;
+					}
 					else
 						runOffset = cdaysDiff;
 
+					runPortfolio = portfolio;
+					runScope = STBTScope::Create(&runPortfolio, timeSeries);
+
+					if (bot.init)
+						bot.init(runScope, bot.userPtr);
 					runDayIndex = 0;
 				}
-
-				bot.update(runScope, trades, runOffset - runDayIndex, bot.userPtr);
-				runIndex++;
+				if (runDayIndex == runLength)
+				{
+					if (bot.cleanup)
+						bot.cleanup(runScope, bot.userPtr);
+					runDayIndex = -1;
+					runIndex++;
+				}
+				else
+				{
+					bot.update(runScope, trades, runOffset - runDayIndex, bot.userPtr);
+					runDayIndex++;
+				}
 			}
-			runIndex = 0;
+
 			ImGui::End();
 		}
 		return false;

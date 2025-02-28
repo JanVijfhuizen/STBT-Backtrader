@@ -29,7 +29,6 @@ namespace jv::bt
 
 		STBTTrade* trades;
 		STBTScope runScope;
-		Portfolio runPortfolio;
 		uint32_t runIndex;
 		uint32_t runDayIndex;
 		uint32_t runOffset;

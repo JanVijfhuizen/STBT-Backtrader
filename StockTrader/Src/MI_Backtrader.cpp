@@ -45,6 +45,8 @@ namespace jv::bt
 			namesCharPtrs[i] = names[i].c_str();
 
 		portfolio = Portfolio::Create(stbt.arena, namesCharPtrs.ptr, names.length);
+		for (uint32_t i = 0; i < names.length; i++)
+			portfolio.stocks[i].symbol = names[i].c_str();
 
 		subIndex = 0;
 		symbolIndex = -1;
@@ -261,7 +263,7 @@ namespace jv::bt
 			const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 			const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
 
-			std::string runText = "Run " + std::to_string(runIndex);
+			std::string runText = "Epoch " + std::to_string(runIndex);
 			runText += "/";
 			runText += std::to_string(length);
 
@@ -319,8 +321,16 @@ namespace jv::bt
 					else
 						runOffset = cdaysDiff;
 
-					runPortfolio = portfolio;
-					runScope = STBTScope::Create(&runPortfolio, timeSeries);
+					// Fill portfolio.
+					portfolio.liquidity = static_cast<float>(*buffers[0]);
+					for (uint32_t i = 0; i < timeSeries.length; i++)
+					{
+						portfolio.stocks[i].count = static_cast<uint32_t>(*buffers[i + 1]);
+					}
+
+					runScope = STBTScope::Create(&portfolio, timeSeries);
+					for (uint32_t i = 0; i < timeSeries.length; i++)
+						trades[i].change = 0;
 
 					if (bot.init)
 						bot.init(runScope, bot.userPtr);
@@ -335,7 +345,27 @@ namespace jv::bt
 				}
 				else
 				{
-					bot.update(runScope, trades, runOffset - runDayIndex, bot.userPtr);
+					const uint32_t dayOffsetIndex = runOffset - runDayIndex;
+
+					// Execute trades.
+					for (uint32_t i = 0; i < timeSeries.length; i++)
+					{
+						auto& trade = trades[i];
+						auto& stock = portfolio.stocks[i];
+						const float change = trade.change * timeSeries[i].open[dayOffsetIndex];
+
+						const bool enoughInStock = trade.change > 0 ? true : trade.change <= stock.count;
+
+						if (change < portfolio.liquidity && enoughInStock)
+						{
+							stock.count += trade.change;
+							portfolio.liquidity -= change;
+						}
+						
+						trade.change = 0;
+					}
+
+					bot.update(runScope, trades, dayOffsetIndex, bot.userPtr);
 					runDayIndex++;
 				}
 			}

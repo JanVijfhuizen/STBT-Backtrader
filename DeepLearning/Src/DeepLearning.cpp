@@ -3,7 +3,7 @@
 
 void SimpleTradeBot(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades, uint32_t current, void* userPtr)
 {
-	
+	trades[1].change = 1;
 }
 
 int main()

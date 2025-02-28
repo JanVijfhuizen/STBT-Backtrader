@@ -18,8 +18,6 @@ namespace jv::bt
 		uint32_t symbolIndex;
 		bool normalizeGraph;
 
-		Array<std::string> scripts;
-
 		uint32_t algoIndex;
 		bool randomizeDate;
 		char buffBuffer[8];
@@ -28,6 +26,14 @@ namespace jv::bt
 		char runCountBuffer[8];
 		bool log;
 		bool running;
+
+		STBTTrade* trades;
+		STBTScope runScope;
+		Portfolio runPortfolio;
+		uint32_t runIndex;
+		uint32_t runEpochIndex;
+		uint32_t runDayIndex;
+		uint32_t runOffset;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

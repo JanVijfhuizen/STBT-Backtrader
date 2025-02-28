@@ -4,6 +4,7 @@
 #include <JLib/ArrayUtils.h>
 #include <Utils/UT_Colors.h>
 #include <Ext/ImGuiLoadBar.h>
+#include <Utils/UT_Time.h>
 
 namespace jv::bt
 {
@@ -53,6 +54,8 @@ namespace jv::bt
 
 		algoIndex = -1;
 		running = false;
+
+		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
 
 		uint32_t n = 1;
 		snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
@@ -220,7 +223,13 @@ namespace jv::bt
 						stbt.output.Add() = "ERROR: Length is out of scope!";
 					}
 
-					running = true;
+					if (valid)
+					{
+						running = true;
+						runPortfolio = portfolio;
+						runScope = STBTScope::Create(&runPortfolio, timeSeries);
+						runIndex = -1;
+					}
 				}
 			}
 		}
@@ -233,18 +242,50 @@ namespace jv::bt
 
 		if (running)
 		{
+			const int32_t buffer = std::atoi(buffBuffer);
+			int32_t length = std::atoi(lengthBuffer);
+
+			const auto tFrom = mktime(&stbt.from);
+			const auto tTo = mktime(&stbt.to);
+
+			const auto diff = difftime(tTo, tFrom);
+			const uint32_t daysDiff = diff / 60 / 60 / 24;
+
+			auto& bot = stbt.bots[algoIndex];
+
+			if (!randomizeDate)
+				length = daysDiff - buffer;
+
 			ImGuiIO& io = ImGui::GetIO();
 			glm::vec2 size = { 240, 120 };
 			ImGui::SetNextWindowSize({ size.x, size.y });
 			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("name");
-			if (ImGui::BeginPopup("name"))
-			{
-				const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-				const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+			ImGui::OpenPopup("run");
+			ImGui::BeginPopup("run");
 
-				ImGui::Spinner("##spinner", 15, 6, col);
+			const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+			const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
 
+			std::string runText = "Run " + std::to_string(runIndex);
+			runText += "/";
+			runText += std::to_string(length);
+			runText += " Epoch " + std::to_string(runIndex);
+			runText += "/";
+			runText += std::to_string(length);
+			runText += " Day " + std::to_string(runIndex);
+			runText += "/";
+			runText += std::to_string(length);
+
+			if (runIndex == -1)
+				runText = "Preprocessing data.";
+			ImGui::Text(runText.c_str());
+
+			ImGui::Spinner("##spinner", 15, 6, col);
+
+			const char* todoText = "Doing nothing.";
+
+			// Render frame window.
+			/*
 				ImGui::Text("Run 1/240, Day 56/213");
 				ImGui::Text("Est. 1 min 54 sec remaining");
 
@@ -252,7 +293,55 @@ namespace jv::bt
 				ImGui::Text("Calculating MA");
 
 				ImGui::End();
+			*/
+			if (runIndex == -1)
+			{
+				if(bot.init)
+					bot.init(runScope, bot.userPtr);
+				runIndex = 0;
+				runEpochIndex = 0;
+				runDayIndex = -1;
 			}
+			else if (runIndex >= length)
+			{
+				if(bot.cleanup)
+					bot.cleanup(runScope, bot.userPtr);
+				running = false;
+			}
+			else
+			{
+				if (runDayIndex == -1)
+				{
+					// If random, decide on day.
+					const int32_t buffer = std::atoi(buffBuffer);
+					const int32_t length = std::atoi(lengthBuffer);
+
+					const auto tCurrent = GetTime(0);
+					const auto tFrom = mktime(&stbt.from);
+					const auto tTo = mktime(&stbt.to);
+
+					const auto diff = difftime(tTo, tFrom);
+					const uint32_t daysDiff = diff / 60 / 60 / 24;
+
+					const auto cdiff = difftime(tCurrent, tFrom);
+					const uint32_t cdaysDiff = cdiff / 60 / 60 / 24;
+
+					const uint32_t maxDiff = daysDiff - buffer - length;
+					const uint32_t randOffset = rand() % maxDiff;
+
+					if (randomizeDate)
+						runOffset = cdaysDiff - randOffset;
+					else
+						runOffset = cdaysDiff;
+
+					runDayIndex = 0;
+				}
+
+				bot.update(runScope, trades, runOffset - runDayIndex, bot.userPtr);
+				runIndex++;
+			}
+			runIndex = 0;
+			ImGui::End();
 		}
 		return false;
 	}

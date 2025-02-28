@@ -108,4 +108,11 @@ namespace jv::bt
 		assert(timeSeries.length > 0);
 		return timeSeries[0].length;
 	}
+	STBTScope STBTScope::Create(Portfolio* portfolio, const Array<TimeSeries> timeSeries)
+	{
+		STBTScope scope{};
+		scope.timeSeries = timeSeries;
+		scope.portfolio = portfolio;
+		return scope;
+	}
 }

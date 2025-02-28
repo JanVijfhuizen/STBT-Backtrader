@@ -13,6 +13,8 @@ namespace jv::bt
 		[[nodiscard]] TimeSeries GetTimeSeries(uint32_t index) const;
 		[[nodiscard]] uint32_t GetLength() const;
 
+		[[nodiscard]] static STBTScope Create(Portfolio* portfolio, Array<TimeSeries> timeSeries);
+
 	private:
 		Portfolio* portfolio;
 		Array<TimeSeries> timeSeries;
@@ -29,9 +31,9 @@ namespace jv::bt
 		const char* author = "NO AUTHOR GIVEN";
 		const char* description = "NO DESCRIPTION GIVEN";
 
-		void(*init)(const STBTScope& scope, void* userPtr);
+		void(*init)(const STBTScope& scope, void* userPtr) = nullptr;
 		void(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, void* userPtr);
-		void(*cleanup)(const STBTScope& scope, void* userPtr);
+		void(*cleanup)(const STBTScope& scope, void* userPtr) = nullptr;
 		void* userPtr = nullptr;
 	};
 

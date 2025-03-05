@@ -188,6 +188,7 @@ namespace jv::bt
 			}
 
 			ImGui::Checkbox("Log", &log);
+			ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
 			ImGui::Checkbox("Randomize Date", &randomizeDate);
 
 			if (randomizeDate)
@@ -290,6 +291,9 @@ namespace jv::bt
 			const uint32_t runLength = randomizeDate ? std::atoi(lengthBuffer) : daysDiff;
 			auto& bot = stbt.bots[algoIndex];
 
+			bool canFinish = !pauseOnFinish;
+			bool canEnd = false;
+
 			if(render)
 			{
 				ImGuiIO& io = ImGui::GetIO();
@@ -309,7 +313,7 @@ namespace jv::bt
 
 				if (runDayIndex != -1)
 				{
-					runText += " Day " + std::to_string(runDayIndex + 1);
+					runText += " Day " + std::to_string(runDayIndex);
 					runText += "/";
 					runText += std::to_string(runLength);
 				}
@@ -317,10 +321,15 @@ namespace jv::bt
 					runText = "Preprocessing data.";
 
 				ImGui::Text(runText.c_str());
+				//ImGui::Spinner("##spinner", 15, 6, col);
 
-				ImGui::Spinner("##spinner", 15, 6, col);
-
-				const char* todoText = "Doing nothing.";
+				if (runDayIndex >= runLength)
+				{
+					if (ImGui::Button("Continue"))
+						canFinish = true;
+					if (ImGui::Button("Break"))
+						canEnd = true;
+				}
 			}
 
 			if (runIndex == -1)
@@ -369,12 +378,18 @@ namespace jv::bt
 				}
 				if (runDayIndex == runLength)
 				{
-					if (bot.cleanup)
-						bot.cleanup(stbtScope, bot.userPtr);
-					runDayIndex = -1;
-					runIndex++;
+					if (canFinish || canEnd)
+					{
+						if (bot.cleanup)
+							bot.cleanup(stbtScope, bot.userPtr);
+						runDayIndex = -1;
+						runIndex++;
 
-					stbt.arena.DestroyScope(runScope);
+						stbt.arena.DestroyScope(runScope);
+
+						if (canEnd)
+							runIndex = length;
+					}
 				}
 				else
 				{
@@ -383,34 +398,14 @@ namespace jv::bt
 					const auto& stocks = portfolio.stocks;
 
 					float portfolioValue = 0;
+
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 					{
 						auto& num = runLog.numsInPort[i][runDayIndex] = stocks[i].count;
-						portfolioValue += timeSeries[i].open[dayOffsetIndex] * num;
+						portfolioValue += timeSeries[i].close[dayOffsetIndex] * num;
 					}
 					runLog.portValues[runDayIndex] = portfolioValue;
 					runLog.liquidities[runDayIndex] = portfolio.liquidity;
-
-					if (running && runDayIndex > 0 && render)
-					{
-						const auto tScope = stbt.tempArena.CreateScope();
-						auto graphPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
-						for (uint32_t i = 0; i < runDayIndex; i++)
-						{
-							const auto v = runLog.portValues[i] + runLog.liquidities[i];
-							graphPoints[i].open = v;
-							graphPoints[i].close = v;
-							graphPoints[i].high = v;
-							graphPoints[i].low = v;
-						}
-
-						stbt.renderer.DrawGraph({ 0.5, 0 },
-							glm::vec2(stbt.renderer.GetAspectRatio(), 1),
-							graphPoints.ptr, graphPoints.length, gr::GraphType::line,
-							false, true, glm::vec4(1), runDayIndex);
-
-						stbt.tempArena.DestroyScope(tScope);
-					}
 
 					// Execute trades.
 					for (uint32_t i = 0; i < timeSeries.length; i++)
@@ -437,8 +432,32 @@ namespace jv::bt
 				}
 			}
 
-			if(render)
+			if (render)
+			{
+				if (runDayIndex > 0 && runDayIndex != -1)
+				{
+					const uint32_t l = runDayIndex >= runLength ? runLength - 1 : runDayIndex;
+					const auto tScope = stbt.tempArena.CreateScope();
+					auto graphPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+					for (uint32_t i = 0; i < l; i++)
+					{
+						const auto v = runLog.portValues[i] + runLog.liquidities[i];
+						graphPoints[i].open = v;
+						graphPoints[i].close = v;
+						graphPoints[i].high = v;
+						graphPoints[i].low = v;
+					}
+
+					stbt.renderer.DrawGraph({ 0.5, 0 },
+						glm::vec2(stbt.renderer.GetAspectRatio(), 1),
+						graphPoints.ptr, l, gr::GraphType::line,
+						false, true, glm::vec4(1), l);
+
+					stbt.tempArena.DestroyScope(tScope);
+				}
+
 				ImGui::End();
+			}
 
 			const int32_t batchLength = std::atoi(batchBuffer);
 			if (++batchId < batchLength && running)

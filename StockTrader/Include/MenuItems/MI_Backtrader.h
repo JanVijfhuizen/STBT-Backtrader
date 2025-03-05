@@ -27,6 +27,7 @@ namespace jv::bt
 		char feeBuffer[8];
 		char runCountBuffer[8];
 		bool log;
+		bool pauseOnFinish;
 		bool running;
 		uint32_t batchId;
 

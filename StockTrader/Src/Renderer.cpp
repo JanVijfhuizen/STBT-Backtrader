@@ -164,7 +164,7 @@ namespace jv::gr
 	}
 	void Renderer::DrawGraph(const glm::vec2 position, const glm::vec2 scale, 
 		GraphPoint* points, const uint32_t length, const GraphType type, 
-		const bool noBackground, const bool normalize, const glm::vec4 color)
+		const bool noBackground, const bool normalize, const glm::vec4 color, const uint32_t stopAt)
 	{
 		if (!noBackground)
 		{
@@ -187,7 +187,8 @@ namespace jv::gr
 		if (!normalize)
 			floor = Min<float>(0, floor);
 
-		for (uint32_t j = 1; j < length; j++)
+		const uint32_t l = stopAt == -1 ? length : stopAt;
+		for (uint32_t j = 1; j < l; j++)
 		{
 			float xStart = org + lineWidth * (j - 1);
 			float xEnd = xStart + lineWidth;

@@ -66,7 +66,7 @@ namespace jv::bt
 		snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
 		float f = 1e-3f;
 		snprintf(feeBuffer, sizeof(feeBuffer), "%f", f);
-		f = 1000;
+		f = 10000;
 		snprintf(buffers[0], sizeof(buffers[0]), "%f", f);
 
 		stbt.tempArena.DestroyScope(tempScope);
@@ -341,8 +341,7 @@ namespace jv::bt
 					const auto tCurrent = GetTime(0);
 					const auto cdiff = difftime(tCurrent, tFrom);
 					const uint32_t cdaysDiff = cdiff / 60 / 60 / 24;
-
-					const uint32_t maxDiff = daysDiff - buffer - length;
+					const uint32_t maxDiff = daysDiff - buffer - runLength;
 
 					if (randomizeDate)
 					{
@@ -408,7 +407,7 @@ namespace jv::bt
 						stbt.renderer.DrawGraph({ 0.5, 0 },
 							glm::vec2(stbt.renderer.GetAspectRatio(), 1),
 							graphPoints.ptr, graphPoints.length, gr::GraphType::line,
-							false, true, glm::vec4(1));
+							false, true, glm::vec4(1), runDayIndex);
 
 						stbt.tempArena.DestroyScope(tScope);
 					}

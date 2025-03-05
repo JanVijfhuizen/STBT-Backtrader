@@ -50,7 +50,8 @@ namespace jv::gr
 		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
 		void DrawGraph(glm::vec2 position, glm::vec2 scale, GraphPoint* points, 
-			uint32_t length, GraphType type, bool noBackground, bool normalize, glm::vec4 color = glm::vec4(1, 0, 0, 1));
+			uint32_t length, GraphType type, bool noBackground, bool normalize, 
+			glm::vec4 color = glm::vec4(1, 0, 0, 1), const uint32_t stopAt = -1);
 	};
 
 	[[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);

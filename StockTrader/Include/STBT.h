@@ -12,6 +12,7 @@ namespace jv::bt
 		[[nodiscard]] uint32_t GetNInPort(uint32_t index) const;
 		[[nodiscard]] TimeSeries GetTimeSeries(uint32_t index) const;
 		[[nodiscard]] uint32_t GetLength() const;
+		[[nodiscard]] uint32_t GetTimeSeriesCount() const;
 
 		[[nodiscard]] static STBTScope Create(Portfolio* portfolio, Array<TimeSeries> timeSeries);
 

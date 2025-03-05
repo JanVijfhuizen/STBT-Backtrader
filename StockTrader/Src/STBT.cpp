@@ -108,6 +108,10 @@ namespace jv::bt
 		assert(timeSeries.length > 0);
 		return timeSeries[0].length;
 	}
+	uint32_t STBTScope::GetTimeSeriesCount() const
+	{
+		return timeSeries.length;
+	}
 	STBTScope STBTScope::Create(Portfolio* portfolio, const Array<TimeSeries> timeSeries)
 	{
 		STBTScope scope{};

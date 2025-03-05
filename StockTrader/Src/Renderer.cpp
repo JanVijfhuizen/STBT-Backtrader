@@ -220,7 +220,6 @@ namespace jv::gr
 				low = jv::RLerp<float>(low, floor, ceiling) * scale.y - scale.y / 2;
 				high = jv::RLerp<float>(high, floor, ceiling) * scale.y - scale.y / 2;
 				DrawLine(glm::vec2(pos.x, low), glm::vec2(pos.x, high), glm::vec4(1, 1, 1, 1));
-
 				DrawPlane(pos, glm::vec2(width, height), color);
 			}
 		}

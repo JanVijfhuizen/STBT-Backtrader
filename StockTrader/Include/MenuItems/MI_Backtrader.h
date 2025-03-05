@@ -1,6 +1,7 @@
 #pragma once
 #include "MI_Main.h"
 #include <Portfolio.h>
+#include <Log.h>
 
 namespace jv::bt
 {
@@ -22,16 +23,21 @@ namespace jv::bt
 		bool randomizeDate;
 		char buffBuffer[8];
 		char lengthBuffer[8];
+		char batchBuffer[8];
 		char feeBuffer[8];
 		char runCountBuffer[8];
 		bool log;
 		bool running;
+		uint32_t batchId;
 
 		STBTTrade* trades;
-		STBTScope runScope;
+		STBTScope stbtScope;
 		uint32_t runIndex;
 		uint32_t runDayIndex;
 		uint32_t runOffset;
+
+		uint64_t runScope;
+		Log runLog;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);
@@ -41,5 +47,6 @@ namespace jv::bt
 		const char* GetSubMenuTitle();
 		const char* GetDescription();
 		void Unload(STBT& stbt) override;
+		void BackTest(STBT& stbt, bool render);
 	};
 }

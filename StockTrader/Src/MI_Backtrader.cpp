@@ -61,6 +61,13 @@ namespace jv::bt
 
 		uint32_t n = 1;
 		snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
+		snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
+		n = 0;
+		snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
+		float f = 1e-3f;
+		snprintf(feeBuffer, sizeof(feeBuffer), "%f", f);
+		f = 1000;
+		snprintf(buffers[0], sizeof(buffers[0]), "%f", f);
 
 		stbt.tempArena.DestroyScope(tempScope);
 		subScope = stbt.arena.CreateScope();
@@ -173,6 +180,13 @@ namespace jv::bt
 				snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
 			}
 
+			if (ImGui::InputText("Batches", batchBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
+			{
+				int32_t n = std::atoi(batchBuffer);
+				n = Max(n, 1);
+				snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
+			}
+
 			ImGui::Checkbox("Log", &log);
 			ImGui::Checkbox("Randomize Date", &randomizeDate);
 
@@ -229,6 +243,7 @@ namespace jv::bt
 					{
 						running = true;
 						runIndex = -1;
+						batchId = 0;
 					}
 				}
 			}
@@ -239,7 +254,30 @@ namespace jv::bt
 	bool MI_Backtrader::DrawFree(STBT& stbt, uint32_t& index)
 	{
 		MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
+		BackTest(stbt, true);
+		return false;
+	}
 
+	const char* MI_Backtrader::GetMenuTitle()
+	{
+		return "Backtrader";
+	}
+
+	const char* MI_Backtrader::GetSubMenuTitle()
+	{
+		return "Details";
+	}
+
+	const char* MI_Backtrader::GetDescription()
+	{
+		return "Test trade algorithms \nin paper trading.";
+	}
+
+	void MI_Backtrader::Unload(STBT& stbt)
+	{
+	}
+	void MI_Backtrader::BackTest(STBT& stbt, bool render)
+	{
 		if (running)
 		{
 			const auto tFrom = mktime(&stbt.from);
@@ -252,53 +290,46 @@ namespace jv::bt
 			const uint32_t runLength = randomizeDate ? std::atoi(lengthBuffer) : daysDiff;
 			auto& bot = stbt.bots[algoIndex];
 
-			ImGuiIO& io = ImGui::GetIO();
-			glm::vec2 size = { 240, 120 };
-			ImGui::SetNextWindowSize({ size.x, size.y });
-			ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, 
-				io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-			ImGui::OpenPopup("run");
-			ImGui::BeginPopup("run");
-
-			const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-			const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
-
-			std::string runText = "Epoch " + std::to_string(runIndex);
-			runText += "/";
-			runText += std::to_string(length);
-
-			if (runDayIndex != -1)
+			if(render)
 			{
-				runText += " Day " + std::to_string(runDayIndex);
+				ImGuiIO& io = ImGui::GetIO();
+				glm::vec2 size = { 240, 120 };
+				ImGui::SetNextWindowSize({ size.x, size.y });
+				ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f,
+					io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+				ImGui::OpenPopup("run");
+				ImGui::BeginPopup("run");
+
+				const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+				const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+
+				std::string runText = "Epoch " + std::to_string(runIndex + 1);
 				runText += "/";
-				runText += std::to_string(runLength);
+				runText += std::to_string(length);
+
+				if (runDayIndex != -1)
+				{
+					runText += " Day " + std::to_string(runDayIndex + 1);
+					runText += "/";
+					runText += std::to_string(runLength);
+				}
+				if (runIndex == -1)
+					runText = "Preprocessing data.";
+
+				ImGui::Text(runText.c_str());
+
+				ImGui::Spinner("##spinner", 15, 6, col);
+
+				const char* todoText = "Doing nothing.";
 			}
-			if (runIndex == -1)
-				runText = "Preprocessing data.";
 
-			ImGui::Text(runText.c_str());
-
-			ImGui::Spinner("##spinner", 15, 6, col);
-
-			const char* todoText = "Doing nothing.";
-
-			// Render frame window.
-			/*
-				ImGui::Text("Run 1/240, Day 56/213");
-				ImGui::Text("Est. 1 min 54 sec remaining");
-
-				ImGui::BufferingBar("##buffer_bar", 0.7f, ImVec2(200, 6), bg, col);
-				ImGui::Text("Calculating MA");
-
-				ImGui::End();
-			*/
 			if (runIndex == -1)
 			{
 				runIndex = 0;
 				runDayIndex = -1;
 			}
 			else if (runIndex >= length)
-			{	
+			{
 				running = false;
 			}
 			else
@@ -322,37 +353,74 @@ namespace jv::bt
 						runOffset = cdaysDiff;
 
 					// Fill portfolio.
-					portfolio.liquidity = static_cast<float>(*buffers[0]);
+					portfolio.liquidity = std::atof(buffers[0]);
 					for (uint32_t i = 0; i < timeSeries.length; i++)
-					{
 						portfolio.stocks[i].count = static_cast<uint32_t>(*buffers[i + 1]);
-					}
 
-					runScope = STBTScope::Create(&portfolio, timeSeries);
+					stbtScope = STBTScope::Create(&portfolio, timeSeries);
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 						trades[i].change = 0;
 
 					if (bot.init)
-						bot.init(runScope, bot.userPtr);
+						bot.init(stbtScope, bot.userPtr);
 					runDayIndex = 0;
+
+					runScope = stbt.arena.CreateScope();
+					runLog = Log::Create(stbt.arena, stbtScope, runOffset - runLength, runOffset);	
 				}
 				if (runDayIndex == runLength)
 				{
 					if (bot.cleanup)
-						bot.cleanup(runScope, bot.userPtr);
+						bot.cleanup(stbtScope, bot.userPtr);
 					runDayIndex = -1;
 					runIndex++;
+
+					stbt.arena.DestroyScope(runScope);
 				}
 				else
 				{
 					const uint32_t dayOffsetIndex = runOffset - runDayIndex;
+					const float fee = std::atof(feeBuffer);
+					const auto& stocks = portfolio.stocks;
+
+					float portfolioValue = 0;
+					for (uint32_t i = 0; i < timeSeries.length; i++)
+					{
+						auto& num = runLog.numsInPort[i][runDayIndex] = stocks[i].count;
+						portfolioValue += timeSeries[i].open[dayOffsetIndex] * num;
+					}
+					runLog.portValues[runDayIndex] = portfolioValue;
+					runLog.liquidities[runDayIndex] = portfolio.liquidity;
+
+					if (running && runDayIndex > 0 && render)
+					{
+						const auto tScope = stbt.tempArena.CreateScope();
+						auto graphPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+						for (uint32_t i = 0; i < runDayIndex; i++)
+						{
+							const auto v = runLog.portValues[i] + runLog.liquidities[i];
+							graphPoints[i].open = v;
+							graphPoints[i].close = v;
+							graphPoints[i].high = v;
+							graphPoints[i].low = v;
+						}
+
+						stbt.renderer.DrawGraph({ 0.5, 0 },
+							glm::vec2(stbt.renderer.GetAspectRatio(), 1),
+							graphPoints.ptr, graphPoints.length, gr::GraphType::line,
+							false, true, glm::vec4(1));
+
+						stbt.tempArena.DestroyScope(tScope);
+					}
 
 					// Execute trades.
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 					{
 						auto& trade = trades[i];
 						auto& stock = portfolio.stocks[i];
-						const float change = trade.change * timeSeries[i].open[dayOffsetIndex];
+						float change = trade.change * timeSeries[i].open[dayOffsetIndex];
+						const float feeMod = (1.f + fee * (change > 0 ? 1 : -1));
+						change *= feeMod;
 
 						const bool enoughInStock = trade.change > 0 ? true : trade.change <= stock.count;
 
@@ -361,36 +429,23 @@ namespace jv::bt
 							stock.count += trade.change;
 							portfolio.liquidity -= change;
 						}
-						
+
 						trade.change = 0;
 					}
 
-					bot.update(runScope, trades, dayOffsetIndex, bot.userPtr);
+					bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr);
 					runDayIndex++;
 				}
 			}
 
-			ImGui::End();
+			if(render)
+				ImGui::End();
+
+			const int32_t batchLength = std::atoi(batchBuffer);
+			if (++batchId < batchLength && running)
+				BackTest(stbt, false);
+			else
+				batchId = 0;
 		}
-		return false;
-	}
-
-	const char* MI_Backtrader::GetMenuTitle()
-	{
-		return "Backtrader";
-	}
-
-	const char* MI_Backtrader::GetSubMenuTitle()
-	{
-		return "Details";
-	}
-
-	const char* MI_Backtrader::GetDescription()
-	{
-		return "Test trade algorithms \nin paper trading.";
-	}
-
-	void MI_Backtrader::Unload(STBT& stbt)
-	{
 	}
 }

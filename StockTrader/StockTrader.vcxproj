@@ -173,6 +173,7 @@
     <ClInclude Include="Include\JLib\QueueUtils.h" />
     <ClInclude Include="Include\JLib\Vector.h" />
     <ClInclude Include="Include\JLib\VectorUtils.h" />
+    <ClInclude Include="Include\Log.h" />
     <ClInclude Include="Include\MenuItems\MI_Main.h" />
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\Graphics\Shader.h" />
@@ -191,6 +192,7 @@
     <ClInclude Include="Include\Utils\UT_Time.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\Log.cpp" />
     <ClCompile Include="Src\Portfolio.cpp" />
     <ClCompile Include="Src\MI_MainMenu.cpp" />
     <ClCompile Include="Src\MI_Main.cpp" />

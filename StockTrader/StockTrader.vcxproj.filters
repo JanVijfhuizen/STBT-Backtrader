@@ -132,6 +132,9 @@
     <ClInclude Include="Include\Ext\ImGuiLoadBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\dllmain.cpp">
@@ -195,6 +198,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\Portfolio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

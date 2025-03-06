@@ -254,7 +254,8 @@ namespace jv::bt
 
 	bool MI_Backtrader::DrawFree(STBT& stbt, uint32_t& index)
 	{
-		MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
+		if(!running)
+			MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
 		BackTest(stbt, true);
 		return false;
 	}
@@ -296,13 +297,7 @@ namespace jv::bt
 
 			if(render)
 			{
-				ImGuiIO& io = ImGui::GetIO();
-				glm::vec2 size = { 240, 120 };
-				ImGui::SetNextWindowSize({ size.x, size.y });
-				ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f,
-					io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-				ImGui::OpenPopup("run");
-				ImGui::BeginPopup("run");
+				MI_Symbols::DrawBottomRightWindow("Current Run", true);
 
 				const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 				const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
@@ -319,17 +314,18 @@ namespace jv::bt
 				}
 				if (runIndex == -1)
 					runText = "Preprocessing data.";
-
 				ImGui::Text(runText.c_str());
-				//ImGui::Spinner("##spinner", 15, 6, col);
-
-				if (runDayIndex >= runLength)
+				
+				if (runDayIndex >= runLength && pauseOnFinish)
 				{
 					if (ImGui::Button("Continue"))
 						canFinish = true;
+					ImGui::SameLine();
 					if (ImGui::Button("Break"))
 						canEnd = true;
 				}
+
+				ImGui::End();
 			}
 
 			if (runIndex == -1)
@@ -455,8 +451,6 @@ namespace jv::bt
 
 					stbt.tempArena.DestroyScope(tScope);
 				}
-
-				ImGui::End();
 			}
 
 			const int32_t batchLength = std::atoi(batchBuffer);

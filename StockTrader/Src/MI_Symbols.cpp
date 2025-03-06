@@ -330,9 +330,7 @@ namespace jv::bt
 
 		auto graphPoints = RenderSymbolData(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
 
-		ImGui::Begin("Settings", nullptr, WIN_FLAGS);
-		ImGui::SetWindowPos({ 400, 0 });
-		ImGui::SetWindowSize({ 400, 124 });
+		DrawTopRightWindow("Settings");
 		ImGui::DatePicker("Date 1", stbt.from);
 		ImGui::DatePicker("Date 2", stbt.to);
 
@@ -385,9 +383,7 @@ namespace jv::bt
 
 		std::string title = "Details: ";
 		title += names[symbolIndex];
-		ImGui::Begin(title.c_str(), nullptr, WIN_FLAGS);
-		ImGui::SetWindowPos({ 400, 500 });
-		ImGui::SetWindowSize({ 400, 100 });
+		DrawBottomRightWindow(title.c_str());
 
 		float min = FLT_MAX, max = 0;
 
@@ -428,5 +424,31 @@ namespace jv::bt
 		}
 
 		ImGui::End();
+	}
+	void MI_Symbols::DrawTopRightWindow(const char* name)
+	{
+		ImGui::Begin(name, nullptr, WIN_FLAGS);
+		ImGui::SetWindowPos({ 400, 0 });
+		ImGui::SetWindowSize({ 400, 124 });
+	}
+	void MI_Symbols::DrawBottomRightWindow(const char* name, const bool popup)
+	{
+		const ImVec2 pos = { 400, 500 };
+		const ImVec2 size = { 400, 100 };
+
+		if (!popup)
+		{
+			ImGui::Begin(name, nullptr, WIN_FLAGS);
+			ImGui::SetWindowPos(pos);
+			ImGui::SetWindowSize(size);
+		}
+		else
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			ImGui::SetNextWindowSize(size);
+			ImGui::SetNextWindowPos(pos);
+			ImGui::OpenPopup(name);
+			ImGui::BeginPopup(name);
+		}
 	}
 }

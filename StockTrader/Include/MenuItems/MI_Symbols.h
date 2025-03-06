@@ -32,5 +32,8 @@ namespace jv::bt
 			const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, const bool normalizeGraph);
 		static void TryRenderSymbol(STBT& stbt, Array<TimeSeries>& timeSeries,
 			const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, bool& normalizeGraph);
+
+		static void DrawTopRightWindow(const char* name);
+		static void DrawBottomRightWindow(const char* name, bool popup = false);
 	};
 }

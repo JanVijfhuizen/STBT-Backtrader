@@ -335,7 +335,12 @@ namespace jv::bt
 						stepCompleted = false;
 					ImGui::SameLine();
 					if (ImGui::Button("Break"))
+					{
+						runDayIndex = runLength;
+						stepCompleted = false;
+						canFinish = true;
 						canEnd = true;
+					}
 				}
 
 				ImGui::End();

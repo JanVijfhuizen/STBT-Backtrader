@@ -55,6 +55,9 @@ namespace jv::bt
 		normalizeGraph = false;
 
 		algoIndex = -1;
+		stepwise = false;
+		log = false;
+		pauseOnFinish = false;
 		running = false;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
@@ -187,9 +190,10 @@ namespace jv::bt
 				snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
 			}
 
-			ImGui::Checkbox("Log", &log);
+			ImGui::Checkbox("Stepwise", &stepwise);
 			ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
 			ImGui::Checkbox("Randomize Date", &randomizeDate);
+			ImGui::Checkbox("Log", &log);
 
 			if (randomizeDate)
 			{
@@ -325,6 +329,14 @@ namespace jv::bt
 					if (ImGui::Button("Break"))
 						canEnd = true;
 				}
+				else if (stepwise && stepCompleted)
+				{
+					if (ImGui::Button("Continue"))
+						stepCompleted = false;
+					ImGui::SameLine();
+					if (ImGui::Button("Break"))
+						canEnd = true;
+				}
 
 				ImGui::End();
 
@@ -402,7 +414,8 @@ namespace jv::bt
 					runDayIndex = 0;
 
 					runScope = stbt.arena.CreateScope();
-					runLog = Log::Create(stbt.arena, stbtScope, runOffset - runLength, runOffset);	
+					runLog = Log::Create(stbt.arena, stbtScope, runOffset - runLength, runOffset);
+					stepCompleted = false;
 				}
 				if (runDayIndex == runLength)
 				{
@@ -419,7 +432,7 @@ namespace jv::bt
 							runIndex = length;
 					}
 				}
-				else
+				else if(!stepwise || !stepCompleted)
 				{
 					const uint32_t dayOffsetIndex = runOffset - runDayIndex;
 					const float fee = std::atof(feeBuffer);
@@ -457,6 +470,7 @@ namespace jv::bt
 
 					bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr);
 					runDayIndex++;
+					stepCompleted = true;
 				}
 			}
 

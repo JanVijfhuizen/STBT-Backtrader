@@ -29,6 +29,7 @@ namespace jv::bt
 		bool log;
 		bool pauseOnFinish;
 		bool running;
+		bool stepwise;
 		uint32_t batchId;
 
 		STBTTrade* trades;
@@ -39,6 +40,7 @@ namespace jv::bt
 
 		uint64_t runScope;
 		Log runLog;
+		bool stepCompleted;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

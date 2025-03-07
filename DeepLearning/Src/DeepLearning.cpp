@@ -3,7 +3,11 @@
 
 void SimpleTradeBot(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades, uint32_t current, void* userPtr)
 {
-	trades[1].change = 1;
+	for (uint32_t i = 0; i < 4; i++)
+	{
+		trades[i].change = rand() % 3;
+		trades[i].change -= 1;
+	}
 }
 
 int main()

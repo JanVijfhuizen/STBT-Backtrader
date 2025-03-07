@@ -31,22 +31,21 @@ namespace jv::bt
 			buffers[i] = stbt.arena.New<char>(16);
 		timeSeries = CreateArray<TimeSeries>(stbt.arena, c);
 
+		auto namesCharPtrs = CreateArray<const char*>(stbt.tempArena, names.length);
+
 		uint32_t index = 0;
 		for (size_t i = 0; i < enabled.length; i++)
 		{
 			if (!enabled[i])
 				continue;
 			uint32_t _;
-			timeSeries[index++] = MI_Symbols::LoadSymbol(stbt, i, names, _);
+			namesCharPtrs[index] = names[i].c_str();
+			timeSeries[index++] = MI_Symbols::LoadSymbol(stbt, i, names, _);			
 		}
 
-		auto namesCharPtrs = CreateArray<const char*>(stbt.tempArena, names.length);
-		for (uint32_t i = 0; i < names.length; i++)
-			namesCharPtrs[i] = names[i].c_str();
-
 		portfolio = Portfolio::Create(stbt.arena, namesCharPtrs.ptr, names.length);
-		for (uint32_t i = 0; i < names.length; i++)
-			portfolio.stocks[i].symbol = names[i].c_str();
+		for (uint32_t i = 0; i < c; i++)
+			portfolio.stocks[i].symbol = namesCharPtrs[i];
 
 		subIndex = 0;
 		symbolIndex = -1;
@@ -65,7 +64,6 @@ namespace jv::bt
 		uint32_t n = 1;
 		snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
 		snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
-		n = 0;
 		snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
 		float f = 1e-3f;
 		snprintf(feeBuffer, sizeof(feeBuffer), "%f", f);
@@ -165,7 +163,7 @@ namespace jv::bt
 			if (ImGui::InputText("Buffer", buffBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
 			{
 				int32_t n = std::atoi(buffBuffer);
-				n = Max(n, 0);
+				n = Max(n, 1);
 				snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
 			}
 
@@ -183,14 +181,16 @@ namespace jv::bt
 				snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
 			}
 
-			if (ImGui::InputText("Batches", batchBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
-			{
-				int32_t n = std::atoi(batchBuffer);
-				n = Max(n, 1);
-				snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
-			}
-
 			ImGui::Checkbox("Stepwise", &stepwise);
+
+			if(!stepwise)
+				if (ImGui::InputText("Batches", batchBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
+				{
+					int32_t n = std::atoi(batchBuffer);
+					n = Max(n, 1);
+					snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
+				}
+			
 			ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
 			ImGui::Checkbox("Randomize Date", &randomizeDate);
 			ImGui::Checkbox("Log", &log);
@@ -249,6 +249,7 @@ namespace jv::bt
 						running = true;
 						runIndex = -1;
 						batchId = 0;
+						timeElapsed = 0;
 					}
 				}
 			}
@@ -320,6 +321,20 @@ namespace jv::bt
 				if (runIndex == -1)
 					runText = "Preprocessing data.";
 				ImGui::Text(runText.c_str());
+
+				if (!stepwise)
+				{
+					std::string elapsed = "Elapsed/Remaining: " + ConvertSecondsToHHMMSS(timeElapsed / 1e6) + "/";
+					
+					float e = timeElapsed;
+					e /= runDayIndex + runIndex * runLength;
+					const float avrFrame = e;
+					const float totalDuration = avrFrame * (length * runLength);
+					e *= (length - runIndex - 1) * runLength + (runLength - runDayIndex);
+					elapsed += ConvertSecondsToHHMMSS(e / 1e6);
+					ImGui::Text(elapsed.c_str());
+					//ImGui::Text(ConvertSecondsToHHMMSS(totalDuration / 1e6).c_str());
+				}
 				
 				if (runDayIndex >= runLength && pauseOnFinish)
 				{
@@ -361,13 +376,29 @@ namespace jv::bt
 					const auto& stock = portfolio.stocks[i];
 					const float val = stock.count * timeSeries[i].close[dayOffsetIndex];
 					v += val;
-
+					
 					std::string t = stock.symbol;
 					t += ": ";
 					t += std::to_string(stock.count);
 					t += ", ";
 					t += std::to_string(int(round(val)));
+					t += " ";
+
+					const int32_t change = trades[i].change;
+					if (change != 0)
+					{
+						ImVec4 col = change > 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
+						ImGui::PushStyleColor(ImGuiCol_Text, col);
+
+						if (change > 0)
+							t += "+";
+						t += std::to_string(change);
+					}
+						
 					ImGui::Text(t.c_str());
+
+					if(change != 0)
+						ImGui::PopStyleColor();
 				}
 				uint32_t iV = round(v);
 
@@ -421,6 +452,7 @@ namespace jv::bt
 					runScope = stbt.arena.CreateScope();
 					runLog = Log::Create(stbt.arena, stbtScope, runOffset - runLength, runOffset);
 					stepCompleted = false;
+					tpStart = std::chrono::steady_clock::now();
 				}
 				if (runDayIndex == runLength)
 				{
@@ -439,6 +471,11 @@ namespace jv::bt
 				}
 				else if(!stepwise || !stepCompleted)
 				{
+					auto tpEnd = std::chrono::steady_clock::now();
+					auto diff = std::chrono::duration_cast<std::chrono::microseconds>(tpEnd - tpStart).count();
+					timeElapsed += diff;
+					tpStart = tpEnd;
+
 					const uint32_t dayOffsetIndex = runOffset - runDayIndex;
 					const float fee = std::atof(feeBuffer);
 					const auto& stocks = portfolio.stocks;
@@ -462,7 +499,7 @@ namespace jv::bt
 						const float feeMod = (1.f + fee * (change > 0 ? 1 : -1));
 						change *= feeMod;
 
-						const bool enoughInStock = trade.change > 0 ? true : trade.change <= stock.count;
+						const bool enoughInStock = trade.change > 0 ? true : -trade.change <= stock.count;
 
 						if (change < portfolio.liquidity && enoughInStock)
 						{
@@ -504,7 +541,7 @@ namespace jv::bt
 				}
 			}
 
-			const int32_t batchLength = std::atoi(batchBuffer);
+			const int32_t batchLength = stepwise ? 1 : std::atoi(batchBuffer);
 			if (++batchId < batchLength && running)
 				BackTest(stbt, false);
 			else

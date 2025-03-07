@@ -8,4 +8,5 @@ namespace jv::bt
 	void ClampDates(STBT& stbt, std::time_t& tFrom, std::time_t& tTo,
 		std::time_t& tCurrent, const Array<TimeSeries>& timeSeries, 
 		uint32_t& length, const uint32_t buffer);
+	[[nodiscard]] std::string ConvertSecondsToHHMMSS(int value);
 }

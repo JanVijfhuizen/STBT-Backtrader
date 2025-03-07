@@ -41,6 +41,8 @@ namespace jv::bt
 		uint64_t runScope;
 		Log runLog;
 		bool stepCompleted;
+		std::chrono::steady_clock::time_point tpStart;
+		double timeElapsed;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

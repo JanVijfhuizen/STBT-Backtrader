@@ -66,7 +66,7 @@ namespace jv::bt
 		snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
 		snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
 		n = 30;
-		snprintf(maBuffer, sizeof(maBuffer), "%i", n);
+		snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
 		float f = 1e-3f;
 		snprintf(feeBuffer, sizeof(feeBuffer), "%f", f);
 		f = 10000;
@@ -104,6 +104,12 @@ namespace jv::bt
 
 	bool MI_Backtrader::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
+		if (running)
+		{
+			DrawLog(stbt);
+			return false;
+		}
+		
 		if (subIndex == btmiPortfolio)
 		{
 			ImGui::Text("Portfolio");
@@ -162,6 +168,13 @@ namespace jv::bt
 		}
 		if (subIndex == btmiRunInfo)
 		{
+			if (ImGui::InputText("Runs", runCountBuffer, 4, ImGuiInputTextFlags_CharsDecimal))
+			{
+				int32_t n = std::atoi(runCountBuffer);
+				n = Max(n, 1);
+				snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
+			}
+
 			if (ImGui::InputText("Buffer", buffBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
 			{
 				int32_t n = std::atoi(buffBuffer);
@@ -176,11 +189,11 @@ namespace jv::bt
 				snprintf(feeBuffer, sizeof(feeBuffer), "%f", n);
 			}
 
-			if (ImGui::InputText("Runs", runCountBuffer, 4, ImGuiInputTextFlags_CharsDecimal))
+			if (ImGui::InputText("Zoom", zoomBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
 			{
-				int32_t n = std::atoi(runCountBuffer);
-				n = Max(n, 1);
-				snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
+				int32_t n = std::atoi(zoomBuffer);
+				n = Max(n, 0);
+				snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
 			}
 
 			if (ImGui::InputText("Batches", batchBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
@@ -203,13 +216,6 @@ namespace jv::bt
 					n = Max(n, 0);
 					snprintf(lengthBuffer, sizeof(lengthBuffer), "%i", n);
 				}
-			}
-
-			if (ImGui::InputText("MA", maBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
-			{
-				int32_t n = std::atoi(maBuffer);
-				n = Max(n, 0);
-				snprintf(maBuffer, sizeof(maBuffer), "%i", n);
 			}
 
 			if (ImGui::Button("Run"))
@@ -302,7 +308,15 @@ namespace jv::bt
 			const uint32_t daysDiff = diff / 60 / 60 / 24;
 
 			const int32_t length = std::atoi(runCountBuffer);
-			const uint32_t runLength = randomizeDate ? std::atoi(lengthBuffer) : daysDiff;
+			uint32_t runLength = randomizeDate ? std::atoi(lengthBuffer) : daysDiff;
+			uint32_t buffer = std::atoi(buffBuffer);
+			if (buffer >= runLength)
+			{
+				stbt.output.Add() = "ERROR: Buffer is larger than run length. \n Aborting run.";
+				running = false;
+			}
+			runLength -= buffer;
+
 			auto& bot = stbt.bots[algoIndex];
 
 			bool canFinish = !pauseOnFinish;
@@ -608,18 +622,18 @@ namespace jv::bt
 						graphPointsPct.ptr, l, gr::GraphType::line,
 						true, true, colors[2], l);
 
-					const uint32_t ma = std::stoi(maBuffer);
+					const uint32_t zoom = std::stoi(zoomBuffer);
 
-					if (l >= ma)
+					if (l >= zoom)
 					{
 						stbt.renderer.DrawGraph({ smallXPos, 0.4 },
 							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
-							&graphPoints.ptr[l - ma], ma, gr::GraphType::line,
+							&graphPoints.ptr[l - zoom], zoom, gr::GraphType::line,
 							true, true, colors[3]);
 
 						stbt.renderer.DrawGraph({ smallXPos, 0.8 },
 							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
-							&graphPointsAvr.ptr[l - ma], ma, gr::GraphType::candle,
+							&graphPointsAvr.ptr[l - zoom], zoom, gr::GraphType::candle,
 							true, true, glm::vec4(1));
 					}
 
@@ -632,6 +646,71 @@ namespace jv::bt
 				BackTest(stbt, false);
 			else
 				batchId = 0;
+		}
+	}
+	void MI_Backtrader::DrawLog(STBT& stbt)
+	{
+		if (runDayIndex == -1)
+			return;
+
+		const uint32_t drawCap = 50;
+		const uint32_t length = Min(runDayIndex, drawCap);
+		const uint32_t start = drawCap > runDayIndex ? 0 : runDayIndex - drawCap;
+
+		for (uint32_t i = 0; i < length; i++)
+		{	
+			std::string dayText = "---DAY ";
+			dayText += std::to_string(runDayIndex - length + i + 1);
+			dayText += "---";
+			ImGui::Text(dayText.c_str());
+
+			const float col = .6f;
+			ImGui::PushStyleColor(ImGuiCol_Text, { col, col, col, 1 });
+
+			const float portV = runLog.portValues[start + i];
+			const float liqV = runLog.liquidities[start + i];
+
+			std::string portText = "Port Value: ";
+			portText += std::to_string((int)portV);
+			ImGui::Text(portText.c_str());
+
+			std::string liquidText = "Liquidity: ";
+			liquidText += std::to_string((int)liqV);
+			ImGui::Text(liquidText.c_str());
+
+			const float portVp = runLog.portValues[start + i];
+			const float liqVp = runLog.liquidities[start + i];
+
+			const auto change = (int)((portV + liqV) - (portVp + liqVp));
+			if (change != 0)
+			{
+				ImVec4 tradeCol = change > 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
+				ImGui::PushStyleColor(ImGuiCol_Text, tradeCol);
+				std::string changeText = "Change: ";
+				changeText += std::to_string(change);
+				ImGui::Text(changeText.c_str());
+				ImGui::PopStyleColor();
+			}
+
+			// Print trades.
+			if (i > 0)
+			{
+				for (uint32_t j = 0; j < timeSeries.length; j++)
+				{
+					const auto& curLog = runLog.numsInPort[j];
+					const int diff = curLog[runDayIndex - length + i - 1] - curLog[runDayIndex - length + i];
+					if (diff == 0)
+						continue;
+
+					std::string tradeText = diff > 0 ? "[BUY] " : "[SELL] ";
+					tradeText += portfolio.stocks[j].symbol;
+					tradeText += " x";
+					tradeText += std::to_string(diff * (diff < 0 ? -1 : 1));
+					ImGui::Text(tradeText.c_str());
+				}
+			}
+
+			ImGui::PopStyleColor();
 		}
 	}
 }

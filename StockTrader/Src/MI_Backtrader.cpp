@@ -447,6 +447,7 @@ namespace jv::bt
 			}
 			else
 			{
+				// If this is a new run, set everything up.
 				if (runDayIndex == -1)
 				{
 					// If random, decide on day.
@@ -462,7 +463,7 @@ namespace jv::bt
 						runOffset = cdaysDiff - randOffset;
 					}
 					else
-						runOffset = cdaysDiff;
+						runOffset = cdaysDiff - buffer;
 
 					// Fill portfolio.
 					portfolio.liquidity = std::atof(buffers[0]);
@@ -482,6 +483,7 @@ namespace jv::bt
 					stepCompleted = false;
 					tpStart = std::chrono::steady_clock::now();
 				}
+				// If this run is completed, either start a new run or quit.
 				if (runDayIndex == runLength)
 				{
 					if (canFinish || canEnd)
@@ -508,16 +510,6 @@ namespace jv::bt
 					const float fee = std::atof(feeBuffer);
 					const auto& stocks = portfolio.stocks;
 
-					float portfolioValue = 0;
-
-					for (uint32_t i = 0; i < timeSeries.length; i++)
-					{
-						auto& num = runLog.numsInPort[i][runDayIndex] = stocks[i].count;
-						portfolioValue += timeSeries[i].close[dayOffsetIndex] * num;
-					}
-					runLog.portValues[runDayIndex] = portfolioValue;
-					runLog.liquidities[runDayIndex] = portfolio.liquidity;
-
 					// Execute trades.
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 					{
@@ -538,6 +530,16 @@ namespace jv::bt
 						trade.change = 0;
 					}
 
+					float portfolioValue = 0;
+					for (uint32_t i = 0; i < timeSeries.length; i++)
+					{
+						auto& num = runLog.numsInPort[i][runDayIndex] = stocks[i].count;
+						portfolioValue += timeSeries[i].close[dayOffsetIndex] * num;
+					}
+
+					runLog.portValues[runDayIndex] = portfolioValue;
+					runLog.liquidities[runDayIndex] = portfolio.liquidity;
+
 					bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr);
 					runDayIndex++;
 					stepCompleted = true;
@@ -546,6 +548,7 @@ namespace jv::bt
 
 			if (render)
 			{
+				// Draw the graphs. Only possible if there are at least 2 graph points.
 				if (runDayIndex > 0 && runDayIndex != -1)
 				{
 					const uint32_t dayOffsetIndex = runOffset - runDayIndex;
@@ -670,6 +673,10 @@ namespace jv::bt
 			const float portV = runLog.portValues[start + i];
 			const float liqV = runLog.liquidities[start + i];
 
+			std::string totalText = "Total Value: ";
+			totalText += std::to_string((int)(portV + liqV));
+			ImGui::Text(totalText.c_str());
+
 			std::string portText = "Port Value: ";
 			portText += std::to_string((int)portV);
 			ImGui::Text(portText.c_str());
@@ -678,18 +685,22 @@ namespace jv::bt
 			liquidText += std::to_string((int)liqV);
 			ImGui::Text(liquidText.c_str());
 
-			const float portVp = runLog.portValues[start + i];
-			const float liqVp = runLog.liquidities[start + i];
-
-			const auto change = (int)((portV + liqV) - (portVp + liqVp));
-			if (change != 0)
+			const int32_t pId = start + i - 1;
+			if (pId >= 0)
 			{
-				ImVec4 tradeCol = change > 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
-				ImGui::PushStyleColor(ImGuiCol_Text, tradeCol);
-				std::string changeText = "Change: ";
-				changeText += std::to_string(change);
-				ImGui::Text(changeText.c_str());
-				ImGui::PopStyleColor();
+				const float portVp = runLog.portValues[pId];
+				const float liqVp = runLog.liquidities[pId];
+
+				const auto change = (int)((portV + liqV) - (portVp + liqVp));
+				if (change != 0)
+				{
+					ImVec4 tradeCol = change > 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
+					ImGui::PushStyleColor(ImGuiCol_Text, tradeCol);
+					std::string changeText = "Change: ";
+					changeText += std::to_string(change);
+					ImGui::Text(changeText.c_str());
+					ImGui::PopStyleColor();
+				}
 			}
 
 			// Print trades.
@@ -702,7 +713,7 @@ namespace jv::bt
 					if (diff == 0)
 						continue;
 
-					std::string tradeText = diff > 0 ? "[BUY] " : "[SELL] ";
+					std::string tradeText = diff < 0 ? "[BUY] " : "[SELL] ";
 					tradeText += portfolio.stocks[j].symbol;
 					tradeText += " x";
 					tradeText += std::to_string(diff * (diff < 0 ? -1 : 1));

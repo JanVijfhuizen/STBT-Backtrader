@@ -278,6 +278,7 @@ namespace jv::bt
 	void MI_Backtrader::Unload(STBT& stbt)
 	{
 	}
+
 	void MI_Backtrader::BackTest(STBT& stbt, bool render)
 	{
 		if (running)
@@ -324,6 +325,37 @@ namespace jv::bt
 					if (ImGui::Button("Break"))
 						canEnd = true;
 				}
+
+				ImGui::End();
+
+				MI_Symbols::DrawTopRightWindow("Stocks", true, true);
+
+				std::string liquidity = "Liquidity: ";
+				uint32_t ILiq = round(portfolio.liquidity);
+				liquidity += std::to_string(ILiq);
+				ImGui::Text(liquidity.c_str());
+
+				const uint32_t dayOffsetIndex = runOffset - runDayIndex;
+
+				std::string portValue = "Port Value: ";
+				float v = portfolio.liquidity;
+				for (uint32_t i = 0; i < timeSeries.length; i++)
+				{
+					const auto& stock = portfolio.stocks[i];
+					const float val = stock.count * timeSeries[i].close[dayOffsetIndex];
+					v += val;
+
+					std::string t = stock.symbol;
+					t += ": ";
+					t += std::to_string(stock.count);
+					t += ", ";
+					t += std::to_string(int(round(val)));
+					ImGui::Text(t.c_str());
+				}
+				uint32_t iV = round(v);
+
+				portValue += std::to_string(iV);
+				ImGui::Text(portValue.c_str());
 
 				ImGui::End();
 			}

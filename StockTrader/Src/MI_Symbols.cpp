@@ -425,12 +425,18 @@ namespace jv::bt
 
 		ImGui::End();
 	}
-	void MI_Symbols::DrawTopRightWindow(const char* name)
+	void MI_Symbols::DrawTopRightWindow(const char* name, const bool large, const bool transparent)
 	{
-		ImGui::Begin(name, nullptr, WIN_FLAGS);
+		ImGuiWindowFlags FLAGS = 0;
+		FLAGS |= ImGuiWindowFlags_NoBackground;
+		FLAGS |= ImGuiWindowFlags_NoTitleBar;
+		FLAGS = transparent ? FLAGS : 0;
+
+		ImGui::Begin(name, nullptr, WIN_FLAGS | FLAGS);
 		ImGui::SetWindowPos({ 400, 0 });
-		ImGui::SetWindowSize({ 400, 124 });
+		ImGui::SetWindowSize({ 400, static_cast<float>(large ? 500 : 124) });
 	}
+
 	void MI_Symbols::DrawBottomRightWindow(const char* name, const bool popup)
 	{
 		const ImVec2 pos = { 400, 500 };

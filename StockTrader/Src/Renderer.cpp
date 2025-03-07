@@ -180,8 +180,8 @@ namespace jv::gr
 		for (uint32_t j = 0; j < length; j++)
 		{
 			const auto& point = points[j];
-			ceiling = jv::Max<float>(ceiling, type == GraphType::line ? point.close : point.high);
-			floor = jv::Min<float>(floor, type == GraphType::line ? point.close : point.low);
+			ceiling = jv::Max<float>(ceiling, point.high);
+			floor = jv::Min<float>(floor, point.low);
 		}
 
 		if (!normalize)

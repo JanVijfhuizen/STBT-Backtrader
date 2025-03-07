@@ -65,6 +65,8 @@ namespace jv::bt
 		snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
 		snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
 		snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
+		n = 30;
+		snprintf(maBuffer, sizeof(maBuffer), "%i", n);
 		float f = 1e-3f;
 		snprintf(feeBuffer, sizeof(feeBuffer), "%f", f);
 		f = 10000;
@@ -203,6 +205,13 @@ namespace jv::bt
 					n = Max(n, 0);
 					snprintf(lengthBuffer, sizeof(lengthBuffer), "%i", n);
 				}
+			}
+
+			if (ImGui::InputText("MA", maBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
+			{
+				int32_t n = std::atoi(maBuffer);
+				n = Max(n, 0);
+				snprintf(maBuffer, sizeof(maBuffer), "%i", n);
 			}
 
 			if (ImGui::Button("Run"))
@@ -520,6 +529,7 @@ namespace jv::bt
 			{
 				if (runDayIndex > 0 && runDayIndex != -1)
 				{
+					const uint32_t dayOffsetIndex = runOffset - runDayIndex;
 					const uint32_t l = runDayIndex >= runLength ? runLength - 1 : runDayIndex;
 					const auto tScope = stbt.tempArena.CreateScope();
 					auto graphPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
@@ -532,12 +542,52 @@ namespace jv::bt
 						graphPoints[i].low = v;
 					}
 
-					for (uint32_t i = 0; i < 4; i++)
+					auto graphPointsAvr = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+					for (uint32_t i = 0; i < l; i++)
 					{
-						stbt.renderer.DrawGraph({ .25 + 0.5 * (i % 2 == 0), -.25 + .5 * (i >= 2)},
-							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 2.f,
-							graphPoints.ptr, l, gr::GraphType::line,
-							false, true, glm::vec4(1), l);
+						float open = 0;
+						float close = 0;
+						float high = 0;
+						float low = 0;
+
+						for (uint32_t j = 0; j < timeSeries.length; j++)
+						{
+							const auto& series = timeSeries[j];
+							open += series.open[runOffset - i];
+							close += series.close[runOffset - i];
+							high += series.high[runOffset - i];
+							low += series.low[runOffset - i];
+						}
+
+						graphPointsAvr[i].open = open;
+						graphPointsAvr[i].close = close;
+						graphPointsAvr[i].high = high;
+						graphPointsAvr[i].low = low;
+					}
+
+					stbt.renderer.DrawGraph({.3, -.25},
+						glm::vec2(stbt.renderer.GetAspectRatio(), 1) * .75f,
+						graphPoints.ptr, l, gr::GraphType::line,
+						true, true, glm::vec4(1, 0, 0, 1), l);
+
+					stbt.renderer.DrawGraph({.8, -.4},
+						glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
+						graphPointsAvr.ptr, l, gr::GraphType::line,
+						true, true, glm::vec4(0, 1, 0, 1), l);
+
+					const uint32_t ma = std::stoi(maBuffer);
+
+					if (l >= ma)
+					{
+						stbt.renderer.DrawGraph({ .8, 0 },
+							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
+							&graphPoints.ptr[l - ma], ma, gr::GraphType::line,
+							true, true, glm::vec4(1));
+
+						stbt.renderer.DrawGraph({ .8, 0.4 },
+							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
+							&graphPointsAvr.ptr[l - ma], ma, gr::GraphType::candle,
+							true, true, glm::vec4(1));
 					}
 
 					stbt.tempArena.DestroyScope(tScope);

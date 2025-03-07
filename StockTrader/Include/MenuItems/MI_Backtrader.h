@@ -23,6 +23,7 @@ namespace jv::bt
 		bool randomizeDate;
 		char buffBuffer[8];
 		char lengthBuffer[8];
+		char maBuffer[8];
 		char batchBuffer[8];
 		char feeBuffer[8];
 		char runCountBuffer[8];

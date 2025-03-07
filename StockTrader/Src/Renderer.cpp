@@ -200,7 +200,7 @@ namespace jv::gr
 			
 			if (type == GraphType::line)
 			{
-				DrawLine(glm::vec2(xStart, yPosPrev), glm::vec2(xEnd, yPos), color);
+				DrawLine(glm::vec2(xStart, yPosPrev + position.y), glm::vec2(xEnd, yPos + position.y), color);
 			}
 			if (type == GraphType::candle)
 			{
@@ -220,8 +220,8 @@ namespace jv::gr
 				
 				low = jv::RLerp<float>(low, floor, ceiling) * scale.y - scale.y / 2;
 				high = jv::RLerp<float>(high, floor, ceiling) * scale.y - scale.y / 2;
-				DrawLine(glm::vec2(pos.x, low), glm::vec2(pos.x, high), glm::vec4(1, 1, 1, 1));
-				DrawPlane(pos, glm::vec2(width, height), color);
+				DrawLine(glm::vec2(pos.x, low + position.y), glm::vec2(pos.x, high + position.y), glm::vec4(1, 1, 1, 1));
+				DrawPlane(pos + glm::vec2(0, position.y), glm::vec2(width, height), color);
 			}
 		}
 	}

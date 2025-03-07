@@ -532,10 +532,13 @@ namespace jv::bt
 						graphPoints[i].low = v;
 					}
 
-					stbt.renderer.DrawGraph({ 0.5, 0 },
-						glm::vec2(stbt.renderer.GetAspectRatio(), 1),
-						graphPoints.ptr, l, gr::GraphType::line,
-						false, true, glm::vec4(1), l);
+					for (uint32_t i = 0; i < 4; i++)
+					{
+						stbt.renderer.DrawGraph({ .25 + 0.5 * (i % 2 == 0), -.25 + .5 * (i >= 2)},
+							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 2.f,
+							graphPoints.ptr, l, gr::GraphType::line,
+							false, true, glm::vec4(1), l);
+					}
 
 					stbt.tempArena.DestroyScope(tScope);
 				}

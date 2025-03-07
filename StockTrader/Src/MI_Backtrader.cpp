@@ -183,16 +183,14 @@ namespace jv::bt
 				snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
 			}
 
-			ImGui::Checkbox("Stepwise", &stepwise);
-
-			if(!stepwise)
-				if (ImGui::InputText("Batches", batchBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
-				{
-					int32_t n = std::atoi(batchBuffer);
-					n = Max(n, 1);
-					snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
-				}
+			if (ImGui::InputText("Batches", batchBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
+			{
+				int32_t n = std::atoi(batchBuffer);
+				n = Max(n, 1);
+				snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
+			}
 			
+			ImGui::Checkbox("Stepwise", &stepwise);
 			ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
 			ImGui::Checkbox("Randomize Date", &randomizeDate);
 			ImGui::Checkbox("Log", &log);
@@ -365,6 +363,13 @@ namespace jv::bt
 						canFinish = true;
 						canEnd = true;
 					}
+					if (ImGui::Button("Stepwise off"))
+						stepwise = false;
+				}
+				else 
+				{
+					if (ImGui::Button("Stepwise on"))
+						stepwise = true;
 				}
 
 				ImGui::End();
@@ -533,6 +538,7 @@ namespace jv::bt
 					const uint32_t l = runDayIndex >= runLength ? runLength - 1 : runDayIndex;
 					const auto tScope = stbt.tempArena.CreateScope();
 					auto graphPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+
 					for (uint32_t i = 0; i < l; i++)
 					{
 						const auto v = runLog.portValues[i] + runLog.liquidities[i];
@@ -543,6 +549,16 @@ namespace jv::bt
 					}
 
 					auto graphPointsAvr = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+					auto graphPointsPct = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+
+					float closeStart = 0;
+					for (uint32_t j = 0; j < timeSeries.length; j++)
+					{
+						const auto& series = timeSeries[j];
+						closeStart += series.close[runOffset];
+					}
+					closeStart /= timeSeries.length;
+
 					for (uint32_t i = 0; i < l; i++)
 					{
 						float open = 0;
@@ -563,28 +579,45 @@ namespace jv::bt
 						graphPointsAvr[i].close = close;
 						graphPointsAvr[i].high = high;
 						graphPointsAvr[i].low = low;
+
+						const float pct = closeStart / close;
+						const float v = graphPoints[i].close * pct;
+
+						graphPointsPct[i].open = v;
+						graphPointsPct[i].close = v;
+						graphPointsPct[i].high = v;
+						graphPointsPct[i].low = v;
 					}
 
-					stbt.renderer.DrawGraph({.3, -.25},
-						glm::vec2(stbt.renderer.GetAspectRatio(), 1) * .75f,
-						graphPoints.ptr, l, gr::GraphType::line,
-						true, true, glm::vec4(1, 0, 0, 1), l);
+					auto colors = LoadRandColors(stbt.tempArena, 4);
 
-					stbt.renderer.DrawGraph({.8, -.4},
+					stbt.renderer.DrawGraph({.35, -.2},
+						glm::vec2(stbt.renderer.GetAspectRatio(), 1) * .9f,
+						graphPoints.ptr, l, gr::GraphType::line,
+						true, true, colors[0], l);
+
+					const float smallXPos = .85f;
+
+					stbt.renderer.DrawGraph({ smallXPos, -.4},
 						glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
 						graphPointsAvr.ptr, l, gr::GraphType::line,
-						true, true, glm::vec4(0, 1, 0, 1), l);
+						true, true, colors[1], l);
+
+					stbt.renderer.DrawGraph({ smallXPos, 0 },
+						glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
+						graphPointsPct.ptr, l, gr::GraphType::line,
+						true, true, colors[2], l);
 
 					const uint32_t ma = std::stoi(maBuffer);
 
 					if (l >= ma)
 					{
-						stbt.renderer.DrawGraph({ .8, 0 },
+						stbt.renderer.DrawGraph({ smallXPos, 0.4 },
 							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
 							&graphPoints.ptr[l - ma], ma, gr::GraphType::line,
-							true, true, glm::vec4(1));
+							true, true, colors[3]);
 
-						stbt.renderer.DrawGraph({ .8, 0.4 },
+						stbt.renderer.DrawGraph({ smallXPos, 0.8 },
 							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
 							&graphPointsAvr.ptr[l - ma], ma, gr::GraphType::candle,
 							true, true, glm::vec4(1));

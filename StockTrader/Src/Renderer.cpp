@@ -236,7 +236,7 @@ namespace jv::gr
 
 			convPos *= RESOLUTION;
 
-			glm::vec2 winSize = { scale.x * RESOLUTION.x / 4, 40 };
+			glm::vec2 winSize = { scale.x * RESOLUTION.x / 4, 10 };
 
 			convPos.x -= winSize.x * aspectRatio;
 			convPos.y += scale.y * RESOLUTION.y / 4;
@@ -249,7 +249,20 @@ namespace jv::gr
 			ImGui::Begin(title, nullptr, WIN_FLAGS | FLAGS);
 			ImGui::SetWindowPos({ convPos.x, convPos.y });
 			ImGui::SetWindowSize({ winSize.x, winSize.y });
-			ImGui::Text(title);
+
+			std::string text = title;
+			const float start = points[0].close;
+			const float end = points[l - 1].close;
+			const float pct = end / start - 1.f;
+			text += " [";
+			text += pct >= 0 ? "+" : "-";
+			text += std::to_string(static_cast<uint32_t>(abs(pct) * 100));
+			text += "%%]";
+
+			ImVec4 tradeCol = pct >= 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
+			ImGui::PushStyleColor(ImGuiCol_Text, tradeCol);
+			ImGui::Text(text.c_str());
+			ImGui::PopStyleColor();
 			ImGui::End();
 		}
 	}

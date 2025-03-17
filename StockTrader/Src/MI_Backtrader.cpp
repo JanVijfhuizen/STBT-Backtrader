@@ -610,39 +610,44 @@ namespace jv::bt
 					const float ratio = stbt.renderer.GetAspectRatio();
 
 					glm::vec2 grPos = { 0, 0 };
-					grPos.x += .5f;
+					grPos.x += .36f;
+					grPos.y += .02f;
 
 					stbt.renderer.SetLineWidth(2);
-					stbt.renderer.DrawGraph(ratio, grPos, glm::vec2(1),
+					stbt.renderer.DrawGraph(ratio, grPos, glm::vec2(.9),
 						graphPoints.ptr, l, gr::GraphType::line,
-						false, true, colors[0], l, "graph a");
+						false, true, colors[0], l, "portfolio value");
 					stbt.renderer.SetLineWidth(1);
 
 					const float smallXPos = .85f;
 
-					stbt.renderer.DrawGraph(ratio, {smallXPos, -.4},
+					stbt.renderer.DrawGraph(ratio, {smallXPos, 0.3 },
 						glm::vec2(1) / 3.f,
 						graphPointsAvr.ptr, l, gr::GraphType::line,
-						false, true, colors[1], l, "graph b");
+						false, true, colors[1], l, "mark");
 
-					stbt.renderer.DrawGraph(ratio, { smallXPos, 0 },
+					stbt.renderer.DrawGraph(ratio, { smallXPos, -0.2 },
 						glm::vec2(1) / 3.f,
 						graphPointsPct.ptr, l, gr::GraphType::line,
-						false, true, colors[2], l, "graph c");
+						false, true, colors[2], l, "rel");
 
 					const uint32_t zoom = std::stoi(zoomBuffer);
 
 					if (l >= zoom)
 					{
-						stbt.renderer.DrawGraph(ratio, { smallXPos, 0.4 },
+						std::string zoomPort = "port" + std::to_string(zoom);
+
+						stbt.renderer.DrawGraph(ratio, { smallXPos - .3, 0.8 },
 							glm::vec2(1) / 3.f,
 							&graphPoints.ptr[l - zoom], zoom, gr::GraphType::line,
-							true, true, colors[3], -1, "graph d");
+							false, true, colors[3], -1, zoomPort.c_str());
+
+						std::string zoomMarket = "mark" + std::to_string(zoom);
 
 						stbt.renderer.DrawGraph(ratio, { smallXPos, 0.8 },
 							glm::vec2(1) / 3.f,
 							&graphPointsAvr.ptr[l - zoom], zoom, gr::GraphType::candle,
-							true, true, glm::vec4(1), -1, "graph e");
+							false, true, glm::vec4(1), -1, zoomMarket.c_str());
 					}
 
 					stbt.tempArena.DestroyScope(tScope);

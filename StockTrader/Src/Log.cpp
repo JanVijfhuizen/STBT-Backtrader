@@ -15,6 +15,8 @@ namespace jv::bt
 		log.numsInPort = arena.New<uint32_t*>(timeSeriesCount);
 		for (uint32_t i = 0; i < timeSeriesCount; i++)
 			log.numsInPort[i] = arena.New<uint32_t>(length);
+		log.marktAvr = arena.New<float>(length);
+		log.marktPct = arena.New<float>(length);
 		return log;
 	}
 	void Log::Destroy(Arena& arena, const Log& log)

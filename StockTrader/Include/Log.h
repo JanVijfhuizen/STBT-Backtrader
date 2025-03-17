@@ -8,6 +8,8 @@ namespace jv::bt
 		uint32_t** numsInPort;
 		float* liquidities;
 		float* portValues;
+		float* marktAvr;
+		float* marktPct;
 
 		[[nodiscard]] static Log Create(Arena& arena, const STBTScope& scope, uint32_t start, uint32_t end);
 		static void Destroy(Arena& arena, const Log& log);

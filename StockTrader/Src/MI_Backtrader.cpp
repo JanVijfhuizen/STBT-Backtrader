@@ -540,6 +540,23 @@ namespace jv::bt
 					runLog.portValues[runDayIndex] = portfolioValue;
 					runLog.liquidities[runDayIndex] = portfolio.liquidity;
 
+					float close = 0;
+					float closeStart = 0;
+
+					for (uint32_t j = 0; j < timeSeries.length; j++)
+					{
+						const auto& series = timeSeries[j];
+						close += series.close[runOffset - runDayIndex];
+						closeStart += series.close[runOffset];
+					}
+
+					const float pct = closeStart / close;
+					const float avr = (portfolioValue + portfolio.liquidity) / 
+						(runLog.portValues[0] + runLog.liquidities[0]) / pct;
+
+					runLog.marktPct[runDayIndex] = pct;
+					runLog.marktAvr[runDayIndex] = avr;
+
 					bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr);
 					runDayIndex++;
 					stepCompleted = true;
@@ -568,42 +585,20 @@ namespace jv::bt
 					auto graphPointsAvr = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
 					auto graphPointsPct = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
 
-					float closeStart = 0;
-					for (uint32_t j = 0; j < timeSeries.length; j++)
-					{
-						const auto& series = timeSeries[j];
-						closeStart += series.close[runOffset];
-					}
-					closeStart /= timeSeries.length;
-
 					for (uint32_t i = 0; i < l; i++)
 					{
-						float open = 0;
-						float close = 0;
-						float high = 0;
-						float low = 0;
+						const float avr = runLog.marktAvr[i];
+						const float pct = runLog.marktPct[i];
 
-						for (uint32_t j = 0; j < timeSeries.length; j++)
-						{
-							const auto& series = timeSeries[j];
-							open += series.open[runOffset - i];
-							close += series.close[runOffset - i];
-							high += series.high[runOffset - i];
-							low += series.low[runOffset - i];
-						}
+						graphPointsAvr[i].open = avr;
+						graphPointsAvr[i].close = avr;
+						graphPointsAvr[i].high = avr;
+						graphPointsAvr[i].low = avr;
 
-						graphPointsAvr[i].open = open;
-						graphPointsAvr[i].close = close;
-						graphPointsAvr[i].high = high;
-						graphPointsAvr[i].low = low;
-
-						const float pct = closeStart / close;
-						const float v = graphPoints[i].close * pct;
-
-						graphPointsPct[i].open = v;
-						graphPointsPct[i].close = v;
-						graphPointsPct[i].high = v;
-						graphPointsPct[i].low = v;
+						graphPointsPct[i].open = pct;
+						graphPointsPct[i].close = pct;
+						graphPointsPct[i].high = pct;
+						graphPointsPct[i].low = pct;
 					}
 
 					auto colors = LoadRandColors(stbt.tempArena, 4);

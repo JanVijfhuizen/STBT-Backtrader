@@ -162,17 +162,19 @@ namespace jv::gr
 			gr::GetShaderUniform(lineShader, "color"), color);
 		Draw(VertType::line);
 	}
-	void Renderer::DrawGraph(const glm::vec2 position, const glm::vec2 scale, 
+	void Renderer::DrawGraph(const float aspectRatio, const glm::vec2 position, const glm::vec2 scale,
 		GraphPoint* points, const uint32_t length, const GraphType type, 
-		const bool noBackground, const bool normalize, const glm::vec4 color, const uint32_t stopAt)
+		const bool noBackground, const bool normalize, const glm::vec4 color, const uint32_t stopAt, const char* title)
 	{
+		glm::vec2 aspScale = scale * glm::vec2(aspectRatio, 1);
+
 		if (!noBackground)
 		{
-			DrawPlane(position, scale, glm::vec4(1));
-			DrawPlane(position, scale * (1.f - graphBorderThickness), glm::vec4(0));
+			DrawPlane(position, aspScale, glm::vec4(1));
+			DrawPlane(position, aspScale * (1.f - graphBorderThickness), glm::vec4(0));
 		}
 
-		float lineWidth = 1.f / (length - 1) * scale.x;
+		float lineWidth = 1.f / (length - 1) * aspScale.x;
 		float org = -lineWidth * (length - 1) / 2 + position.x;
 		float ceiling = 0;
 		float floor = FLT_MAX;
@@ -194,9 +196,9 @@ namespace jv::gr
 			float xEnd = xStart + lineWidth;
 
 			const auto& cur = points[j];
-			const float yPos = jv::RLerp<float>(cur.close, floor, ceiling) * scale.y - scale.y / 2;
+			const float yPos = jv::RLerp<float>(cur.close, floor, ceiling) * aspScale.y - aspScale.y / 2;
 			const auto& prev = points[j - 1];
-			const float yPosPrev = jv::RLerp<float>(prev.close, floor, ceiling) * scale.y - scale.y / 2;
+			const float yPosPrev = jv::RLerp<float>(prev.close, floor, ceiling) * aspScale.y - aspScale.y / 2;
 			
 			if (type == GraphType::line)
 			{
@@ -208,21 +210,47 @@ namespace jv::gr
 				const float close = cur.close;
 
 				const auto color = open < close ? glm::vec4(0, 1, 0, 1) : glm::vec4(1, 0, 0, 1);
-				const float yPos2 = jv::RLerp<float>((open + close) / 2, floor, ceiling) * scale.y - scale.y / 2;
+				const float yPos2 = jv::RLerp<float>((open + close) / 2, floor, ceiling) * aspScale.y - aspScale.y / 2;
 
 				const auto pos = glm::vec2(xStart + lineWidth / 2, yPos2);
 				const float width = (xEnd - xStart) * candleThickness;
-				const float height = (open - close) / (ceiling - floor) * scale.y;
+				const float height = (open - close) / (ceiling - floor) * aspScale.y;
 
 				// low/high
 				float low = cur.low;
 				float high = cur.high;
 				
-				low = jv::RLerp<float>(low, floor, ceiling) * scale.y - scale.y / 2;
-				high = jv::RLerp<float>(high, floor, ceiling) * scale.y - scale.y / 2;
+				low = jv::RLerp<float>(low, floor, ceiling) * aspScale.y - aspScale.y / 2;
+				high = jv::RLerp<float>(high, floor, ceiling) * aspScale.y - aspScale.y / 2;
 				DrawLine(glm::vec2(pos.x, low + position.y), glm::vec2(pos.x, high + position.y), glm::vec4(1, 1, 1, 1));
 				DrawPlane(pos + glm::vec2(0, position.y), glm::vec2(width, height), color);
 			}
+		}
+
+		if (title)
+		{
+			glm::vec2 convPos = position;
+			convPos += glm::vec2(1);
+			convPos *= .5f;
+			convPos.y = 1.f - convPos.y;
+
+			convPos *= RESOLUTION;
+
+			glm::vec2 winSize = { scale.x * RESOLUTION.x / 4, 40 };
+
+			convPos.x -= winSize.x * aspectRatio;
+			convPos.y += scale.y * RESOLUTION.y / 4;
+			winSize.x *= 2;
+			winSize.x *= aspectRatio;
+			
+			ImGuiWindowFlags FLAGS = 0;
+			//FLAGS |= ImGuiWindowFlags_NoBackground;
+			FLAGS |= ImGuiWindowFlags_NoTitleBar;
+			ImGui::Begin(title, nullptr, WIN_FLAGS | FLAGS);
+			ImGui::SetWindowPos({ convPos.x, convPos.y });
+			ImGui::SetWindowSize({ winSize.x, winSize.y });
+			ImGui::Text(title);
+			ImGui::End();
 		}
 	}
 }

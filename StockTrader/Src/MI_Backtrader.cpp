@@ -607,37 +607,42 @@ namespace jv::bt
 					}
 
 					auto colors = LoadRandColors(stbt.tempArena, 4);
+					const float ratio = stbt.renderer.GetAspectRatio();
 
-					stbt.renderer.DrawGraph({.35, -.2},
-						glm::vec2(stbt.renderer.GetAspectRatio(), 1) * .9f,
+					glm::vec2 grPos = { 0, 0 };
+					grPos.x += .5f;
+
+					stbt.renderer.SetLineWidth(2);
+					stbt.renderer.DrawGraph(ratio, grPos, glm::vec2(1),
 						graphPoints.ptr, l, gr::GraphType::line,
-						true, true, colors[0], l);
+						false, true, colors[0], l, "graph a");
+					stbt.renderer.SetLineWidth(1);
 
 					const float smallXPos = .85f;
 
-					stbt.renderer.DrawGraph({ smallXPos, -.4},
-						glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
+					stbt.renderer.DrawGraph(ratio, {smallXPos, -.4},
+						glm::vec2(1) / 3.f,
 						graphPointsAvr.ptr, l, gr::GraphType::line,
-						true, true, colors[1], l);
+						false, true, colors[1], l, "graph b");
 
-					stbt.renderer.DrawGraph({ smallXPos, 0 },
-						glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
+					stbt.renderer.DrawGraph(ratio, { smallXPos, 0 },
+						glm::vec2(1) / 3.f,
 						graphPointsPct.ptr, l, gr::GraphType::line,
-						true, true, colors[2], l);
+						false, true, colors[2], l, "graph c");
 
 					const uint32_t zoom = std::stoi(zoomBuffer);
 
 					if (l >= zoom)
 					{
-						stbt.renderer.DrawGraph({ smallXPos, 0.4 },
-							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
+						stbt.renderer.DrawGraph(ratio, { smallXPos, 0.4 },
+							glm::vec2(1) / 3.f,
 							&graphPoints.ptr[l - zoom], zoom, gr::GraphType::line,
-							true, true, colors[3]);
+							true, true, colors[3], -1, "graph d");
 
-						stbt.renderer.DrawGraph({ smallXPos, 0.8 },
-							glm::vec2(stbt.renderer.GetAspectRatio(), 1) / 3.f,
+						stbt.renderer.DrawGraph(ratio, { smallXPos, 0.8 },
+							glm::vec2(1) / 3.f,
 							&graphPointsAvr.ptr[l - zoom], zoom, gr::GraphType::candle,
-							true, true, glm::vec4(1));
+							true, true, glm::vec4(1), -1, "graph e");
 					}
 
 					stbt.tempArena.DestroyScope(tScope);

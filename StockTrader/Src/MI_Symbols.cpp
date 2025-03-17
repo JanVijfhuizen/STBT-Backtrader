@@ -263,6 +263,7 @@ namespace jv::bt
 		}
 
 		auto randColors = LoadRandColors(stbt.frameArena, timeSeries.length);
+		const float ratio = stbt.renderer.GetAspectRatio();
 
 		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, timeSeries.length);
 		for (uint32_t i = 0; i < timeSeries.length; i++)
@@ -279,14 +280,12 @@ namespace jv::bt
 				points[i].low = series.low[index];
 			}
 
-			stbt.renderer.graphBorderThickness = 0;
 			stbt.renderer.SetLineWidth(1.f + (sId == i) * 1.f);
 
 			auto color = randColors[i];
 			color *= .2f + .8f * (sId == i);
 
-			stbt.renderer.DrawGraph({ .5, 0 },
-				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
+			stbt.renderer.DrawGraph(ratio, { .5, 0 }, glm::vec2(1),
 				points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType),
 				true, normalizeGraph, color);
 		}
@@ -313,8 +312,7 @@ namespace jv::bt
 				points[i].low = v;
 			}
 
-			stbt.renderer.DrawGraph({ .5, 0 },
-				glm::vec2(stbt.renderer.GetAspectRatio(), 1),
+			stbt.renderer.DrawGraph(ratio, { .5, 0 }, glm::vec2(1),
 				points.ptr, points.length, gr::GraphType::line,
 				true, normalizeGraph, glm::vec4(0, 1, 0, 1));
 		}
@@ -440,7 +438,7 @@ namespace jv::bt
 	void MI_Symbols::DrawBottomRightWindow(const char* name, const bool popup)
 	{
 		const ImVec2 pos = { 400, 500 };
-		const ImVec2 size = { 400, 100 };
+		const ImVec2 size = { 400, MENU_RESOLUTION_SMALL.y };
 
 		if (!popup)
 		{

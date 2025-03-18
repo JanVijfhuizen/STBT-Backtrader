@@ -550,7 +550,7 @@ namespace jv::bt
 						closeStart += series.close[runOffset];
 					}
 
-					const float pct = closeStart / close;
+					const float pct = close / closeStart;
 					const float avr = (portfolioValue + portfolio.liquidity) / 
 						(runLog.portValues[0] + runLog.liquidities[0]) / pct;
 
@@ -601,7 +601,7 @@ namespace jv::bt
 						graphPointsPct[i].low = pct;
 					}
 
-					auto colors = LoadRandColors(stbt.tempArena, 4);
+					auto colors = LoadRandColors(stbt.tempArena, 5);
 					const float ratio = stbt.renderer.GetAspectRatio();
 
 					glm::vec2 grPos = { 0, 0 };
@@ -618,12 +618,12 @@ namespace jv::bt
 
 					stbt.renderer.DrawGraph(ratio, {smallXPos, 0.3 },
 						glm::vec2(1) / 3.f,
-						graphPointsAvr.ptr, l, gr::GraphType::line,
+						graphPointsPct.ptr, l, gr::GraphType::line,
 						false, true, colors[1], l, "mark");
 
 					stbt.renderer.DrawGraph(ratio, { smallXPos, -0.2 },
 						glm::vec2(1) / 3.f,
-						graphPointsPct.ptr, l, gr::GraphType::line,
+						graphPointsAvr.ptr, l, gr::GraphType::line,
 						false, true, colors[2], l, "rel");
 
 					const uint32_t zoom = std::stoi(zoomBuffer);
@@ -641,8 +641,8 @@ namespace jv::bt
 
 						stbt.renderer.DrawGraph(ratio, { smallXPos, 0.8 },
 							glm::vec2(1) / 3.f,
-							&graphPointsAvr.ptr[l - zoom], zoom, gr::GraphType::candle,
-							false, true, glm::vec4(1), -1, zoomMarket.c_str());
+							&graphPointsPct.ptr[l - zoom], zoom, gr::GraphType::line,
+							false, true, colors[4], -1, zoomMarket.c_str());
 					}
 
 					stbt.tempArena.DestroyScope(tScope);

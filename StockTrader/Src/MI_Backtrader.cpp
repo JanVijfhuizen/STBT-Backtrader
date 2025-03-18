@@ -8,6 +8,8 @@
 
 namespace jv::bt
 {
+	constexpr int32_t MAX_ZOOM = 30;
+	
 	enum BTMenuIndex
 	{
 		btmiPortfolio,
@@ -65,7 +67,7 @@ namespace jv::bt
 		snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
 		snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
 		snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
-		n = 30;
+		n = MAX_ZOOM;
 		snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
 		float f = 1e-3f;
 		snprintf(feeBuffer, sizeof(feeBuffer), "%f", f);
@@ -78,6 +80,9 @@ namespace jv::bt
 
 	bool MI_Backtrader::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
+		if (running)
+			return false;
+
 		const char* buttons[]
 		{
 			"Environment",
@@ -192,7 +197,7 @@ namespace jv::bt
 			if (ImGui::InputText("Zoom", zoomBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
 			{
 				int32_t n = std::atoi(zoomBuffer);
-				n = Max(n, 0);
+				n = Clamp(n, 2, MAX_ZOOM);
 				snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
 			}
 
@@ -324,7 +329,7 @@ namespace jv::bt
 
 			if(render)
 			{
-				MI_Symbols::DrawBottomRightWindow("Current Run", true);
+				MI_Symbols::DrawBottomRightWindow("Current Run");
 
 				const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 				const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
@@ -377,6 +382,15 @@ namespace jv::bt
 						canFinish = true;
 						canEnd = true;
 					}
+					ImGui::SameLine();
+					ImGui::PushItemWidth(40);
+					if (ImGui::InputText("Zoom", zoomBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
+					{
+						int32_t n = std::atoi(zoomBuffer);
+						n = Clamp(n, 2, MAX_ZOOM);
+						snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
+					}
+
 					if (ImGui::Button("Stepwise off"))
 						stepwise = false;
 				}
@@ -616,14 +630,18 @@ namespace jv::bt
 					stbt.renderer.DrawGraph(drawInfo);
 					stbt.renderer.SetLineWidth(1);
 
-					drawInfo.position = { .85f, .3f };
+					const float top = .8;
+					const float bot = -.265;
+					const float center = (top + bot) / 2;
+
+					drawInfo.position = { .85f, center };
 					drawInfo.scale = glm::vec2(1) / 3.f;
 					drawInfo.points = pctPoints.ptr;
 					drawInfo.color = colors[1];
 					drawInfo.title = "mark";
 					stbt.renderer.DrawGraph(drawInfo);
 
-					drawInfo.position.y = -.2f;
+					drawInfo.position.y = bot;
 					drawInfo.points = avrPoints.ptr;
 					drawInfo.color = colors[2];
 					drawInfo.title = "rel";
@@ -631,11 +649,11 @@ namespace jv::bt
 
 					const uint32_t zoom = std::stoi(zoomBuffer);
 
-					if (l >= zoom)
+					if (l >= zoom && zoom > 0 && zoom <= Min((uint32_t)MAX_ZOOM, runLength))
 					{
 						std::string zoomPort = "port" + std::to_string(zoom);
 
-						drawInfo.position.y = .8f;
+						drawInfo.position.y = top;
 						drawInfo.points = &portPoints.ptr[l - zoom];
 						drawInfo.length = zoom;
 						drawInfo.color = colors[3];

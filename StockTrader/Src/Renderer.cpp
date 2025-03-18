@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Graphics/Renderer.h"
 #include <JLib/Math.h>
+#include <Ext/ImGuiTextUtils.h>
 
 namespace jv::gr
 {
@@ -240,12 +241,14 @@ namespace jv::gr
 			convPos.y += info.scale.y * RESOLUTION.y / 4;
 			winSize.x *= 2;
 			winSize.x *= info.aspectRatio;
+
+			const float WIN_OFFSET = 6;
 			
 			ImGuiWindowFlags FLAGS = 0;
 			//FLAGS |= ImGuiWindowFlags_NoBackground;
 			FLAGS |= ImGuiWindowFlags_NoTitleBar;
 			ImGui::Begin(info.title, nullptr, WIN_FLAGS | FLAGS);
-			ImGui::SetWindowPos({ convPos.x, convPos.y });
+			ImGui::SetWindowPos({ convPos.x, convPos.y + WIN_OFFSET });
 			ImGui::SetWindowSize({ winSize.x, winSize.y });
 
 			std::string text = info.title;
@@ -259,7 +262,7 @@ namespace jv::gr
 
 			ImVec4 tradeCol = pct >= 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
 			ImGui::PushStyleColor(ImGuiCol_Text, tradeCol);
-			ImGui::Text(text.c_str());
+			ImGui::TextCenter(text);
 			ImGui::PopStyleColor();
 			ImGui::End();
 		}

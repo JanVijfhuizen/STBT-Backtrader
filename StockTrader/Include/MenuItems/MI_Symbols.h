@@ -34,6 +34,6 @@ namespace jv::bt
 			const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, bool& normalizeGraph);
 
 		static void DrawTopRightWindow(const char* name, bool large = false, bool transparent = false);
-		static void DrawBottomRightWindow(const char* name, bool popup = false);
+		static void DrawBottomRightWindow(const char* name);
 	};
 }

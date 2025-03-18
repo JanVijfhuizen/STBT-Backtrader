@@ -446,24 +446,13 @@ namespace jv::bt
 		ImGui::SetWindowSize({ 400, static_cast<float>(large ? 500 : 124) });
 	}
 
-	void MI_Symbols::DrawBottomRightWindow(const char* name, const bool popup)
+	void MI_Symbols::DrawBottomRightWindow(const char* name)
 	{
 		const ImVec2 pos = { 400, 500 };
 		const ImVec2 size = { 400, MENU_RESOLUTION_SMALL.y };
 
-		if (!popup)
-		{
-			ImGui::Begin(name, nullptr, WIN_FLAGS);
-			ImGui::SetWindowPos(pos);
-			ImGui::SetWindowSize(size);
-		}
-		else
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			ImGui::SetNextWindowSize(size);
-			ImGui::SetNextWindowPos(pos);
-			ImGui::OpenPopup(name);
-			ImGui::BeginPopup(name);
-		}
+		ImGui::Begin(name, nullptr, WIN_FLAGS);
+		ImGui::SetWindowPos(pos);
+		ImGui::SetWindowSize(size);
 	}
 }

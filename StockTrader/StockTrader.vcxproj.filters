@@ -135,6 +135,9 @@
     <ClInclude Include="Include\Log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Ext\ImGuiTextUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\dllmain.cpp">
@@ -201,6 +204,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\ImGuiTextUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

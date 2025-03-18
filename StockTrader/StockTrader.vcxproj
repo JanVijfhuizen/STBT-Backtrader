@@ -152,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="Include\Ext\ImGuiDatePicker.h" />
     <ClInclude Include="Include\Ext\ImGuiLoadBar.h" />
+    <ClInclude Include="Include\Ext\ImGuiTextUtils.h" />
     <ClInclude Include="Include\framework.h" />
     <ClInclude Include="Include\JLib\FPFNTester.h" />
     <ClInclude Include="Include\gnuplot-iostream.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="Include\Utils\UT_Time.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\ImGuiTextUtils.cpp" />
     <ClCompile Include="Src\Log.cpp" />
     <ClCompile Include="Src\Portfolio.cpp" />
     <ClCompile Include="Src\MI_MainMenu.cpp" />

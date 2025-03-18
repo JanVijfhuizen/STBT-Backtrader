@@ -24,6 +24,23 @@ namespace jv::gr
 		bool resizeable = false;
 	};
 
+	struct DrawGraphInfo final
+	{
+		glm::vec2 position;
+		GraphPoint* points;
+		uint32_t length;
+
+		const char* title = nullptr;
+		glm::vec2 scale{ 1 };
+		float aspectRatio = 1;
+		GraphType type = GraphType::line;
+		bool noBackground = true;
+		bool normalize = true;
+		glm::vec4 color{1, 0, 0, 1};
+		const uint32_t stopAt = -1;
+		uint32_t maxLinesDrawn = 400;
+	};
+
 	struct Renderer final
 	{
 		glm::vec2 resolution;
@@ -48,9 +65,7 @@ namespace jv::gr
 
 		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
-		void DrawGraph(float aspectRatio, glm::vec2 position, glm::vec2 scale, GraphPoint* points, 
-			uint32_t length, GraphType type, bool noBackground, bool normalize, 
-			glm::vec4 color = glm::vec4(1, 0, 0, 1), const uint32_t stopAt = -1, const char* title = nullptr);
+		void DrawGraph(DrawGraphInfo info);
 	};
 
 	[[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);

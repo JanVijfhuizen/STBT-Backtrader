@@ -285,9 +285,15 @@ namespace jv::bt
 			auto color = randColors[i];
 			color *= .2f + .8f * (sId == i);
 
-			stbt.renderer.DrawGraph(ratio, { .5, 0 }, glm::vec2(1),
-				points.ptr, points.length, static_cast<gr::GraphType>(stbt.graphType),
-				true, normalizeGraph, color);
+			jv::gr::DrawGraphInfo drawInfo{};
+			drawInfo.aspectRatio = ratio;
+			drawInfo.position = { .5f, 0 };
+			drawInfo.points = points.ptr;
+			drawInfo.length = points.length;
+			drawInfo.type = static_cast<gr::GraphType>(stbt.graphType);
+			drawInfo.normalize = normalizeGraph;
+			drawInfo.color = color;
+			stbt.renderer.DrawGraph(drawInfo);
 		}
 		stbt.renderer.SetLineWidth(1);
 
@@ -312,9 +318,14 @@ namespace jv::bt
 				points[i].low = v;
 			}
 
-			stbt.renderer.DrawGraph(ratio, { .5, 0 }, glm::vec2(1),
-				points.ptr, points.length, gr::GraphType::line,
-				true, normalizeGraph, glm::vec4(0, 1, 0, 1));
+			jv::gr::DrawGraphInfo drawInfo{};
+			drawInfo.aspectRatio = ratio;
+			drawInfo.position = { .5f, 0 };
+			drawInfo.points = points.ptr;
+			drawInfo.length = points.length;
+			drawInfo.type = gr::GraphType::line;
+			drawInfo.normalize = normalizeGraph;
+			drawInfo.color = glm::vec4(0, 1, 0, 1);
 		}
 
 		return graphPoints[sId];

@@ -603,23 +603,31 @@ namespace jv::bt
 					grPos.x += .36f;
 					grPos.y += .02f;
 
+					jv::gr::DrawGraphInfo drawInfo{};
+					drawInfo.aspectRatio = ratio;
+					drawInfo.position = grPos;
+					drawInfo.scale = glm::vec2(.9);
+					drawInfo.points = portPoints.ptr;
+					drawInfo.length = l;
+					drawInfo.color = colors[0];
+					drawInfo.title = "portfolio value";
+
 					stbt.renderer.SetLineWidth(2);
-					stbt.renderer.DrawGraph(ratio, grPos, glm::vec2(.9),
-						portPoints.ptr, l, gr::GraphType::line,
-						false, true, colors[0], l, "portfolio value");
+					stbt.renderer.DrawGraph(drawInfo);
 					stbt.renderer.SetLineWidth(1);
 
-					const float smallXPos = .85f;
+					drawInfo.position = { .85f, .3f };
+					drawInfo.scale = glm::vec2(1) / 3.f;
+					drawInfo.points = pctPoints.ptr;
+					drawInfo.color = colors[1];
+					drawInfo.title = "mark";
+					stbt.renderer.DrawGraph(drawInfo);
 
-					stbt.renderer.DrawGraph(ratio, {smallXPos, 0.3 },
-						glm::vec2(1) / 3.f,
-						pctPoints.ptr, l, gr::GraphType::line,
-						false, true, colors[1], l, "mark");
-
-					stbt.renderer.DrawGraph(ratio, { smallXPos, -0.2 },
-						glm::vec2(1) / 3.f,
-						avrPoints.ptr, l, gr::GraphType::line,
-						false, true, colors[2], l, "rel");
+					drawInfo.position.y = -.2f;
+					drawInfo.points = avrPoints.ptr;
+					drawInfo.color = colors[2];
+					drawInfo.title = "rel";
+					stbt.renderer.DrawGraph(drawInfo);
 
 					const uint32_t zoom = std::stoi(zoomBuffer);
 
@@ -627,17 +635,20 @@ namespace jv::bt
 					{
 						std::string zoomPort = "port" + std::to_string(zoom);
 
-						stbt.renderer.DrawGraph(ratio, { smallXPos - .3, 0.8 },
-							glm::vec2(1) / 3.f,
-							&portPoints.ptr[l - zoom], zoom, gr::GraphType::line,
-							false, true, colors[3], -1, zoomPort.c_str());
+						drawInfo.position.y = .8f;
+						drawInfo.points = &portPoints.ptr[l - zoom];
+						drawInfo.length = zoom;
+						drawInfo.color = colors[3];
+						drawInfo.title = zoomPort.c_str();
+						stbt.renderer.DrawGraph(drawInfo);
 
 						std::string zoomMarket = "mark" + std::to_string(zoom);
-
-						stbt.renderer.DrawGraph(ratio, { smallXPos, 0.8 },
-							glm::vec2(1) / 3.f,
-							&pctPoints.ptr[l - zoom], zoom, gr::GraphType::line,
-							false, true, colors[4], -1, zoomMarket.c_str());
+						drawInfo.position.x -= .3f;
+						drawInfo.position.y = .8f;
+						drawInfo.points = &avrPoints.ptr[l - zoom];
+						drawInfo.color = colors[4];
+						drawInfo.title = zoomMarket.c_str();
+						stbt.renderer.DrawGraph(drawInfo);
 					}
 
 					stbt.tempArena.DestroyScope(tScope);

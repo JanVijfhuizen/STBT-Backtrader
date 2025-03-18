@@ -162,49 +162,47 @@ namespace jv::gr
 			gr::GetShaderUniform(lineShader, "color"), color);
 		Draw(VertType::line);
 	}
-	void Renderer::DrawGraph(const float aspectRatio, const glm::vec2 position, const glm::vec2 scale,
-		GraphPoint* points, const uint32_t length, const GraphType type, 
-		const bool noBackground, const bool normalize, const glm::vec4 color, const uint32_t stopAt, const char* title)
+	void Renderer::DrawGraph(DrawGraphInfo info)
 	{
-		glm::vec2 aspScale = scale * glm::vec2(aspectRatio, 1);
+		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1);
 
-		if (!noBackground)
+		if (!info.noBackground)
 		{
-			DrawPlane(position, aspScale, glm::vec4(1));
-			DrawPlane(position, aspScale * (1.f - graphBorderThickness), glm::vec4(0));
+			DrawPlane(info.position, aspScale, glm::vec4(1));
+			DrawPlane(info.position, aspScale * (1.f - graphBorderThickness), glm::vec4(0));
 		}
 
-		float lineWidth = 1.f / (length - 1) * aspScale.x;
-		float org = -lineWidth * (length - 1) / 2 + position.x;
+		float lineWidth = 1.f / (info.length - 1) * aspScale.x;
+		float org = -lineWidth * (info.length - 1) / 2 + info.position.x;
 		float ceiling = 0;
 		float floor = FLT_MAX;
 
-		for (uint32_t j = 0; j < length; j++)
+		for (uint32_t j = 0; j < info.length; j++)
 		{
-			const auto& point = points[j];
+			const auto& point = info.points[j];
 			ceiling = jv::Max<float>(ceiling, point.high);
 			floor = jv::Min<float>(floor, point.low);
 		}
 
-		if (!normalize)
+		if (!info.normalize)
 			floor = Min<float>(0, floor);
 
-		const uint32_t l = stopAt == -1 ? length : stopAt;
+		const uint32_t l = info.stopAt == -1 ? info.length : info.stopAt;
 		for (uint32_t j = 1; j < l; j++)
 		{
 			float xStart = org + lineWidth * (j - 1);
 			float xEnd = xStart + lineWidth;
 
-			const auto& cur = points[j];
+			const auto& cur = info.points[j];
 			const float yPos = jv::RLerp<float>(cur.close, floor, ceiling) * aspScale.y - aspScale.y / 2;
-			const auto& prev = points[j - 1];
+			const auto& prev = info.points[j - 1];
 			const float yPosPrev = jv::RLerp<float>(prev.close, floor, ceiling) * aspScale.y - aspScale.y / 2;
 			
-			if (type == GraphType::line)
+			if (info.type == GraphType::line)
 			{
-				DrawLine(glm::vec2(xStart, yPosPrev + position.y), glm::vec2(xEnd, yPos + position.y), color);
+				DrawLine(glm::vec2(xStart, yPosPrev + info.position.y), glm::vec2(xEnd, yPos + info.position.y), info.color);
 			}
-			if (type == GraphType::candle)
+			if (info.type == GraphType::candle)
 			{
 				const float open = cur.open;
 				const float close = cur.close;
@@ -222,37 +220,37 @@ namespace jv::gr
 				
 				low = jv::RLerp<float>(low, floor, ceiling) * aspScale.y - aspScale.y / 2;
 				high = jv::RLerp<float>(high, floor, ceiling) * aspScale.y - aspScale.y / 2;
-				DrawLine(glm::vec2(pos.x, low + position.y), glm::vec2(pos.x, high + position.y), glm::vec4(1, 1, 1, 1));
-				DrawPlane(pos + glm::vec2(0, position.y), glm::vec2(width, height), color);
+				DrawLine(glm::vec2(pos.x, low + info.position.y), glm::vec2(pos.x, high + info.position.y), glm::vec4(1, 1, 1, 1));
+				DrawPlane(pos + glm::vec2(0, info.position.y), glm::vec2(width, height), color);
 			}
 		}
 
-		if (title)
+		if (info.title)
 		{
-			glm::vec2 convPos = position;
+			glm::vec2 convPos = info.position;
 			convPos += glm::vec2(1);
 			convPos *= .5f;
 			convPos.y = 1.f - convPos.y;
 
 			convPos *= RESOLUTION;
 
-			glm::vec2 winSize = { scale.x * RESOLUTION.x / 4, 10 };
+			glm::vec2 winSize = { info.scale.x * RESOLUTION.x / 4, 10 };
 
-			convPos.x -= winSize.x * aspectRatio;
-			convPos.y += scale.y * RESOLUTION.y / 4;
+			convPos.x -= winSize.x * info.aspectRatio;
+			convPos.y += info.scale.y * RESOLUTION.y / 4;
 			winSize.x *= 2;
-			winSize.x *= aspectRatio;
+			winSize.x *= info.aspectRatio;
 			
 			ImGuiWindowFlags FLAGS = 0;
 			//FLAGS |= ImGuiWindowFlags_NoBackground;
 			FLAGS |= ImGuiWindowFlags_NoTitleBar;
-			ImGui::Begin(title, nullptr, WIN_FLAGS | FLAGS);
+			ImGui::Begin(info.title, nullptr, WIN_FLAGS | FLAGS);
 			ImGui::SetWindowPos({ convPos.x, convPos.y });
 			ImGui::SetWindowSize({ winSize.x, winSize.y });
 
-			std::string text = title;
-			const float start = points[0].close;
-			const float end = points[l - 1].close;
+			std::string text = info.title;
+			const float start = info.points[0].close;
+			const float end = info.points[l - 1].close;
 			const float pct = end / start - 1.f;
 			text += " [";
 			text += pct >= 0 ? "+" : "-";

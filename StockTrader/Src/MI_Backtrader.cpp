@@ -482,6 +482,10 @@ namespace jv::bt
 					runLog = Log::Create(stbt.arena, stbtScope, runOffset - runLength, runOffset);
 					stepCompleted = false;
 					tpStart = std::chrono::steady_clock::now();
+
+					portPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+					avrPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+					pctPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
 				}
 				// If this run is completed, either start a new run or quit.
 				if (runDayIndex == runLength)
@@ -571,35 +575,26 @@ namespace jv::bt
 					const uint32_t dayOffsetIndex = runOffset - runDayIndex;
 					const uint32_t l = runDayIndex >= runLength ? runLength - 1 : runDayIndex;
 					const auto tScope = stbt.tempArena.CreateScope();
-					auto graphPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
 
-					for (uint32_t i = 0; i < l; i++)
-					{
-						const auto v = runLog.portValues[i] + runLog.liquidities[i];
-						graphPoints[i].open = v;
-						graphPoints[i].close = v;
-						graphPoints[i].high = v;
-						graphPoints[i].low = v;
-					}
+					const uint32_t i = l - 1;
+					const auto v = runLog.portValues[i] + runLog.liquidities[i];
+					const float avr = runLog.marktAvr[i];
+					const float pct = runLog.marktPct[i];
 
-					auto graphPointsAvr = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
-					auto graphPointsPct = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+					portPoints[i].open = v;
+					portPoints[i].close = v;
+					portPoints[i].high = v;
+					portPoints[i].low = v;
 
-					for (uint32_t i = 0; i < l; i++)
-					{
-						const float avr = runLog.marktAvr[i];
-						const float pct = runLog.marktPct[i];
+					avrPoints[i].open = avr;
+					avrPoints[i].close = avr;
+					avrPoints[i].high = avr;
+					avrPoints[i].low = avr;
 
-						graphPointsAvr[i].open = avr;
-						graphPointsAvr[i].close = avr;
-						graphPointsAvr[i].high = avr;
-						graphPointsAvr[i].low = avr;
-
-						graphPointsPct[i].open = pct;
-						graphPointsPct[i].close = pct;
-						graphPointsPct[i].high = pct;
-						graphPointsPct[i].low = pct;
-					}
+					pctPoints[i].open = pct;
+					pctPoints[i].close = pct;
+					pctPoints[i].high = pct;
+					pctPoints[i].low = pct;
 
 					auto colors = LoadRandColors(stbt.tempArena, 5);
 					const float ratio = stbt.renderer.GetAspectRatio();
@@ -610,7 +605,7 @@ namespace jv::bt
 
 					stbt.renderer.SetLineWidth(2);
 					stbt.renderer.DrawGraph(ratio, grPos, glm::vec2(.9),
-						graphPoints.ptr, l, gr::GraphType::line,
+						portPoints.ptr, l, gr::GraphType::line,
 						false, true, colors[0], l, "portfolio value");
 					stbt.renderer.SetLineWidth(1);
 
@@ -618,12 +613,12 @@ namespace jv::bt
 
 					stbt.renderer.DrawGraph(ratio, {smallXPos, 0.3 },
 						glm::vec2(1) / 3.f,
-						graphPointsPct.ptr, l, gr::GraphType::line,
+						pctPoints.ptr, l, gr::GraphType::line,
 						false, true, colors[1], l, "mark");
 
 					stbt.renderer.DrawGraph(ratio, { smallXPos, -0.2 },
 						glm::vec2(1) / 3.f,
-						graphPointsAvr.ptr, l, gr::GraphType::line,
+						avrPoints.ptr, l, gr::GraphType::line,
 						false, true, colors[2], l, "rel");
 
 					const uint32_t zoom = std::stoi(zoomBuffer);
@@ -634,14 +629,14 @@ namespace jv::bt
 
 						stbt.renderer.DrawGraph(ratio, { smallXPos - .3, 0.8 },
 							glm::vec2(1) / 3.f,
-							&graphPoints.ptr[l - zoom], zoom, gr::GraphType::line,
+							&portPoints.ptr[l - zoom], zoom, gr::GraphType::line,
 							false, true, colors[3], -1, zoomPort.c_str());
 
 						std::string zoomMarket = "mark" + std::to_string(zoom);
 
 						stbt.renderer.DrawGraph(ratio, { smallXPos, 0.8 },
 							glm::vec2(1) / 3.f,
-							&graphPointsPct.ptr[l - zoom], zoom, gr::GraphType::line,
+							&pctPoints.ptr[l - zoom], zoom, gr::GraphType::line,
 							false, true, colors[4], -1, zoomMarket.c_str());
 					}
 

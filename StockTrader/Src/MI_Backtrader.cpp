@@ -367,7 +367,7 @@ namespace jv::bt
 					if (ImGui::Button("Continue"))
 						canFinish = true;
 					ImGui::SameLine();
-					if (ImGui::Button("Break"))
+					if (runIndex < length - 1 && ImGui::Button("Break"))
 						canEnd = true;
 				}
 				else if (stepwise && stepCompleted)
@@ -651,6 +651,7 @@ namespace jv::bt
 
 					if (l >= zoom && zoom > 0 && zoom <= Min((uint32_t)MAX_ZOOM, runLength))
 					{
+						drawInfo.noBackground = false;
 						std::string zoomPort = "port" + std::to_string(zoom);
 
 						drawInfo.position.y = top;

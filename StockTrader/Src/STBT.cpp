@@ -28,7 +28,7 @@ namespace jv::bt
 
 		ImGui::Begin("Output", nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({ 0, 400 });
-		ImGui::SetWindowSize({ 400, 200 });
+		ImGui::SetWindowSize({ 200.f * (menu.index == 0 ? 1 : 2), 200});
 
 		for (auto& a : output)
 			ImGui::Text(a);

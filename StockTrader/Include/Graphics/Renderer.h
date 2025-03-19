@@ -38,7 +38,7 @@ namespace jv::gr
 		bool normalize = true;
 		glm::vec4 color{1, 0, 0, 1};
 		const uint32_t stopAt = -1;
-		uint32_t maxLinesDrawn = 400;
+		uint32_t maxLinesDrawn = 100;
 	};
 
 	struct Renderer final

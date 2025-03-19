@@ -173,14 +173,20 @@ namespace jv::gr
 			DrawPlane(info.position, aspScale * (1.f - graphBorderThickness), glm::vec4(0));
 		}
 
-		float lineWidth = 1.f / (info.length - 1) * aspScale.x;
-		float org = -lineWidth * (info.length - 1) / 2 + info.position.x;
+		const uint32_t l = info.stopAt == -1 ? info.length : info.stopAt;
+		const uint32_t l2 = Min(info.length, info.maxLinesDrawn);
+		const uint32_t len = Min(l, info.maxLinesDrawn);
+		const float stepSize = (float)l / len;
+		const uint32_t iStepSize = round(stepSize);
+
+		float lineWidth = 1.f / (l2 - 1) * aspScale.x;
+		float org = -lineWidth * (l2 - 1) / 2 + info.position.x;
 		float ceiling = 0;
 		float floor = FLT_MAX;
 
-		for (uint32_t j = 0; j < info.length; j++)
+		for (uint32_t i = 0; i < info.length; i++)
 		{
-			const auto& point = info.points[j];
+			const auto& point = info.points[i];
 			ceiling = jv::Max<float>(ceiling, point.high);
 			floor = jv::Min<float>(floor, point.low);
 		}
@@ -188,26 +194,52 @@ namespace jv::gr
 		if (!info.normalize)
 			floor = Min<float>(0, floor);
 
-		const uint32_t l = info.stopAt == -1 ? info.length : info.stopAt;
-		for (uint32_t j = 1; j < l; j++)
+		for (uint32_t i = 0; i < len - 1; i++)
 		{
-			float xStart = org + lineWidth * (j - 1);
+			float xStart = org + lineWidth * i;
 			float xEnd = xStart + lineWidth;
 
-			const auto& cur = info.points[j];
-			const float yPos = jv::RLerp<float>(cur.close, floor, ceiling) * aspScale.y - aspScale.y / 2;
-			const auto& prev = info.points[j - 1];
-			const float yPosPrev = jv::RLerp<float>(prev.close, floor, ceiling) * aspScale.y - aspScale.y / 2;
-			
+			float open = 0;
+			float close = 0;
+			float high = 0;
+			float low = 0;
+			float pClose = 0;
+
+			const uint32_t curInd = round(stepSize * (i + 1));
+			const uint32_t prevInd = round(stepSize * i);
+
+			// Get smooth value of neighbours.
+			float overf = (stepSize - 1) / 2;
+			int32_t overI = ceil(overf);
+			for (int32_t i = -overI; i < overI + 1; i++)
+			{
+				const auto rem = Min<float>(fabs(overf + 1.f - fabs(i)), 1);
+				const auto& cur = info.points[Min(curInd + i, l - 1)];
+				const auto& prev = info.points[Max((int32_t)prevInd + i, 0)];
+
+				open += cur.open * rem;
+				close += cur.close * rem;
+				high += cur.high * rem;
+				low += cur.low * rem;
+				pClose += prev.close * rem;
+			}
+
+			const float div = 1.f + overf * 2;
+			open /= div;
+			close /= div;
+			high /= div;
+			low /= div;
+			pClose /= div;
+
+			const float yPos = jv::RLerp<float>(close, floor, ceiling) * aspScale.y - aspScale.y / 2;		
+			const float yPosPrev = jv::RLerp<float>(pClose, floor, ceiling) * aspScale.y - aspScale.y / 2;
+
 			if (info.type == GraphType::line)
 			{
 				DrawLine(glm::vec2(xStart, yPosPrev + info.position.y), glm::vec2(xEnd, yPos + info.position.y), info.color);
 			}
 			if (info.type == GraphType::candle)
 			{
-				const float open = cur.open;
-				const float close = cur.close;
-
 				const auto color = open < close ? glm::vec4(0, 1, 0, 1) : glm::vec4(1, 0, 0, 1);
 				const float yPos2 = jv::RLerp<float>((open + close) / 2, floor, ceiling) * aspScale.y - aspScale.y / 2;
 
@@ -215,10 +247,6 @@ namespace jv::gr
 				const float width = (xEnd - xStart) * candleThickness;
 				const float height = (open - close) / (ceiling - floor) * aspScale.y;
 
-				// low/high
-				float low = cur.low;
-				float high = cur.high;
-				
 				low = jv::RLerp<float>(low, floor, ceiling) * aspScale.y - aspScale.y / 2;
 				high = jv::RLerp<float>(high, floor, ceiling) * aspScale.y - aspScale.y / 2;
 				DrawLine(glm::vec2(pos.x, low + info.position.y), glm::vec2(pos.x, high + info.position.y), glm::vec4(1, 1, 1, 1));

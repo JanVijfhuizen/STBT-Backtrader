@@ -6,12 +6,18 @@ namespace jv::bt
 	class MI_Symbols final : public MI_Main
 	{
 	public:
+		// Timeseries of the current loaded in stock.
 		Array<TimeSeries> timeSeries;
+		// Names of all known symbols in scope.
 		Array<std::string> names;
+		// Whether or not said symbols are enabled for the backtrader.
 		Array<bool> enabled;
-		char nameBuffer[6];
+		// Current symbol index.
 		uint32_t symbolIndex = -1;
+		// Normalize graph on the screen.
 		bool normalizeGraph = true;
+
+		char nameBuffer[6];
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);
@@ -32,8 +38,5 @@ namespace jv::bt
 			const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, const bool normalizeGraph);
 		static void TryRenderSymbol(STBT& stbt, Array<TimeSeries>& timeSeries,
 			const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, bool& normalizeGraph);
-
-		static void DrawTopRightWindow(const char* name, bool large = false, bool transparent = false);
-		static void DrawBottomRightWindow(const char* name);
 	};
 }

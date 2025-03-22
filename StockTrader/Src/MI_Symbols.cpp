@@ -13,20 +13,27 @@ namespace jv::bt
 		names = GetSymbolNames(stbt);
 		enabled = GetEnabled(stbt, names, enabled);
 		timeSeries = CreateArray<TimeSeries>(stbt.arena, 1);
+		// If no symbol has been selected or if the index is currently out of range.
 		if (symbolIndex != -1 && symbolIndex >= names.length)
 			symbolIndex = -1;
+		// Load symbol in if it's already selected.
 		if(symbolIndex != -1)
 			timeSeries[0] = LoadSymbol(stbt, symbolIndex, names, symbolIndex);
 	}
 
 	bool MI_Symbols::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
+		std::string enableText = "When using the backtrader,\nall enabled stocks will\nbe loaded in.\n";
+		enableText += "Your license might limit\nthe amount of load calls\nyou can make per day.";
+
+		TryDrawTutorialText(stbt, enableText.c_str());
 		if (ImGui::Button("Enable All"))
 			for (auto& b : enabled)
 				b = true;
 		if (ImGui::Button("Disable All"))
 			for (auto& b : enabled)
 				b = false;
+		TryDrawTutorialText(stbt, "Save the list of which\nsymbols are enabled.");
 		if (ImGui::Button("Save changes"))
 			SaveOrCreateEnabledSymbols(stbt, names, enabled);
 		if (ImGui::Button("Back"))
@@ -37,6 +44,8 @@ namespace jv::bt
 
 	bool MI_Symbols::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
+		TryDrawTutorialText(stbt, "[ADD]: Request symbol\ndata from the web.");
+		TryDrawTutorialText(stbt, "[CHECKBOX]: Enable symbol\nfor use in the backtester.");
 		if (ImGui::Button("Add"))
 		{
 			std::string s{ nameBuffer };
@@ -340,12 +349,18 @@ namespace jv::bt
 		auto graphPoints = RenderSymbolData(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
 
 		DrawTopRightWindow("Settings");
+		TryDrawTutorialText(stbt, "Start/End date. Interchangeable.");
 		ImGui::DatePicker("Date 1", stbt.from);
 		ImGui::DatePicker("Date 2", stbt.to);
 
+		TryDrawTutorialText(stbt, "Defines how the graph will be rendered.");
 		const char* items[]{ "Line","Candles" };
 		bool check = ImGui::Combo("Graph Type", &stbt.graphType, items, 2);
 
+		TryDrawTutorialText(stbt, "[DAYS]: Update dates to reflect NOW - NOW minus DAYS");
+		TryDrawTutorialText(stbt, "[MA]: Render Moving Average on top of the data.");
+		TryDrawTutorialText(stbt, "[NORM]: Normalize stock data.");
+		TryDrawTutorialText(stbt, "[LIFETIME]: Updates dates to reflect entire history.");
 		if (ImGui::Button("Days"))
 		{
 			const int i = stbt.days;
@@ -433,26 +448,5 @@ namespace jv::bt
 		}
 
 		ImGui::End();
-	}
-	void MI_Symbols::DrawTopRightWindow(const char* name, const bool large, const bool transparent)
-	{
-		ImGuiWindowFlags FLAGS = 0;
-		FLAGS |= ImGuiWindowFlags_NoBackground;
-		FLAGS |= ImGuiWindowFlags_NoTitleBar;
-		FLAGS = transparent ? FLAGS : 0;
-
-		ImGui::Begin(name, nullptr, WIN_FLAGS | FLAGS);
-		ImGui::SetWindowPos({ 400, 0 });
-		ImGui::SetWindowSize({ 400, static_cast<float>(large ? 500 : 124) });
-	}
-
-	void MI_Symbols::DrawBottomRightWindow(const char* name)
-	{
-		const ImVec2 pos = { 400, 500 };
-		const ImVec2 size = { 400, MENU_RESOLUTION_SMALL.y };
-
-		ImGui::Begin(name, nullptr, WIN_FLAGS);
-		ImGui::SetWindowPos(pos);
-		ImGui::SetWindowSize(size);
 	}
 }

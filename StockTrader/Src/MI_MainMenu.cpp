@@ -13,10 +13,15 @@ namespace jv::bt
 
 	bool MI_MainMenu::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
+		TryDrawTutorialText(stbt, "Adds tooltips.");
+		ImGui::Checkbox("Tutorial Mode", &stbt.enableTutorialMode);
+		TryDrawTutorialText(stbt, "Look, load and enable/\ndisable symbol stock data.");
 		if (ImGui::Button("Symbols"))
 			index = miSymbols;
+		TryDrawTutorialText(stbt, "Test and debug stock\ntrading algorithms.");
 		if (ImGui::Button("Backtrader"))
 			index = miBacktrader;
+		TryDrawTutorialText(stbt, "External licensing keys\nrequired to load in\nstock data.");
 		if (ImGui::Button("Licensing"))
 			index = miLicense;
 		if (ImGui::Button("Exit"))

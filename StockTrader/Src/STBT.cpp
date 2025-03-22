@@ -22,21 +22,23 @@ namespace jv::bt
 
 	bool STBT::Update()
 	{
+		// Update (sub)menu(s).
 		bool quit = menu.Update(arena, *this);
 		if (quit)
 			return true;
 
+		// Draw output window.
 		ImGui::Begin("Output", nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos({ 0, 400 });
 		ImGui::SetWindowSize({ 200.f * (menu.index == 0 ? 1 : 2), 200});
-
 		for (auto& a : output)
 			ImGui::Text(a);
-
+		
 		ImGui::End();
 
 		const bool ret = renderer.Render();
 		frameArena.Clear();
+		
 		return ret;
 	}
 
@@ -45,10 +47,12 @@ namespace jv::bt
 		STBT stbt{};
 		stbt.tracker = {};
 
+		// Create renderer.
 		jv::gr::RendererCreateInfo createInfo{};
 		createInfo.title = "STBT (Stock Trading Back Tester)";
 		stbt.renderer = jv::gr::CreateRenderer(createInfo);
 
+		// Create memory management tools.
 		ArenaCreateInfo arenaCreateInfo{};
 		arenaCreateInfo.alloc = MAlloc;
 		arenaCreateInfo.free = MFree;
@@ -56,11 +60,13 @@ namespace jv::bt
 		stbt.tempArena = Arena::Create(arenaCreateInfo);
 		stbt.frameArena = Arena::Create(arenaCreateInfo);
 
+		// Create output log and copy bots.
 		stbt.output = CreateQueue<const char*>(stbt.arena, 50);
 		stbt.bots = CreateArray<STBTBot>(stbt.arena, botCount);
 		for (uint32_t i = 0; i < botCount; i++)
 			stbt.bots[i] = bots[i];
 
+		// Create menu classes.
 		auto& menu = stbt.menu = Menu<STBT>::CreateMenu(stbt.arena, 4);
 		menu.Add() = stbt.arena.New<MI_MainMenu>();
 		menu.Add() = stbt.arena.New<MI_Symbols>();
@@ -69,6 +75,7 @@ namespace jv::bt
 		menu.Init(stbt.arena, stbt);
 		menu.SetIndex(stbt.arena, stbt, 0);
 
+		// Initialize basic settings.
 		auto t = GetTime();
 		stbt.to = *std::gmtime(&t);
 		t = GetTime(DAYS_DEFAULT);
@@ -76,6 +83,7 @@ namespace jv::bt
 		stbt.graphType = 0;
 		stbt.ma = 0;
 		stbt.days = DAYS_DEFAULT;
+		stbt.enableTutorialMode = false;
 
 		return stbt;
 	}

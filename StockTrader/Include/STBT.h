@@ -5,13 +5,19 @@
 
 namespace jv::bt
 {
+	// Local scope that the bots can access.
 	struct STBTScope final
 	{
 	public:
+		// Get the money in the bank.
 		[[nodiscard]] float GetLiquidity() const;
+		// Get the number of stocks of target symbol I in the portfolio. 
 		[[nodiscard]] uint32_t GetNInPort(uint32_t index) const;
+		// Get a timeseries for target symbol.
 		[[nodiscard]] TimeSeries GetTimeSeries(uint32_t index) const;
+		// Get the length of the scope (days).
 		[[nodiscard]] uint32_t GetLength() const;
+		// Get the amount of unique symbols.
 		[[nodiscard]] uint32_t GetTimeSeriesCount() const;
 
 		[[nodiscard]] static STBTScope Create(Portfolio* portfolio, Array<TimeSeries> timeSeries);
@@ -26,20 +32,26 @@ namespace jv::bt
 		int32_t change = 0;
 	};
 
+	// AI stock trader. Can be tested in the STBT program.
 	struct STBTBot final
 	{
 		const char* name = "NO NAME GIVEN";
 		const char* author = "NO AUTHOR GIVEN";
 		const char* description = "NO DESCRIPTION GIVEN";
 
+		// Executes once at the start of a run.
 		void(*init)(const STBTScope& scope, void* userPtr) = nullptr;
+		// Executes every day in a run.
 		void(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, void* userPtr);
+		// Executes at the end of a run.
 		void(*cleanup)(const STBTScope& scope, void* userPtr) = nullptr;
+		// A custom pointer can be given here.
 		void* userPtr = nullptr;
 	};
 
 	struct STBTCreateInfo final
 	{
+		// Stock symbols.
 		const char** symbols;
 		uint32_t symbolsLength;
 	};
@@ -54,10 +66,13 @@ namespace jv::bt
 
 		Array<STBTBot> bots;
 
+		bool enableTutorialMode;
+
 		char license[32];
 		tm from, to;
 		int graphType;
 		uint32_t days;
+		// Moving Average.
 		uint32_t ma;
 
 		__declspec(dllexport) bool Update();

@@ -454,6 +454,7 @@ namespace jv::bt
 			{
 				runIndex = 0;
 				runDayIndex = -1;
+				runTimePoint = std::chrono::system_clock::now();
 			}
 			else if (runIndex >= length)
 			{
@@ -515,6 +516,13 @@ namespace jv::bt
 
 						if (canEnd)
 							runIndex = length;
+
+						if (log)
+						{
+							std::string s = std::format("Logs/{:%d-%m-%Y %H-%M-%OS}-", runTimePoint);
+							s += std::to_string(runIndex) + ".log";
+							Log::Save(runLog, s.c_str());
+						}	
 					}
 				}
 				else if(!stepwise || !stepCompleted)
@@ -552,7 +560,9 @@ namespace jv::bt
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 					{
 						auto& num = runLog.numsInPort[i][runDayIndex] = stocks[i].count;
-						portfolioValue += timeSeries[i].close[dayOffsetIndex] * num;
+						const auto close = timeSeries[i].close[dayOffsetIndex];
+						portfolioValue += close * num;
+						runLog.stockCloses[i][runDayIndex] = close;
 					}
 
 					runLog.portValues[runDayIndex] = portfolioValue;

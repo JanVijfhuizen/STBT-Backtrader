@@ -46,6 +46,7 @@ namespace jv::bt
 		double timeElapsed;
 
 		Array<jv::gr::GraphPoint> portPoints, avrPoints, pctPoints;
+		std::chrono::system_clock::time_point runTimePoint;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

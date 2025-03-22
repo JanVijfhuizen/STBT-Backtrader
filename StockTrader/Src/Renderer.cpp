@@ -177,7 +177,6 @@ namespace jv::gr
 		const uint32_t l2 = Min(info.length, info.maxLinesDrawn);
 		const uint32_t len = Min(l, info.maxLinesDrawn);
 		const float stepSize = (float)l / len;
-		const uint32_t iStepSize = round(stepSize);
 
 		float lineWidth = 1.f / (l2 - 1) * aspScale.x;
 		float org = -lineWidth * (l2 - 1) / 2 + info.position.x;
@@ -194,64 +193,60 @@ namespace jv::gr
 		if (!info.normalize)
 			floor = Min<float>(0, floor);
 
-		for (uint32_t i = 0; i < len - 1; i++)
+		float pOpen = 0;
+		float pClose = 0;
+		float pHigh = 0;
+		float pLow = 0;
+
+		for (uint32_t i = 0; i < len; i++)
 		{
-			float xStart = org + lineWidth * i;
+			float xStart = org + lineWidth * (i - 1);
 			float xEnd = xStart + lineWidth;
+
+			const uint32_t curPt = round(stepSize * i);
 
 			float open = 0;
 			float close = 0;
 			float high = 0;
 			float low = 0;
-			float pClose = 0;
+			float divBy = 0;
 
-			const uint32_t curInd = round(stepSize * (i + 1));
-			const uint32_t prevInd = round(stepSize * i);
+			auto& point = info.points[curPt];
 
-			// Get smooth value of neighbours.
-			float overf = (stepSize - 1) / 2;
-			int32_t overI = ceil(overf);
-			for (int32_t i = -overI; i < overI + 1; i++)
-			{
-				const auto rem = Min<float>(fabs(overf + 1.f - fabs(i)), 1);
-				const auto& cur = info.points[Min(curInd + i, l - 1)];
-				const auto& prev = info.points[Max((int32_t)prevInd + i, 0)];
-
-				open += cur.open * rem;
-				close += cur.close * rem;
-				high += cur.high * rem;
-				low += cur.low * rem;
-				pClose += prev.close * rem;
-			}
-
-			const float div = 1.f + overf * 2;
-			open /= div;
-			close /= div;
-			high /= div;
-			low /= div;
-			pClose /= div;
+			open += point.open;
+			close += point.close;
+			high += point.high;
+			low += point.low;
 
 			const float yPos = jv::RLerp<float>(close, floor, ceiling) * aspScale.y - aspScale.y / 2;		
-			const float yPosPrev = jv::RLerp<float>(pClose, floor, ceiling) * aspScale.y - aspScale.y / 2;
 
-			if (info.type == GraphType::line)
+			if (i > 0)
 			{
-				DrawLine(glm::vec2(xStart, yPosPrev + info.position.y), glm::vec2(xEnd, yPos + info.position.y), info.color);
-			}
-			if (info.type == GraphType::candle)
-			{
-				const auto color = open < close ? glm::vec4(0, 1, 0, 1) : glm::vec4(1, 0, 0, 1);
-				const float yPos2 = jv::RLerp<float>((open + close) / 2, floor, ceiling) * aspScale.y - aspScale.y / 2;
+				if (info.type == GraphType::line)
+				{
+					const float yPosPrev = jv::RLerp<float>(pClose, floor, ceiling) * aspScale.y - aspScale.y / 2;
+					DrawLine(glm::vec2(xStart, yPosPrev + info.position.y), glm::vec2(xEnd, yPos + info.position.y), info.color);
+				}
+				if (info.type == GraphType::candle)
+				{
+					const auto color = open < close ? glm::vec4(0, 1, 0, 1) : glm::vec4(1, 0, 0, 1);
+					const float yPos2 = jv::RLerp<float>((open + close) / 2, floor, ceiling) * aspScale.y - aspScale.y / 2;
 
-				const auto pos = glm::vec2(xStart + lineWidth / 2, yPos2);
-				const float width = (xEnd - xStart) * candleThickness;
-				const float height = (open - close) / (ceiling - floor) * aspScale.y;
+					const auto pos = glm::vec2(xStart + lineWidth / 2, yPos2);
+					const float width = (xEnd - xStart) * candleThickness;
+					const float height = (open - close) / (ceiling - floor) * aspScale.y;
 
-				low = jv::RLerp<float>(low, floor, ceiling) * aspScale.y - aspScale.y / 2;
-				high = jv::RLerp<float>(high, floor, ceiling) * aspScale.y - aspScale.y / 2;
-				DrawLine(glm::vec2(pos.x, low + info.position.y), glm::vec2(pos.x, high + info.position.y), glm::vec4(1, 1, 1, 1));
-				DrawPlane(pos + glm::vec2(0, info.position.y), glm::vec2(width, height), color);
+					low = jv::RLerp<float>(low, floor, ceiling) * aspScale.y - aspScale.y / 2;
+					high = jv::RLerp<float>(high, floor, ceiling) * aspScale.y - aspScale.y / 2;
+					DrawLine(glm::vec2(pos.x, low + info.position.y), glm::vec2(pos.x, high + info.position.y), glm::vec4(1, 1, 1, 1));
+					DrawPlane(pos + glm::vec2(0, info.position.y), glm::vec2(width, height), color);
+				}
 			}
+
+			pOpen = open;
+			pClose = close;
+			pHigh = high;
+			pLow = low;
 		}
 
 		if (info.title)

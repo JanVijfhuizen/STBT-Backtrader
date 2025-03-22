@@ -90,8 +90,17 @@ namespace jv::bt
 			"Run Info"
 		};
 
+		const char* tooltips[]
+		{
+			"Adjust dates and\nstarting portfolio.", 
+			"Select an algorithm\nto be used.", 
+			"Start and adjust\nrun settings."
+		};
+
 		for (uint32_t i = 0; i < 3; i++)
 		{
+			TryDrawTutorialText(stbt, tooltips[i]);
+
 			const bool selected = subIndex == i;
 			if (selected)
 				ImGui::PushStyleColor(ImGuiCol_Text, { 0, 1, 0, 1 });
@@ -118,9 +127,12 @@ namespace jv::bt
 		if (subIndex == btmiPortfolio)
 		{
 			ImGui::Text("Portfolio");
+			TryDrawTutorialText(stbt, "Starting cash.");
 
 			uint32_t index = 0;
 			ImGui::InputText("Cash", buffers[0], 9, ImGuiInputTextFlags_CharsScientific);
+
+			TryDrawTutorialText(stbt, "Number of starting stocks\nin portfolio per symbol.");
 
 			for (uint32_t i = 0; i < names.length; i++)
 			{
@@ -173,6 +185,7 @@ namespace jv::bt
 		}
 		if (subIndex == btmiRunInfo)
 		{
+			TryDrawTutorialText(stbt, "Amount of runs.");
 			if (ImGui::InputText("Runs", runCountBuffer, 4, ImGuiInputTextFlags_CharsDecimal))
 			{
 				int32_t n = std::atoi(runCountBuffer);
@@ -180,13 +193,14 @@ namespace jv::bt
 				snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
 			}
 
+			TryDrawTutorialText(stbt, "Difference between starting\ndate and minimum run start\ndate.");
 			if (ImGui::InputText("Buffer", buffBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
 			{
 				int32_t n = std::atoi(buffBuffer);
 				n = Max(n, 1);
 				snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
 			}
-
+			TryDrawTutorialText(stbt, "Fee on buying or\nselling stocks.\n1 = 100%");
 			if (ImGui::InputText("Fee", feeBuffer, 8, ImGuiInputTextFlags_CharsDecimal))
 			{
 				float n = std::atof(feeBuffer);
@@ -194,13 +208,14 @@ namespace jv::bt
 				snprintf(feeBuffer, sizeof(feeBuffer), "%f", n);
 			}
 
+			TryDrawTutorialText(stbt, "Number of days in\nzoomed in view of\nportfolio and market\naverage.");
 			if (ImGui::InputText("Zoom", zoomBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
 			{
 				int32_t n = std::atoi(zoomBuffer);
 				n = Clamp(n, 2, MAX_ZOOM);
 				snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
 			}
-
+			TryDrawTutorialText(stbt, "Number of days that pass\nbefore the screen\nrefreshes. Applies to\nstepwise iteration.\nWill increase speed.");
 			if (ImGui::InputText("Batches", batchBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
 			{
 				int32_t n = std::atoi(batchBuffer);
@@ -208,13 +223,17 @@ namespace jv::bt
 				snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
 			}
 			
+			TryDrawTutorialText(stbt, "If enabled, pauses every\nX days, where X = Batches.");
 			ImGui::Checkbox("Stepwise", &stepwise);
 			ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
+			TryDrawTutorialText(stbt, "Randomizes date (within\nthe given start/end\ndates).");
 			ImGui::Checkbox("Randomize Date", &randomizeDate);
+			TryDrawTutorialText(stbt, "Save results of the run\nto a text file after\nit's finished.");
 			ImGui::Checkbox("Log", &log);
 
 			if (randomizeDate)
 			{
+				TryDrawTutorialText(stbt, "Length of the\nrandomized run.");
 				if (ImGui::InputText("Length", lengthBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
 				{
 					int32_t n = std::atoi(lengthBuffer);
@@ -223,6 +242,7 @@ namespace jv::bt
 				}
 			}
 
+			TryDrawTutorialText(stbt, "Begin the run(s).");
 			if (ImGui::Button("Run"))
 			{
 				bool valid = true;
@@ -350,6 +370,7 @@ namespace jv::bt
 
 				if (!stepwise)
 				{
+					TryDrawTutorialText(stbt, "Time Elapsed/Remaining.");
 					std::string elapsed = "Elapsed/Remaining: " + ConvertSecondsToHHMMSS(timeElapsed / 1e6) + "/";
 					
 					float e = timeElapsed;
@@ -364,6 +385,8 @@ namespace jv::bt
 				
 				if (runDayIndex >= runLength && pauseOnFinish)
 				{
+					TryDrawTutorialText(stbt, "[CONTINUE]: End current run.");
+					TryDrawTutorialText(stbt, "[BREAK]: Abort all queued runs.");
 					if (ImGui::Button("Continue"))
 						canFinish = true;
 					ImGui::SameLine();
@@ -372,6 +395,8 @@ namespace jv::bt
 				}
 				else if (stepwise && stepCompleted)
 				{
+					TryDrawTutorialText(stbt, "[CONTINUE]: Continue current run.");
+					TryDrawTutorialText(stbt, "[BREAK]: Abort all queued runs.");
 					if (ImGui::Button("Continue"))
 						stepCompleted = false;
 					ImGui::SameLine();
@@ -403,6 +428,9 @@ namespace jv::bt
 				ImGui::End();
 
 				MI_Symbols::DrawTopRightWindow("Stocks", true, true);
+				TryDrawTutorialText(stbt, "[SYMBOl][AMOUNT][VALUE][CHANGE].");
+				TryDrawTutorialText(stbt, "[REL]: Portfolio relative to stock market.");
+				TryDrawTutorialText(stbt, "[MARK]: Market average.");
 
 				std::string liquidity = "Liquidity: ";
 				uint32_t ILiq = round(portfolio.liquidity);

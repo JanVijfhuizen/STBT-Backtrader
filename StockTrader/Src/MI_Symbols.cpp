@@ -360,7 +360,7 @@ namespace jv::bt
 		TryDrawTutorialText(stbt, "[DAYS]: Update dates to reflect NOW - NOW minus DAYS");
 		TryDrawTutorialText(stbt, "[MA]: Render Moving Average on top of the data.");
 		TryDrawTutorialText(stbt, "[NORM]: Normalize stock data.");
-		TryDrawTutorialText(stbt, "[LIFETIME]: Updates dates to reflect entire history.");
+		TryDrawTutorialText(stbt, "[LIFETIME]: Updates dates to reflect\nentire (accessible) history.");
 		if (ImGui::Button("Days"))
 		{
 			const int i = stbt.days;
@@ -420,6 +420,10 @@ namespace jv::bt
 
 		if (graphPoints.length > 0)
 		{
+			TryDrawTutorialText(stbt, "[START]: Initial stock open.");
+			TryDrawTutorialText(stbt, "[END]: Final stock close.");
+			TryDrawTutorialText(stbt, "[CHANGE]: END - START.");
+
 			auto str = std::format("{:.2f}", graphPoints[0].open);
 			str = "[Start] " + str;
 			ImGui::Text(str.c_str());
@@ -436,6 +440,9 @@ namespace jv::bt
 			str = "[Change] " + str;
 			ImGui::Text(str.c_str());
 			ImGui::PopStyleColor();
+
+			TryDrawTutorialText(stbt, "[HIGH]: Highest stock point.");
+			TryDrawTutorialText(stbt, "[LOW]: Lowest stock point.");
 
 			str = std::format("{:.2f}", max);
 			str = "[High] " + str;

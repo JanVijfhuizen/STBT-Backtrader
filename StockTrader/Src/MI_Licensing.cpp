@@ -34,6 +34,7 @@ namespace jv::bt
 
 	bool MI_Licensing::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
+		TryDrawTutorialText(stbt, "[ALPHA VANTAGE]: Used to\nget stock data from\nthe web.");
 		ImGui::Text("Alpha Vantage");
 		if (ImGui::InputText("##", stbt.license, 17))
 		{

@@ -5,6 +5,17 @@
 
 namespace jv::bt
 {
+	struct RunInfo final
+	{
+		time_t from;
+		time_t to;
+		uint32_t daysDiff;
+		uint32_t length;
+		uint32_t runLength;
+		uint32_t buffer;
+		bool valid;
+	};
+
 	class MI_Backtrader final : public MI_Main
 	{
 	public:
@@ -39,13 +50,17 @@ namespace jv::bt
 		uint32_t runDayIndex;
 		uint32_t runOffset;
 
+		// Scope while running one or more runs.
+		uint64_t runningScope;
+		// Scope for a single run.
 		uint64_t runScope;
 		Log runLog;
 		bool stepCompleted;
 		std::chrono::steady_clock::time_point tpStart;
 		double timeElapsed;
 
-		Array<jv::gr::GraphPoint> portPoints, avrPoints, pctPoints;
+		// Portfolio, Relative (Port to Stock Mark Average), Percentage, General (Average all runs)
+		Array<jv::gr::GraphPoint> portPoints, relPoints, pctPoints, genPoints;
 		std::chrono::system_clock::time_point runTimePoint;
 
 		void Load(STBT& stbt) override;
@@ -58,5 +73,6 @@ namespace jv::bt
 		void Unload(STBT& stbt) override;
 		void BackTest(STBT& stbt, bool render);
 		void DrawLog(STBT& stbt);
+		[[nodiscard]] RunInfo GetRunInfo(STBT& stbt);
 	};
 }

@@ -12,7 +12,7 @@ namespace jv::bt
 		float* liquidities;
 		float* portValues;
 		float** stockCloses;
-		float* marktAvr;
+		float* marktRel;
 		float* marktPct;
 
 		[[nodiscard]] static Log Create(Arena& arena, const STBTScope& scope, uint32_t start, uint32_t end);

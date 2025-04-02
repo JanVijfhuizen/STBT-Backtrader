@@ -288,6 +288,10 @@ namespace jv::bt
 						runIndex = -1;
 						batchId = 0;
 						timeElapsed = 0;
+						runningScope = stbt.arena.CreateScope();
+
+						const auto runInfo = GetRunInfo(stbt);
+						genPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runInfo.runLength);
 					}
 				}
 			}
@@ -326,21 +330,13 @@ namespace jv::bt
 	{
 		if (running)
 		{
-			const auto tFrom = mktime(&stbt.from);
-			const auto tTo = mktime(&stbt.to);
-
-			const auto diff = difftime(tTo, tFrom);
-			const uint32_t daysDiff = diff / 60 / 60 / 24;
-
-			const int32_t length = std::atoi(runCountBuffer);
-			uint32_t runLength = randomizeDate ? std::atoi(lengthBuffer) : daysDiff;
-			uint32_t buffer = std::atoi(buffBuffer);
-			if (buffer >= runLength)
+			const auto runInfo = GetRunInfo(stbt);
+			if (!runInfo.valid)
 			{
 				stbt.output.Add() = "ERROR: Buffer is larger than run length. \n Aborting run.";
 				running = false;
+				stbt.arena.DestroyScope(runningScope);
 			}
-			runLength -= buffer;
 
 			auto& bot = stbt.bots[algoIndex];
 
@@ -356,13 +352,13 @@ namespace jv::bt
 
 				std::string runText = "Epoch " + std::to_string(runIndex + 1);
 				runText += "/";
-				runText += std::to_string(length);
+				runText += std::to_string(runInfo.length);
 
 				if (runDayIndex != -1)
 				{
 					runText += " Day " + std::to_string(runDayIndex);
 					runText += "/";
-					runText += std::to_string(runLength);
+					runText += std::to_string(runInfo.runLength);
 				}
 				if (runIndex == -1)
 					runText = "Preprocessing data.";
@@ -374,23 +370,23 @@ namespace jv::bt
 					std::string elapsed = "Elapsed/Remaining: " + ConvertSecondsToHHMMSS(timeElapsed / 1e6) + "/";
 					
 					float e = timeElapsed;
-					e /= runDayIndex + runIndex * runLength;
+					e /= runDayIndex + runIndex * runInfo.runLength;
 					const float avrFrame = e;
-					const float totalDuration = avrFrame * (length * runLength);
-					e *= (length - runIndex - 1) * runLength + (runLength - runDayIndex);
+					const float totalDuration = avrFrame * (runInfo.length * runInfo.runLength);
+					e *= (runInfo.length - runIndex - 1) * runInfo.runLength + (runInfo.runLength - runDayIndex);
 					elapsed += ConvertSecondsToHHMMSS(e / 1e6);
 					ImGui::Text(elapsed.c_str());
 					//ImGui::Text(ConvertSecondsToHHMMSS(totalDuration / 1e6).c_str());
 				}
 				
-				if (runDayIndex >= runLength && pauseOnFinish)
+				if (runDayIndex >= runInfo.runLength && pauseOnFinish)
 				{
 					TryDrawTutorialText(stbt, "[CONTINUE]: End current run.");
 					TryDrawTutorialText(stbt, "[BREAK]: Abort all queued runs.");
 					if (ImGui::Button("Continue"))
 						canFinish = true;
 					ImGui::SameLine();
-					if (runIndex < length - 1 && ImGui::Button("Break"))
+					if (runIndex < runInfo.length - 1 && ImGui::Button("Break"))
 						canEnd = true;
 				}
 				else if (stepwise && stepCompleted)
@@ -402,7 +398,7 @@ namespace jv::bt
 					ImGui::SameLine();
 					if (ImGui::Button("Break"))
 					{
-						runDayIndex = runLength;
+						runDayIndex = runInfo.runLength;
 						stepCompleted = false;
 						canFinish = true;
 						canEnd = true;
@@ -438,9 +434,9 @@ namespace jv::bt
 				ImGui::Text(liquidity.c_str());
 
 				const uint32_t dayOffsetIndex = runOffset - runDayIndex;
-
 				std::string portValue = "Port Value: ";
 				float v = portfolio.liquidity;
+
 				for (uint32_t i = 0; i < timeSeries.length; i++)
 				{
 					const auto& stock = portfolio.stocks[i];
@@ -484,7 +480,7 @@ namespace jv::bt
 				runDayIndex = -1;
 				runTimePoint = std::chrono::system_clock::now();
 			}
-			else if (runIndex >= length)
+			else if (runIndex >= runInfo.length)
 			{
 				running = false;
 			}
@@ -496,9 +492,9 @@ namespace jv::bt
 					// If random, decide on day.
 					const int32_t buffer = std::atoi(buffBuffer);
 					const auto tCurrent = GetTime(0);
-					const auto cdiff = difftime(tCurrent, tFrom);
+					const auto cdiff = difftime(tCurrent, runInfo.from);
 					const uint32_t cdaysDiff = cdiff / 60 / 60 / 24;
-					const uint32_t maxDiff = daysDiff - buffer - runLength;
+					const uint32_t maxDiff = runInfo.daysDiff - buffer - runInfo.runLength;
 
 					if (randomizeDate)
 					{
@@ -522,16 +518,16 @@ namespace jv::bt
 					runDayIndex = 0;
 
 					runScope = stbt.arena.CreateScope();
-					runLog = Log::Create(stbt.arena, stbtScope, runOffset - runLength, runOffset);
+					runLog = Log::Create(stbt.arena, stbtScope, runOffset - runInfo.runLength, runOffset);
 					stepCompleted = false;
 					tpStart = std::chrono::steady_clock::now();
 
-					portPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
-					avrPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
-					pctPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runLength);
+					portPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runInfo.runLength);
+					relPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runInfo.runLength);
+					pctPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runInfo.runLength);
 				}
 				// If this run is completed, either start a new run or quit.
-				if (runDayIndex == runLength)
+				if (runDayIndex == runInfo.runLength)
 				{
 					if (canFinish || canEnd)
 					{
@@ -543,7 +539,7 @@ namespace jv::bt
 						stbt.arena.DestroyScope(runScope);
 
 						if (canEnd)
-							runIndex = length;
+							runIndex = runInfo.length;
 
 						if (log)
 						{
@@ -607,11 +603,11 @@ namespace jv::bt
 					}
 
 					const float pct = close / closeStart;
-					const float avr = (portfolioValue + portfolio.liquidity) / 
+					const float rel = (portfolioValue + portfolio.liquidity) / 
 						(runLog.portValues[0] + runLog.liquidities[0]) / pct;
 
 					runLog.marktPct[runDayIndex] = pct;
-					runLog.marktAvr[runDayIndex] = avr;
+					runLog.marktRel[runDayIndex] = rel;
 
 					bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr);
 					runDayIndex++;
@@ -625,12 +621,12 @@ namespace jv::bt
 				if (runDayIndex > 0 && runDayIndex != -1)
 				{
 					const uint32_t dayOffsetIndex = runOffset - runDayIndex;
-					const uint32_t l = runDayIndex >= runLength ? runLength - 1 : runDayIndex;
+					const uint32_t l = runDayIndex >= runInfo.runLength ? runInfo.runLength - 1 : runDayIndex;
 					const auto tScope = stbt.tempArena.CreateScope();
 
 					const uint32_t i = l - 1;
 					const auto v = runLog.portValues[i] + runLog.liquidities[i];
-					const float avr = runLog.marktAvr[i];
+					const float rel = runLog.marktRel[i];
 					const float pct = runLog.marktPct[i];
 
 					portPoints[i].open = v;
@@ -638,10 +634,10 @@ namespace jv::bt
 					portPoints[i].high = v;
 					portPoints[i].low = v;
 
-					avrPoints[i].open = avr;
-					avrPoints[i].close = avr;
-					avrPoints[i].high = avr;
-					avrPoints[i].low = avr;
+					relPoints[i].open = rel;
+					relPoints[i].close = rel;
+					relPoints[i].high = rel;
+					relPoints[i].low = rel;
 
 					pctPoints[i].open = pct;
 					pctPoints[i].close = pct;
@@ -680,14 +676,14 @@ namespace jv::bt
 					stbt.renderer.DrawGraph(drawInfo);
 
 					drawInfo.position.y = bot;
-					drawInfo.points = avrPoints.ptr;
+					drawInfo.points = relPoints.ptr;
 					drawInfo.color = colors[2];
 					drawInfo.title = "rel";
 					stbt.renderer.DrawGraph(drawInfo);
 
 					const uint32_t zoom = std::stoi(zoomBuffer);
 
-					if (l >= zoom && zoom > 0 && zoom <= Min((uint32_t)MAX_ZOOM, runLength))
+					if (l >= zoom && zoom > 0 && zoom <= Min((uint32_t)MAX_ZOOM, runInfo.runLength))
 					{
 						drawInfo.noBackground = false;
 						std::string zoomPort = "port" + std::to_string(zoom);
@@ -702,7 +698,7 @@ namespace jv::bt
 						std::string zoomMarket = "mark" + std::to_string(zoom);
 						drawInfo.position.x -= .3f;
 						drawInfo.position.y = .8f;
-						drawInfo.points = &avrPoints.ptr[l - zoom];
+						drawInfo.points = &pctPoints.ptr[l - zoom];
 						drawInfo.color = colors[4];
 						drawInfo.title = zoomMarket.c_str();
 						stbt.renderer.DrawGraph(drawInfo);
@@ -791,5 +787,22 @@ namespace jv::bt
 
 			ImGui::PopStyleColor();
 		}
+	}
+	RunInfo MI_Backtrader::GetRunInfo(STBT& stbt)
+	{
+		RunInfo info{};
+
+		info.from = mktime(&stbt.from);
+		info.to = mktime(&stbt.to);
+
+		const auto diff = difftime(info.to, info.from);
+		info.daysDiff = diff / 60 / 60 / 24;
+
+		info.length = std::atoi(runCountBuffer);
+		info.runLength = randomizeDate ? std::atoi(lengthBuffer) : info.daysDiff;
+		info.buffer = std::atoi(buffBuffer);
+		info.valid = info.buffer < info.runLength;
+		info.runLength -= info.buffer;
+		return info;
 	}
 }

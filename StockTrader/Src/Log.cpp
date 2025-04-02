@@ -22,7 +22,7 @@ namespace jv::bt
 		log.stockCloses = arena.New<float*>(portLength);
 		for (uint32_t i = 0; i < portLength; i++)
 			log.stockCloses[i] = arena.New<float>(length);
-		log.marktAvr = arena.New<float>(length);
+		log.marktRel = arena.New<float>(length);
 		log.marktPct = arena.New<float>(length);
 		log.length = length;
 		log.portLength = portLength;
@@ -49,7 +49,7 @@ namespace jv::bt
 				fout << log.stockCloses[j][i] << std::endl;
 			fout << log.liquidities[i] << std::endl;
 			fout << log.portValues[i] << std::endl;
-			fout << log.marktAvr[i] << std::endl;
+			fout << log.marktRel[i] << std::endl;
 			fout << log.marktPct[i] << std::endl;
 		}
 

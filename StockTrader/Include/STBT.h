@@ -40,13 +40,22 @@ namespace jv::bt
 		const char* description = "NO DESCRIPTION GIVEN";
 
 		// Executes once at the start of a run.
-		void(*init)(const STBTScope& scope, void* userPtr) = nullptr;
+		bool(*init)(const STBTScope& scope, void* userPtr) = nullptr;
 		// Executes every day in a run.
-		void(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, void* userPtr);
+		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, void* userPtr);
 		// Executes at the end of a run.
 		void(*cleanup)(const STBTScope& scope, void* userPtr) = nullptr;
 		// A custom pointer can be given here.
 		void* userPtr = nullptr;
+
+		// Custom variables that you can give to the backtester.
+		bool* bools;
+		const char** boolsNames;
+		uint32_t boolsLength = 0;
+		char** buffers;
+		const char** buffersNames;
+		uint32_t* bufferSizes;
+		uint32_t buffersLength = 0;
 	};
 
 	struct STBTCreateInfo final

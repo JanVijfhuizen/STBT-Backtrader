@@ -178,11 +178,22 @@ namespace jv::bt
 				if (selected)
 					ImGui::PopStyleColor();
 
+				
+
 				if (selected)
 				{
 					ImGui::Text(bot.author);
 					ImGui::Text(bot.description);
-				}
+
+					for (uint32_t i = 0; i < bot.boolsLength; i++)
+						ImGui::Checkbox(bot.boolsNames[i], &bot.bools[i]);
+
+					for (uint32_t i = 0; i < bot.buffersLength; i++)
+					{
+						ImGui::Text(bot.buffersNames[i]);
+						ImGui::InputText("##", bot.buffers[i], bot.bufferSizes[i]);
+					}
+				}	
 			}
 		}
 		if (subIndex == btmiRunInfo)
@@ -521,7 +532,8 @@ namespace jv::bt
 						trades[i].change = 0;
 
 					if (bot.init)
-						bot.init(stbtScope, bot.userPtr);
+						if (!bot.init(stbtScope, bot.userPtr))
+							runDayIndex = runInfo.runLength;
 					runDayIndex = 0;
 
 					runScope = stbt.arena.CreateScope();
@@ -629,8 +641,10 @@ namespace jv::bt
 					runLog.marktPct[runDayIndex] = pct;
 					runLog.marktRel[runDayIndex] = rel;
 
-					bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr);
-					runDayIndex++;
+					if (!bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr))
+						runDayIndex = runInfo.runLength;
+					else
+						runDayIndex++;
 					stepCompleted = true;
 				}
 			}

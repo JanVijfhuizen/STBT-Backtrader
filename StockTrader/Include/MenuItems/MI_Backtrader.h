@@ -76,5 +76,11 @@ namespace jv::bt
 		void BackTest(STBT& stbt, bool render);
 		void DrawLog(STBT& stbt);
 		[[nodiscard]] RunInfo GetRunInfo(STBT& stbt);
+
+		void DrawPortfolioSubMenu(STBT& stbt);
+		void DrawAlgorithmSubMenu(STBT& stbt);
+		void DrawRunSubMenu(STBT& stbt);
+		void RenderRun(STBT& stbt, const RunInfo& runInfo, bool& canFinish, bool& canEnd);
+		void RenderGraphs(STBT& stbt, const RunInfo& runInfo);
 	};
 }

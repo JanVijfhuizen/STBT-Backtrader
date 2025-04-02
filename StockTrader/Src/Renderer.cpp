@@ -163,7 +163,7 @@ namespace jv::gr
 			gr::GetShaderUniform(lineShader, "color"), color);
 		Draw(VertType::line);
 	}
-	void Renderer::DrawGraph(DrawGraphInfo info)
+	bool Renderer::DrawGraph(DrawGraphInfo info)
 	{
 		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1);
 
@@ -249,6 +249,8 @@ namespace jv::gr
 			pLow = low;
 		}
 
+		bool interacted = false;
+
 		if (info.title)
 		{
 			glm::vec2 convPos = info.position;
@@ -258,7 +260,7 @@ namespace jv::gr
 
 			convPos *= RESOLUTION;
 
-			glm::vec2 winSize = { info.scale.x * RESOLUTION.x / 4, 10 };
+			glm::vec2 winSize = { info.scale.x * RESOLUTION.x / 4, 36 };
 
 			convPos.x -= winSize.x * info.aspectRatio;
 			convPos.y += info.scale.y * RESOLUTION.y / 4;
@@ -285,9 +287,20 @@ namespace jv::gr
 
 			ImVec4 tradeCol = pct >= 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
 			ImGui::PushStyleColor(ImGuiCol_Text, tradeCol);
-			ImGui::TextCenter(text);
+			
+			if (info.textIsButton)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+				interacted = ImGui::ButtonCenter(text);
+				ImGui::PopStyleColor();
+			}			
+			else
+				ImGui::TextCenter(text);
+
 			ImGui::PopStyleColor();
 			ImGui::End();
 		}
+
+		return interacted;
 	}
 }

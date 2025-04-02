@@ -76,6 +76,7 @@ namespace jv::bt
 
 		stbt.tempArena.DestroyScope(tempScope);
 		subScope = stbt.arena.CreateScope();
+		highlightedGraphIndex = 0;
 	}
 
 	bool MI_Backtrader::DrawMainMenu(STBT& stbt, uint32_t& index)
@@ -651,18 +652,18 @@ namespace jv::bt
 					grPos.x += .36f;
 					grPos.y += .02f;
 
+					jv::gr::DrawGraphInfo drawInfos[3]{};
+
 					jv::gr::DrawGraphInfo drawInfo{};
 					drawInfo.aspectRatio = ratio;
 					drawInfo.position = grPos;
 					drawInfo.scale = glm::vec2(.9);
 					drawInfo.points = portPoints.ptr;
 					drawInfo.length = l;
+					drawInfo.textIsButton = true;
 					drawInfo.color = colors[0];
-					drawInfo.title = "portfolio value";
-
-					stbt.renderer.SetLineWidth(2);
-					stbt.renderer.DrawGraph(drawInfo);
-					stbt.renderer.SetLineWidth(1);
+					drawInfo.title = "port";
+					drawInfos[0] = drawInfo;
 
 					const float top = .8;
 					const float bot = -.265;
@@ -673,13 +674,43 @@ namespace jv::bt
 					drawInfo.points = pctPoints.ptr;
 					drawInfo.color = colors[1];
 					drawInfo.title = "mark";
-					stbt.renderer.DrawGraph(drawInfo);
+					drawInfos[1] = drawInfo;
 
 					drawInfo.position.y = bot;
 					drawInfo.points = relPoints.ptr;
 					drawInfo.color = colors[2];
 					drawInfo.title = "rel";
-					stbt.renderer.DrawGraph(drawInfo);
+					drawInfos[2] = drawInfo;
+
+					const char* fullTitles[3]
+					{
+						"portfolio value",
+						"market average",
+						"relative to market"
+					};
+
+					drawInfos[highlightedGraphIndex].title = fullTitles[highlightedGraphIndex];
+
+					if (highlightedGraphIndex != 0)
+					{
+						auto t = drawInfos[0];
+						auto& a = drawInfos[0];
+						auto& b = drawInfos[highlightedGraphIndex];
+
+						a.points = b.points;
+						a.title = b.title;
+						b.points = t.points;
+						b.title = t.title;
+					}
+
+					stbt.renderer.SetLineWidth(2);
+					if (stbt.renderer.DrawGraph(drawInfos[0]))
+						highlightedGraphIndex = 0;
+					stbt.renderer.SetLineWidth(1);
+
+					for (uint32_t i = 0; i < 2; i++)
+						if (stbt.renderer.DrawGraph(drawInfos[i + 1]))
+							highlightedGraphIndex = highlightedGraphIndex == i + 1 ? 0 : i + 1;
 
 					const uint32_t zoom = std::stoi(zoomBuffer);
 

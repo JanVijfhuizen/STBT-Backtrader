@@ -58,6 +58,7 @@ namespace jv::bt
 		bool stepCompleted;
 		std::chrono::steady_clock::time_point tpStart;
 		double timeElapsed;
+		uint32_t highlightedGraphIndex;
 
 		// Portfolio, Relative (Port to Stock Mark Average), Percentage, General (Average all runs)
 		Array<jv::gr::GraphPoint> portPoints, relPoints, pctPoints, genPoints;

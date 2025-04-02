@@ -37,8 +37,9 @@ namespace jv::gr
 		bool noBackground = true;
 		bool normalize = true;
 		glm::vec4 color{1, 0, 0, 1};
-		const uint32_t stopAt = -1;
+		uint32_t stopAt = UINT32_MAX;
 		uint32_t maxLinesDrawn = 100;
+		bool textIsButton = false;
 	};
 
 	struct Renderer final
@@ -65,7 +66,7 @@ namespace jv::gr
 
 		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
-		void DrawGraph(DrawGraphInfo info);
+		bool DrawGraph(DrawGraphInfo info);
 	};
 
 	[[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);

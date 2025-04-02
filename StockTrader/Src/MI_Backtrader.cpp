@@ -59,6 +59,7 @@ namespace jv::bt
 		stepwise = false;
 		log = false;
 		pauseOnFinish = false;
+		pauseOnFinishAll = true;
 		running = false;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
@@ -226,7 +227,10 @@ namespace jv::bt
 			
 			TryDrawTutorialText(stbt, "If enabled, pauses every\nX days, where X = Batches.");
 			ImGui::Checkbox("Stepwise", &stepwise);
+			TryDrawTutorialText(stbt, "Pause after run.");
 			ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
+			TryDrawTutorialText(stbt, "Pause after final run.");
+			ImGui::Checkbox("Pause On Finish ALL", &pauseOnFinishAll);
 			TryDrawTutorialText(stbt, "Randomizes date (within\nthe given start/end\ndates).");
 			ImGui::Checkbox("Randomize Date", &randomizeDate);
 			TryDrawTutorialText(stbt, "Save results of the run\nto a text file after\nit's finished.");
@@ -342,6 +346,8 @@ namespace jv::bt
 			auto& bot = stbt.bots[algoIndex];
 
 			bool canFinish = !pauseOnFinish;
+			if (runIndex >= runInfo.length - 1)
+				canFinish = canFinish ? !pauseOnFinishAll : false;
 			bool canEnd = false;
 
 			if(render)
@@ -380,7 +386,7 @@ namespace jv::bt
 					//ImGui::Text(ConvertSecondsToHHMMSS(totalDuration / 1e6).c_str());
 				}
 				
-				if (runDayIndex >= runInfo.runLength && pauseOnFinish)
+				if (runDayIndex >= runInfo.runLength && (pauseOnFinish || pauseOnFinishAll))
 				{
 					TryDrawTutorialText(stbt, "[CONTINUE]: End current run.");
 					TryDrawTutorialText(stbt, "[BREAK]: Abort all queued runs.");
@@ -532,6 +538,19 @@ namespace jv::bt
 				{
 					if (canFinish || canEnd)
 					{
+						// Save the average of all runs.
+						for (uint32_t i = 0; i < runInfo.runLength; i++)
+						{
+							auto& p = genPoints[i];
+							p.close *= runIndex;
+							p.close += relPoints[i].close;
+							p.close /= runIndex + 1;
+
+							p.open = p.close;
+							p.high = p.close;
+							p.low = p.close;
+						}
+
 						if (bot.cleanup)
 							bot.cleanup(stbtScope, bot.userPtr);
 						runDayIndex = -1;
@@ -682,6 +701,7 @@ namespace jv::bt
 					drawInfo.title = "rel";
 					drawInfos[2] = drawInfo;
 
+					// Switch between graphs if selected and give the full name to the big graph.
 					const char* fullTitles[3]
 					{
 						"portfolio value",
@@ -690,7 +710,6 @@ namespace jv::bt
 					};
 
 					drawInfos[highlightedGraphIndex].title = fullTitles[highlightedGraphIndex];
-
 					if (highlightedGraphIndex != 0)
 					{
 						auto t = drawInfos[0];
@@ -701,6 +720,16 @@ namespace jv::bt
 						a.title = b.title;
 						b.points = t.points;
 						b.title = t.title;
+					}
+
+					// If relative gains are debugged.
+					if (highlightedGraphIndex == 2 && runIndex > 0)
+					{
+						auto genInfo = drawInfos[0];
+						genInfo.title = nullptr;
+						genInfo.points = genPoints.ptr;
+						genInfo.color = glm::vec4(0, 1, 0, 1);
+						stbt.renderer.DrawGraph(genInfo);
 					}
 
 					stbt.renderer.SetLineWidth(2);

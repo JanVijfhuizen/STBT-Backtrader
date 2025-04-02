@@ -40,6 +40,7 @@ namespace jv::bt
 		char runCountBuffer[8];
 		bool log;
 		bool pauseOnFinish;
+		bool pauseOnFinishAll;
 		bool running;
 		bool stepwise;
 		uint32_t batchId;

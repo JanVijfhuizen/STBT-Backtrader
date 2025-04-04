@@ -101,6 +101,15 @@ namespace jv::bt
 		return portfolio->liquidity;
 	}
 
+	float STBTScope::GetPortValue(const uint32_t current) const
+	{
+		const uint32_t l = GetTimeSeriesCount();
+		float ret = portfolio->liquidity;
+		for (uint32_t i = 0; i < l; i++)
+			ret += GetNInPort(i) * GetTimeSeries(i).close[current];
+		return ret;
+	}
+
 	uint32_t STBTScope::GetNInPort(const uint32_t index) const
 	{
 		return portfolio->stocks[index].count;

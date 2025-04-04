@@ -283,7 +283,7 @@ namespace jv::gr
 			text += " [";
 			text += pct >= 0 ? "+" : "-";
 			text += std::to_string(static_cast<uint32_t>(abs(pct) * 100));
-			text += "%%]";
+			text += "%]";
 
 			ImVec4 tradeCol = pct >= 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
 			ImGui::PushStyleColor(ImGuiCol_Text, tradeCol);

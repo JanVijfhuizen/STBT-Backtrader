@@ -10,15 +10,17 @@ namespace jv::bt
 	{
 	public:
 		// Get the money in the bank.
-		[[nodiscard]] float GetLiquidity() const;
+		__declspec(dllexport) [[nodiscard]] float GetLiquidity() const;
+		// Get the value of the current portfolio
+		__declspec(dllexport) [[nodiscard]] float GetPortValue(uint32_t current) const;
 		// Get the number of stocks of target symbol I in the portfolio. 
-		[[nodiscard]] uint32_t GetNInPort(uint32_t index) const;
+		__declspec(dllexport) [[nodiscard]] uint32_t GetNInPort(uint32_t index) const;
 		// Get a timeseries for target symbol.
-		[[nodiscard]] TimeSeries GetTimeSeries(uint32_t index) const;
+		__declspec(dllexport) [[nodiscard]] TimeSeries GetTimeSeries(uint32_t index) const;
 		// Get the length of the scope (days).
-		[[nodiscard]] uint32_t GetLength() const;
+		__declspec(dllexport) [[nodiscard]] uint32_t GetLength() const;
 		// Get the amount of unique symbols.
-		[[nodiscard]] uint32_t GetTimeSeriesCount() const;
+		__declspec(dllexport) [[nodiscard]] uint32_t GetTimeSeriesCount() const;
 
 		[[nodiscard]] static STBTScope Create(Portfolio* portfolio, Array<TimeSeries> timeSeries);
 

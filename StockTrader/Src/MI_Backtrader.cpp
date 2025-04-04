@@ -287,20 +287,29 @@ namespace jv::bt
 					// Execute trades.
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 					{
+						const auto open = timeSeries[i].open[dayOffsetIndex];
 						auto& trade = trades[i];
 						auto& stock = portfolio.stocks[i];
-						float change = trade.change * timeSeries[i].open[dayOffsetIndex];
-						const float feeMod = (1.f + fee * (change > 0 ? 1 : -1));
-						change *= feeMod;
+						const float feeMod = (1.f + fee * (trade.change > 0 ? 1 : -1));
 
-						const bool enoughInStock = trade.change > 0 ? true : -trade.change <= stock.count;
-
-						if (change < portfolio.liquidity && enoughInStock)
+						// Limit max buys.
+						if (trade.change > 0)
 						{
-							stock.count += trade.change;
-							portfolio.liquidity -= change;
+							const uint32_t maxBuys = floor(portfolio.liquidity / (open * feeMod));
+							trade.change = Min<int32_t>(maxBuys, trade.change);
+						}
+						// Limit max sells.
+						if (trade.change < 0)
+						{
+							const int32_t maxSells = stock.count;
+							trade.change = Max<int32_t>(-maxSells, trade.change);
 						}
 
+						float change = trade.change * open;
+						change *= feeMod;
+
+						stock.count += trade.change;
+						portfolio.liquidity -= change;
 						trade.change = 0;
 					}
 

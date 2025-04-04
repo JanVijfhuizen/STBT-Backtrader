@@ -16,20 +16,27 @@ namespace jv
 	{
 		// Generation length.
 		uint32_t length;
-		// Generation width.
+		// Instance width.
 		uint32_t width;
 		uint64_t scope;
 		// Array of value instances.
-		float* generation;
+		float** generation;
 		// Current optimal combination of values.
 		float* result;
+		// Ratings of generation.
+		float* genRatings;
 		// Rating of current result.
 		float rating;
 		// Generation index.
 		uint32_t genId;
+		// Training index.
+		uint32_t trainId;
 
 		// Randomly initialize generation.
 		void RandInit();
+
+		[[nodiscard]] float* GetTrainee();
+		void Rate(Arena& tempArena, float rating);
 
 		[[nodiscard]] static GeneticAlgorithm Create(Arena& arena, GeneticAlgorithmCreateInfo& info);
 		static void Destroy(Arena& arena, GeneticAlgorithm& ga);

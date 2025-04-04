@@ -39,15 +39,15 @@ namespace jv
 		uint32_t count = 0;
 		uint32_t front = 0;
 
-		[[nodiscard]] T& operator[](uint32_t i) const;
-		[[nodiscard]] QueueIterator<T> begin() const;
-		[[nodiscard]] QueueIterator<T> end() const;
+		__declspec(dllexport) [[nodiscard]] T& operator[](uint32_t i) const;
+		__declspec(dllexport) [[nodiscard]] QueueIterator<T> begin() const;
+		__declspec(dllexport) [[nodiscard]] QueueIterator<T> end() const;
 
-		T& Add();
-		[[nodiscard]] T& Peek() const;
-		T Pop();
+		__declspec(dllexport) T& Add();
+		__declspec(dllexport) [[nodiscard]] T& Peek() const;
+		__declspec(dllexport) T Pop();
 
-		[[nodiscard]] uint32_t GetIndex(uint32_t i) const;
+		__declspec(dllexport) [[nodiscard]] uint32_t GetIndex(uint32_t i) const;
 	};
 
 	template <typename T>

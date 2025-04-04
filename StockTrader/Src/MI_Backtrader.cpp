@@ -224,7 +224,7 @@ namespace jv::bt
 						trades[i].change = 0;
 
 					if (bot.init)
-						if (!bot.init(stbtScope, bot.userPtr))
+						if (!bot.init(stbtScope, bot.userPtr, runIndex, runInfo.length, stbt.output))
 							runDayIndex = runInfo.runLength;
 					runDayIndex = 0;
 
@@ -256,7 +256,7 @@ namespace jv::bt
 						}
 
 						if (bot.cleanup)
-							bot.cleanup(stbtScope, bot.userPtr);
+							bot.cleanup(stbtScope, bot.userPtr, stbt.output);
 						runDayIndex = -1;
 						runIndex++;
 
@@ -333,7 +333,7 @@ namespace jv::bt
 					runLog.marktPct[runDayIndex] = pct;
 					runLog.marktRel[runDayIndex] = rel;
 
-					if (!bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr))
+					if (!bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr, stbt.output))
 						runDayIndex = runInfo.runLength;
 					else
 						runDayIndex++;

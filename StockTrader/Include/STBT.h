@@ -40,11 +40,13 @@ namespace jv::bt
 		const char* description = "NO DESCRIPTION GIVEN";
 
 		// Executes once at the start of a run.
-		bool(*init)(const STBTScope& scope, void* userPtr) = nullptr;
+		bool(*init)(const STBTScope& scope, void* userPtr, uint32_t runIndex, 
+			uint32_t runCount, Queue<const char*>& output) = nullptr;
 		// Executes every day in a run.
-		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, void* userPtr);
+		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, 
+			void* userPtr, Queue<const char*>& output);
 		// Executes at the end of a run.
-		void(*cleanup)(const STBTScope& scope, void* userPtr) = nullptr;
+		void(*cleanup)(const STBTScope& scope, void* userPtr, Queue<const char*>& output) = nullptr;
 		// A custom pointer can be given here.
 		void* userPtr = nullptr;
 

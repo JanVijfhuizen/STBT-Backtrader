@@ -1,7 +1,21 @@
 #include "pch.h"
 #include <STBT.h>
+#include <Algorithms/GeneticAlgorithm.h>
 
-bool SimpleTradeBot(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades, uint32_t current, void* userPtr)
+struct GATrader final
+{
+	jv::GeneticAlgorithm ga;
+	bool training = true;
+};
+
+bool GATraderInit(const jv::bt::STBTScope& scope, void* userPtr, uint32_t runIndex, 
+	uint32_t runLength, jv::Queue<const char*>& output)
+{
+	return true;
+}
+
+bool GATraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades, 
+	uint32_t current, void* userPtr, jv::Queue<const char*>& output)
 {
 	for (uint32_t i = 0; i < 4; i++)
 	{
@@ -12,37 +26,36 @@ bool SimpleTradeBot(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades, u
 	return true;
 }
 
+void GATraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output)
+{
+
+}
+
 int main()
 {
-	bool bools[2];
-	const char* boolNames[2]
+	GATrader trader{};
+	const char* bName = "Training";
+
+	jv::bt::STBTBot bot;
+	bot.name = "GA trader";
+	bot.description = "Genetic Algorithm Trading.";
+	bot.author = "jannie";
+	bot.init = GATraderInit;
+	bot.update = GATraderUpdate;
+	bot.cleanup = GATraderCleanup;
+	bot.bools = &trader.training;
+	bot.boolsNames = &bName;
+	bot.boolsLength = 1;
+	bot.userPtr = &trader;
+
+	auto stbt = jv::bt::CreateSTBT(&bot, 1);
 	{
-		"finishOnValleyReached",
-		"testing bool"
-	};
-
-	char buffer[16]{};
-	char* buffers[1];
-	buffers[0] = buffer;
-	const char* bufferName = "some buffer";
-	uint32_t bufferSize = 16;
-
-	jv::bt::STBTBot bots[3];
-	bots[0].name = "empty test bot";
-	bots[2].name = "other bot";
-	bots[1].name = "Basic Trade Bot";
-	bots[1].description = "Does some basic trading.";
-	bots[1].author = "jv";
-	bots[1].update = SimpleTradeBot;
-	bots[1].bools = bools;
-	bots[1].boolsNames = boolNames;
-	bots[1].boolsLength = 2;
-	bots[1].buffers = buffers;
-	bots[1].buffersNames = &bufferName;
-	bots[1].bufferSizes = &bufferSize;
-	bots[1].buffersLength = 1;
-
-	auto stbt = jv::bt::CreateSTBT(bots, 3);
+		jv::GeneticAlgorithmCreateInfo info{};
+		info.width = 5;
+		info.length = 100;
+		trader.ga = jv::GeneticAlgorithm::Create(stbt.arena, info);
+		trader.ga.RandInit();
+	}
 
 	while (!stbt.Update())
 		continue;

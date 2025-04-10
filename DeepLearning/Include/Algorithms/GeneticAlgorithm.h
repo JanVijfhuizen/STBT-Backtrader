@@ -10,14 +10,26 @@ namespace jv
 		uint32_t width;
 		// Function to rate instances.
 		float(*rate)(float* values);
+		// Chance to mutate child instance.
+		float mutateChance = .08f;
+		float mutateMultiplier = .1f;
+		float mutateAddition = .2f;
+		// The percentage of survivers from one generation to the next.
+		float surviverPct = .4f;
+		// The amount of new arrivals in every generation.
+		float arrivalsPct = .4f;
 	};
 
 	struct GeneticAlgorithm final
 	{
-		// Generation length.
 		uint32_t length;
-		// Instance width.
 		uint32_t width;
+		float mutateChance;
+		float mutateMultiplier;
+		float mutateAddition;
+		float surviverPct;
+		float arrivalsPct;
+
 		uint64_t scope;
 		// Array of value instances.
 		float** generation;

@@ -35,7 +35,6 @@ namespace jv::bt
 		char buffBuffer[8];
 		char lengthBuffer[8];
 		char zoomBuffer[8];
-		char batchBuffer[8];
 		char feeBuffer[8];
 		char runCountBuffer[8];
 		bool log;
@@ -43,7 +42,7 @@ namespace jv::bt
 		bool pauseOnFinishAll;
 		bool running;
 		bool stepwise;
-		uint32_t batchId;
+		bool instantMode;
 
 		STBTTrade* trades;
 		STBTScope stbtScope;
@@ -81,6 +80,6 @@ namespace jv::bt
 		void DrawAlgorithmSubMenu(STBT& stbt);
 		void DrawRunSubMenu(STBT& stbt);
 		void RenderRun(STBT& stbt, const RunInfo& runInfo, bool& canFinish, bool& canEnd);
-		void RenderGraphs(STBT& stbt, const RunInfo& runInfo);
+		void RenderGraphs(STBT& stbt, const RunInfo& runInfo, bool render);
 	};
 }

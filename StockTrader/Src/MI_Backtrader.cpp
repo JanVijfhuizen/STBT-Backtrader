@@ -61,12 +61,12 @@ namespace jv::bt
 		pauseOnFinish = false;
 		pauseOnFinishAll = true;
 		running = false;
+		instantMode = false;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
 
 		uint32_t n = 1;
 		snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", n);
-		snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
 		snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
 		n = MAX_ZOOM;
 		snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
@@ -350,14 +350,9 @@ namespace jv::bt
 				}
 			}
 
-			if (render)
-				RenderGraphs(stbt, runInfo);
-
-			const int32_t batchLength = stepwise ? 1 : std::atoi(batchBuffer);
-			if (++batchId < batchLength && running)
+			RenderGraphs(stbt, runInfo, render);
+			if (instantMode && running && runDayIndex != runInfo.runLength)
 				BackTest(stbt, false);
-			else
-				batchId = 0;
 		}
 	}
 	void MI_Backtrader::DrawLog(STBT& stbt)
@@ -524,7 +519,7 @@ namespace jv::bt
 	void MI_Backtrader::DrawRunSubMenu(STBT& stbt)
 	{
 		TryDrawTutorialText(stbt, "Amount of runs.");
-		if (ImGui::InputText("Runs", runCountBuffer, 4, ImGuiInputTextFlags_CharsDecimal))
+		if (ImGui::InputText("Runs", runCountBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
 		{
 			int32_t n = std::atoi(runCountBuffer);
 			n = Max(n, 1);
@@ -553,14 +548,8 @@ namespace jv::bt
 			n = Clamp(n, 2, MAX_ZOOM);
 			snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
 		}
-		TryDrawTutorialText(stbt, "Number of days that pass\nbefore the screen\nrefreshes. Applies to\nstepwise iteration.\nWill increase speed.");
-		if (ImGui::InputText("Batches", batchBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
-		{
-			int32_t n = std::atoi(batchBuffer);
-			n = Max(n, 1);
-			snprintf(batchBuffer, sizeof(batchBuffer), "%i", n);
-		}
-
+		TryDrawTutorialText(stbt, "If true, will skip visualization.");
+		ImGui::Checkbox("Instant Mode", &instantMode);
 		TryDrawTutorialText(stbt, "If enabled, pauses every\nX days, where X = Batches.");
 		ImGui::Checkbox("Stepwise", &stepwise);
 		TryDrawTutorialText(stbt, "Pause after run.");
@@ -627,7 +616,6 @@ namespace jv::bt
 				{
 					running = true;
 					runIndex = -1;
-					batchId = 0;
 					timeElapsed = 0;
 					runningScope = stbt.arena.CreateScope();
 
@@ -768,7 +756,7 @@ namespace jv::bt
 		ImGui::End();
 	}
 
-	void MI_Backtrader::RenderGraphs(STBT& stbt, const RunInfo& runInfo)
+	void MI_Backtrader::RenderGraphs(STBT& stbt, const RunInfo& runInfo, const bool render)
 	{
 		// Draw the graphs. Only possible if there are at least 2 graph points.
 		if (runDayIndex > 0 && runDayIndex != -1)
@@ -796,6 +784,12 @@ namespace jv::bt
 			pctPoints[i].close = pct;
 			pctPoints[i].high = pct;
 			pctPoints[i].low = pct;
+
+			if (!render)
+			{
+				stbt.tempArena.DestroyScope(tScope);
+				return;
+			}
 
 			auto colors = LoadRandColors(stbt.tempArena, 5);
 			const float ratio = stbt.renderer.GetAspectRatio();

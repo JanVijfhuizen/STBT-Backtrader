@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="Include\Algorithms\GeneticAlgorithm.h" />
     <ClInclude Include="Include\pch.h" />
+    <ClInclude Include="Include\TraderUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\GeneticAlgorithm.cpp" />
@@ -28,6 +29,7 @@
     <ClCompile Include="Src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Src\TraderUtils.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

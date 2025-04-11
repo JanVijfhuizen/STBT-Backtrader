@@ -42,8 +42,8 @@ namespace jv::bt
 		const char* description = "NO DESCRIPTION GIVEN";
 
 		// Executes once at the start of a run.
-		bool(*init)(const STBTScope& scope, void* userPtr, uint32_t runIndex, 
-			uint32_t runCount, Queue<const char*>& output) = nullptr;
+		bool(*init)(const STBTScope& scope, void* userPtr, uint32_t start, uint32_t end,
+			uint32_t runIndex, uint32_t nRuns, uint32_t buffer, Queue<const char*>& output) = nullptr;
 		// Executes every day in a run.
 		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, 
 			void* userPtr, Queue<const char*>& output);

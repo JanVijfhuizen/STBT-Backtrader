@@ -224,7 +224,8 @@ namespace jv::bt
 						trades[i].change = 0;
 
 					if (bot.init)
-						if (!bot.init(stbtScope, bot.userPtr, runIndex, runInfo.length, stbt.output))
+						if (!bot.init(stbtScope, bot.userPtr, runOffset, runOffset - runInfo.runLength, 
+							runIndex, runInfo.length, buffer, stbt.output))
 							runDayIndex = runInfo.runLength;
 					runDayIndex = 0;
 

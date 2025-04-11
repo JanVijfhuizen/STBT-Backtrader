@@ -1,6 +1,7 @@
 #include "pch.h"
 #include <STBT.h>
 #include <Algorithms/GeneticAlgorithm.h>
+#include <TraderUtils.h>
 
 void* MAlloc(const uint32_t size)
 {
@@ -21,7 +22,10 @@ struct GATrader final
 
 	// Train instance info.
 	float startV;
-	uint32_t endId;
+	uint32_t start, end;
+
+	uint64_t tempScope;
+	jv::Array<float> ma30;
 
 	// GE info.
 	uint32_t width = 30;
@@ -31,11 +35,19 @@ struct GATrader final
 	float mutateMultiplier = .1f;
 };
 
-bool GATraderInit(const jv::bt::STBTScope& scope, void* userPtr, uint32_t runIndex, 
-	uint32_t runLength, jv::Queue<const char*>& output)
+bool GATraderInit(const jv::bt::STBTScope& scope, void* userPtr, 
+	const uint32_t start, const uint32_t end,
+	const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
+	jv::Queue<const char*>& output)
 {
 	auto& gt = *reinterpret_cast<GATrader*>(userPtr);
+	gt.tempScope = gt.tempArena->CreateScope();
+
 	gt.startV = scope.GetPortValue(runIndex);
+	gt.start = start;
+	gt.end = end;
+	gt.ma30 = jv::TraderUtils::CreateMA(*gt.tempArena, start, end,
+		jv::Min<uint32_t>(buffer, 30), scope.GetTimeSeries(0).close);
 	return true;
 }
 
@@ -45,10 +57,10 @@ bool GATraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
 	auto& gt = *reinterpret_cast<GATrader*>(userPtr);
 	float* algo = reinterpret_cast<float*>(gt.training ? gt.ga.GetTrainee() : gt.ga.result);
 
-	float v = algo[current];
+	float v;
+	v = algo[current];
 	trades[0].change = v > 0 ? 1e9 : -1e9;
-	gt.endId = current;
-
+	gt.end = current;
 	return true;
 }
 
@@ -56,7 +68,8 @@ void GATraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<co
 {
 	auto& gt = *reinterpret_cast<GATrader*>(userPtr);
 	if (gt.training)
-		gt.ga.Rate(*gt.arena, *gt.tempArena, scope.GetPortValue(gt.endId) - gt.startV);
+		gt.ga.Rate(*gt.arena, *gt.tempArena, scope.GetPortValue(gt.end) - gt.startV);
+	gt.tempArena->DestroyScope(gt.tempScope);
 }
 
 void* Create(jv::Arena& arena, void* userPtr)

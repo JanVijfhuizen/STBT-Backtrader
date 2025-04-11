@@ -214,8 +214,9 @@ namespace jv::bt
 					else
 						runOffset = cdaysDiff - buffer;
 
+					// BUG
 					const auto tS = GetTime(0);
-					const auto sdiff = difftime(tS, runInfo.from);
+					const auto sdiff = difftime(tS, runInfo.to);
 					const uint32_t sdaysDiff = sdiff / 60 / 60 / 24;
 					runOffset += sdaysDiff;
 
@@ -447,8 +448,14 @@ namespace jv::bt
 		info.length = std::atoi(runCountBuffer);
 		info.runLength = randomizeDate ? std::atoi(lengthBuffer) : info.daysDiff;
 		info.buffer = std::atoi(buffBuffer);
-		info.valid = info.buffer < info.runLength;
-		info.runLength -= info.buffer;
+		info.valid = true;
+
+		if (!randomizeDate)
+		{
+			info.runLength -= info.buffer;
+			info.valid = info.buffer < info.runLength;
+		}
+			
 		return info;
 	}
 

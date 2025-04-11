@@ -16,7 +16,7 @@ namespace jv
 		uint32_t start, end;
 
 		uint64_t tempScope;
-		jv::Array<float> ma30;
+		float* ma30;
 
 		// GE info.
 		uint32_t width = 30;

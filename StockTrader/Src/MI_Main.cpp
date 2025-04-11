@@ -53,6 +53,7 @@ namespace jv::bt
 		ImGuiWindowFlags FLAGS = 0;
 		FLAGS |= ImGuiWindowFlags_NoBackground;
 		FLAGS |= ImGuiWindowFlags_NoTitleBar;
+		FLAGS |= ImGuiWindowFlags_NoInputs;
 		FLAGS = transparent ? FLAGS : 0;
 
 		ImGui::Begin(name, nullptr, WIN_FLAGS | FLAGS);

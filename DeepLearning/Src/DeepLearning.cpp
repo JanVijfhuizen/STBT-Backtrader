@@ -3,6 +3,7 @@
 #include <Algorithms/GeneticAlgorithm.h>
 #include <TraderUtils.h>
 #include <Traders/GATrader.h>
+#include <Traders/TradTrader.h>
 
 void* MAlloc(const uint32_t size)
 {
@@ -25,13 +26,15 @@ int main()
 		tempArena = jv::Arena::Create(arenaCreateInfo);
 	}
 
+	auto tradTrader = jv::TradTrader::Create(arena, tempArena);
 	auto gaTrader = jv::GATrader::Create(arena, tempArena);
 
 	const char* bName = "Training";
-	jv::bt::STBTBot bots[1];
+	jv::bt::STBTBot bots[2];
 	bots[0] = gaTrader.GetBot();
+	bots[1] = tradTrader.GetBot();
 
-	auto stbt = jv::bt::CreateSTBT(bots, 1);
+	auto stbt = jv::bt::CreateSTBT(bots, 2);
 	while (!stbt.Update())
 		continue;
 

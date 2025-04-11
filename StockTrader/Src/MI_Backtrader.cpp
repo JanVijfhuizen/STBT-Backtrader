@@ -214,6 +214,11 @@ namespace jv::bt
 					else
 						runOffset = cdaysDiff - buffer;
 
+					const auto tS = GetTime(0);
+					const auto sdiff = difftime(tS, runInfo.from);
+					const uint32_t sdaysDiff = sdiff / 60 / 60 / 24;
+					runOffset += sdaysDiff;
+
 					// Fill portfolio.
 					portfolio.liquidity = std::atof(buffers[0]);
 					for (uint32_t i = 0; i < timeSeries.length; i++)
@@ -223,11 +228,11 @@ namespace jv::bt
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 						trades[i].change = 0;
 
+					runDayIndex = 0;
 					if (bot.init)
 						if (!bot.init(stbtScope, bot.userPtr, runOffset, runOffset - runInfo.runLength, 
 							runIndex, runInfo.length, buffer, stbt.output))
 							runDayIndex = runInfo.runLength;
-					runDayIndex = 0;
 
 					runScope = stbt.arena.CreateScope();
 					runLog = Log::Create(stbt.arena, stbtScope, runOffset - runInfo.runLength, runOffset);

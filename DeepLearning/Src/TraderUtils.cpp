@@ -4,12 +4,12 @@
 
 namespace jv
 {
-    Array<float> TraderUtils::CreateMA(Arena& arena, const uint32_t start, 
+    float* TraderUtils::CreateMA(Arena& arena, const uint32_t start, 
         const uint32_t end, const uint32_t n, float* data)
     {
-        auto maN = CreateArray<float>(arena, start - end);
-
         const uint32_t l = start - end;
+        auto maN = arena.New<float>(l);
+        
         for (uint32_t i = 0; i < l; i++)
         {
             float& f = maN[i] = 0;
@@ -50,6 +50,19 @@ namespace jv
             variance += pow(a[i] - avr, 2);
         variance /= n;
         return variance;
+    }
+    float TraderUtils::GetStandardDeviation(float* a, const uint32_t n)
+    {
+        float sum = 0, mean, standardDeviation = 0;
+        uint32_t i;
+
+        for (i = 0; i < 10; ++i)
+            sum += a[i];
+        mean = sum / 10;
+
+        for (i = 0; i < 10; ++i)
+            standardDeviation += pow(a[i] - mean, 2);
+        return sqrt(standardDeviation / 10);
     }
 }
 

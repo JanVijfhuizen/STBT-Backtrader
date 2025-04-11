@@ -21,6 +21,7 @@ namespace jv
 		GeneticAlgorithmCreateInfo info;
 
 		uint64_t scope;
+		uint64_t resScope;
 		uint64_t genScope;
 
 		void** generation;

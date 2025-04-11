@@ -42,11 +42,12 @@ namespace jv
 			auto bestRating = genRatings[indices[0]];
 			if (bestRating > this->rating)
 			{
+				arena.DestroyScope(resScope);
 				this->rating = bestRating;
-				result = info.copy(arena, cpyGen[indices[0]], info.userPtr);
+				result = info.copy(arena, cpyGen[0], info.userPtr);
+				genScope = arena.CreateScope();
 			}
 
-			std::cout << genRatings[indices[0]] << std::endl;
 			tempArena.DestroyScope(tempScope);
 
 			assert(info.surviverPct > 0 && info.surviverPct <= 1);
@@ -80,12 +81,14 @@ namespace jv
 		ga.generation = arena.New<void*>(info.length);
 		ga.genRatings = arena.New<float>(info.length);
 
+		ga.resScope = arena.CreateScope();
 		ga.genScope = arena.CreateScope();
+		
 		for (uint32_t i = 0; i < info.length; i++)
 			ga.generation[i] = info.create(arena, info.userPtr);
 		ga.result = info.create(arena, info.userPtr);
 
-		ga.rating = FLT_MAX;
+		ga.rating = FLT_MIN;
 		ga.genId = 0;
 		ga.trainId = 0;
 		return ga;

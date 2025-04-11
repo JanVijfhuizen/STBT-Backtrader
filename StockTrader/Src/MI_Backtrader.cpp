@@ -201,7 +201,7 @@ namespace jv::bt
 				{
 					// If random, decide on day.
 					const int32_t buffer = std::atoi(buffBuffer);
-					const auto tCurrent = GetTime(0);
+					const auto tCurrent = runInfo.to;
 					const auto cdiff = difftime(tCurrent, runInfo.from);
 					const uint32_t cdaysDiff = cdiff / 60 / 60 / 24;
 					const uint32_t maxDiff = runInfo.daysDiff - buffer - runInfo.runLength;

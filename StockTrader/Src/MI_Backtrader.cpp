@@ -679,12 +679,12 @@ namespace jv::bt
 
 		const uint32_t dayOffsetIndex = runInfo.from - runDayIndex;
 		std::string portValue = "Port Value: ";
-		float v = portfolio.liquidity;
+		float v = 0;
 
 		for (uint32_t i = 0; i < timeSeries.length; i++)
 		{
 			const auto& stock = portfolio.stocks[i];
-			const float val = stock.count * timeSeries[i].close[dayOffsetIndex];
+			const float val = stock.count * timeSeries[i].close[dayOffsetIndex]; // HERE
 			v += val;
 
 			std::string t = stock.symbol;
@@ -715,13 +715,18 @@ namespace jv::bt
 		portValue += std::to_string(iV);
 		ImGui::Text(portValue.c_str());
 
+		std::string totalValue = "Total Value: ";
+		iV += portfolio.liquidity;
+		totalValue += std::to_string(iV);
+		ImGui::Text(totalValue.c_str());
+
 		ImGui::End();
 	}
 
 	void MI_Backtrader::RenderGraphs(STBT& stbt, const RunInfo& runInfo, const bool render)
 	{
 		// Draw the graphs. Only possible if there are at least 2 graph points.
-		if (runDayIndex == -1 || runDayIndex < 2)
+		if (runDayIndex == -1 || runDayIndex < 1)
 			return;
 
 		const uint32_t dayOffsetIndex = runInfo.from - runDayIndex;

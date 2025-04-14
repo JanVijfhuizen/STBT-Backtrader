@@ -9,6 +9,13 @@
 namespace jv::bt
 {
 	constexpr int32_t MAX_ZOOM = 30;
+
+	enum class RunType
+	{
+		normal,
+		stepwise,
+		instant
+	};
 	
 	enum BTMenuIndex
 	{
@@ -56,12 +63,11 @@ namespace jv::bt
 		normalizeGraph = false;
 
 		algoIndex = -1;
-		stepwise = false;
 		log = false;
 		pauseOnFinish = false;
 		pauseOnFinishAll = true;
 		running = false;
-		instantMode = false;
+		runType = 0;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
 
@@ -280,7 +286,7 @@ namespace jv::bt
 						}	
 					}
 				}
-				else if(!stepwise || !stepCompleted)
+				else if((runType != static_cast<int>(RunType::stepwise)) || !stepCompleted)
 				{
 					auto tpEnd = std::chrono::steady_clock::now();
 					auto diff = std::chrono::duration_cast<std::chrono::microseconds>(tpEnd - tpStart).count();
@@ -358,7 +364,7 @@ namespace jv::bt
 			}
 
 			RenderGraphs(stbt, runInfo, render);
-			if (instantMode && running && runDayIndex != runInfo.runLength)
+			if (runType == static_cast<int>(RunType::instant) && running && runDayIndex != runInfo.runLength)
 				BackTest(stbt, false);
 		}
 	}
@@ -561,10 +567,12 @@ namespace jv::bt
 			n = Clamp(n, 2, MAX_ZOOM);
 			snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
 		}
-		TryDrawTutorialText(stbt, "If true, will skip visualization.");
-		ImGui::Checkbox("Instant Mode", &instantMode);
-		TryDrawTutorialText(stbt, "If enabled, pauses every\nX days, where X = Batches.");
-		ImGui::Checkbox("Stepwise", &stepwise);
+
+		TryDrawTutorialText(stbt, "Stepwise: pauses the run every day.\nInstant: Instantly finishes the run.");
+
+		const char* items[]{ "Default", "Stepwise", "Instant"};
+		ImGui::Combo("Type", &runType, items, 3);
+
 		TryDrawTutorialText(stbt, "Pause after run.");
 		ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
 		TryDrawTutorialText(stbt, "Pause after final run.");
@@ -659,7 +667,7 @@ namespace jv::bt
 			runText = "Preprocessing data.";
 		ImGui::Text(runText.c_str());
 
-		if (!stepwise)
+		if (runType != static_cast<int>(RunType::stepwise))
 		{
 			TryDrawTutorialText(stbt, "Time Elapsed/Remaining.");
 			std::string elapsed = "Elapsed/Remaining: " + ConvertSecondsToHHMMSS(timeElapsed / 1e6) + "/";
@@ -684,7 +692,7 @@ namespace jv::bt
 			if (runIndex < runInfo.length - 1 && ImGui::Button("Break"))
 				canEnd = true;
 		}
-		else if (stepwise && stepCompleted)
+		else if (runType == static_cast<int>(RunType::stepwise) && stepCompleted)
 		{
 			TryDrawTutorialText(stbt, "[CONTINUE]: Continue current run.");
 			TryDrawTutorialText(stbt, "[BREAK]: Abort all queued runs.");
@@ -708,12 +716,12 @@ namespace jv::bt
 			}
 
 			if (ImGui::Button("Stepwise off"))
-				stepwise = false;
+				runType = static_cast<int>(RunType::normal);
 		}
 		else
 		{
 			if (ImGui::Button("Stepwise on"))
-				stepwise = true;
+				runType = static_cast<int>(RunType::stepwise);
 		}
 
 		ImGui::End();

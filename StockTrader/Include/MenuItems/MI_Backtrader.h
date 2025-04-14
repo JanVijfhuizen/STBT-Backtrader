@@ -41,8 +41,7 @@ namespace jv::bt
 		bool pauseOnFinish;
 		bool pauseOnFinishAll;
 		bool running;
-		bool stepwise;
-		bool instantMode;
+		int runType;
 
 		STBTTrade* trades;
 		STBTScope stbtScope;

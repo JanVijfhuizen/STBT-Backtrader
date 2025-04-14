@@ -78,15 +78,10 @@ namespace jv::bt
 		Menu<STBT> menu;
 
 		Array<STBTBot> bots;
-
-		bool enableTutorialMode;
-
+		
 		char license[32];
-		tm from, to;
 		int graphType;
-		uint32_t days;
-		// Moving Average.
-		uint32_t ma;
+		uint32_t range;
 
 		__declspec(dllexport) bool Update();
 	};

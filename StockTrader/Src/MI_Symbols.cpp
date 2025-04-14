@@ -26,14 +26,12 @@ namespace jv::bt
 		std::string enableText = "When using the backtrader,\nall enabled stocks will\nbe loaded in.\n";
 		enableText += "Your license might limit\nthe amount of load calls\nyou can make per day.";
 
-		TryDrawTutorialText(stbt, enableText.c_str());
 		if (ImGui::Button("Enable All"))
 			for (auto& b : enabled)
 				b = true;
 		if (ImGui::Button("Disable All"))
 			for (auto& b : enabled)
 				b = false;
-		TryDrawTutorialText(stbt, "Save the list of which\nsymbols are enabled.");
 		if (ImGui::Button("Save changes"))
 			SaveOrCreateEnabledSymbols(stbt, names, enabled);
 		if (ImGui::Button("Back"))
@@ -44,8 +42,6 @@ namespace jv::bt
 
 	bool MI_Symbols::DrawSubMenu(STBT& stbt, uint32_t& index)
 	{
-		TryDrawTutorialText(stbt, "[ADD]: Request symbol\ndata from the web.");
-		TryDrawTutorialText(stbt, "[CHECKBOX]: Enable symbol\nfor use in the backtester.");
 		if (ImGui::Button("Add"))
 		{
 			std::string s{ nameBuffer };
@@ -237,16 +233,6 @@ namespace jv::bt
 	Array<gr::GraphPoint> MI_Symbols::RenderSymbolData(STBT& stbt, Array<TimeSeries>& timeSeries,
 		const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, const bool normalizeGraph)
 	{
-		std::time_t tFrom, tTo, tCurrent;
-		uint32_t length;
-		ClampDates(stbt, tFrom, tTo, tCurrent, timeSeries, length, 0);
-
-		auto diff = difftime(tTo, tFrom);
-		diff = Min<double>(diff, (length - 1) * 60 * 60 * 24);
-		auto orgDiff = Max<double>(difftime(tCurrent, tTo), 0);
-		uint32_t daysDiff = diff / 60 / 60 / 24;
-		uint32_t daysOrgDiff = orgDiff / 60 / 60 / 24;
-
 		// Get symbol index to normal index.
 		uint32_t sId = 0;
 		if (timeSeries.length > 1)
@@ -262,7 +248,7 @@ namespace jv::bt
 			if (sId == timeSeries.length)
 			{
 				sId = 0;
-				for (uint32_t j = 0; j < length; j++)
+				for (uint32_t j = 0; j < stbt.range; j++)
 					if (enabled[j])
 					{
 						symbolIndex = j;
@@ -278,15 +264,14 @@ namespace jv::bt
 		for (uint32_t i = 0; i < timeSeries.length; i++)
 		{
 			auto& series = timeSeries[i];
-			auto& points = graphPoints[i] = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
+			auto& points = graphPoints[i] = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, stbt.range);
 
-			for (uint32_t i = 0; i < daysDiff; i++)
+			for (uint32_t i = 0; i < stbt.range; i++)
 			{
-				const uint32_t index = daysDiff - i + daysOrgDiff - 1;
-				points[i].open = series.open[index];
-				points[i].close = series.close[index];
-				points[i].high = series.high[index];
-				points[i].low = series.low[index];
+				points[i].open = series.open[i];
+				points[i].close = series.close[i];
+				points[i].high = series.high[i];
+				points[i].low = series.low[i];
 			}
 
 			stbt.renderer.SetLineWidth(1.f + (sId == i) * 1.f);
@@ -306,37 +291,6 @@ namespace jv::bt
 		}
 		stbt.renderer.SetLineWidth(1);
 
-		// If it's not trying to get data from before this stock existed.
-		if (stbt.ma > 0 && daysOrgDiff + daysDiff + 1 + stbt.ma < length && stbt.ma < 10000)
-		{
-			auto points = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, daysDiff);
-			for (uint32_t i = 0; i < daysDiff; i++)
-			{
-				float v = 0;
-
-				for (uint32_t j = 0; j < stbt.ma; j++)
-				{
-					const uint32_t index = daysDiff - i + j + daysOrgDiff - 1;
-					v += timeSeries[sId].close[index];
-				}
-				v /= stbt.ma;
-
-				points[i].open = v;
-				points[i].close = v;
-				points[i].high = v;
-				points[i].low = v;
-			}
-
-			jv::gr::DrawGraphInfo drawInfo{};
-			drawInfo.aspectRatio = ratio;
-			drawInfo.position = { .5f, 0 };
-			drawInfo.points = points.ptr;
-			drawInfo.length = points.length;
-			drawInfo.type = gr::GraphType::line;
-			drawInfo.normalize = normalizeGraph;
-			drawInfo.color = glm::vec4(0, 1, 0, 1);
-		}
-
 		return graphPoints[sId];
 	}
 
@@ -349,60 +303,38 @@ namespace jv::bt
 		auto graphPoints = RenderSymbolData(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
 
 		DrawTopRightWindow("Settings");
-		TryDrawTutorialText(stbt, "Start/End date. Interchangeable.");
-		ImGui::DatePicker("Date 1", stbt.from);
-		ImGui::DatePicker("Date 2", stbt.to);
 
-		TryDrawTutorialText(stbt, "Defines how the graph will be rendered.");
 		const char* items[]{ "Line","Candles" };
 		bool check = ImGui::Combo("Graph Type", &stbt.graphType, items, 2);
 
-		TryDrawTutorialText(stbt, "[DAYS]: Update dates to reflect NOW - NOW minus DAYS");
-		TryDrawTutorialText(stbt, "[MA]: Render Moving Average on top of the data.");
-		TryDrawTutorialText(stbt, "[NORM]: Normalize stock data.");
-		TryDrawTutorialText(stbt, "[LIFETIME]: Updates dates to reflect\nentire (accessible) history.");
-		if (ImGui::Button("Days"))
+		ImGui::PushItemWidth(40);
+		char dayBuffer[6];
+		snprintf(dayBuffer, sizeof(dayBuffer), "%i", stbt.range);
+
+		if (ImGui::InputText("Range", dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
 		{
-			const int i = stbt.days;
-			if (i < 1)
+			const int i = std::atoi(dayBuffer);
+			if (i < 0)
 			{
 				stbt.output.Add() = "ERROR: Invalid number of days given.";
+				stbt.range = 0;
 			}
 			else
-			{
-				auto t = GetTime();
-				stbt.to = *std::gmtime(&t);
-				t = GetTime(i);
-				stbt.from = *std::gmtime(&t);
-			}
+				stbt.range = i;
 		}
 
-		ImGui::PushItemWidth(40);
-
-		char dayBuffer[6];
-		snprintf(dayBuffer, sizeof(dayBuffer), "%i", stbt.days);
-
-		ImGui::SameLine();
-		if (ImGui::InputText("##", dayBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
-			stbt.days = std::atoi(dayBuffer);
-
-		char maBuffer[6];
-		snprintf(maBuffer, sizeof(maBuffer), "%i", stbt.ma);
-
-		ImGui::SameLine();
-		if (ImGui::InputText("MA", maBuffer, 5, ImGuiInputTextFlags_CharsDecimal))
-			stbt.ma = std::atoi(maBuffer);
+		uint32_t l = UINT32_MAX;
+		for(auto& t : timeSeries)
+			l = Min(l, t.length);
+		if (l < stbt.range)
+			stbt.range = l;
 
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 		ImGui::Checkbox("Norm", &normalizeGraph);
 		ImGui::SameLine();
 		if (ImGui::Button("Lifetime"))
-		{
-			stbt.from = {};
-			auto t = GetTime();
-			stbt.to = *std::gmtime(&t);
-		}
+			stbt.range = l;
 		ImGui::End();
 
 		std::string title = "Details: ";
@@ -420,10 +352,6 @@ namespace jv::bt
 
 		if (graphPoints.length > 0)
 		{
-			TryDrawTutorialText(stbt, "[START]: Initial stock open.");
-			TryDrawTutorialText(stbt, "[END]: Final stock close.");
-			TryDrawTutorialText(stbt, "[CHANGE]: END - START.");
-
 			auto str = std::format("{:.2f}", graphPoints[0].open);
 			str = "[Start] " + str;
 			ImGui::Text(str.c_str());
@@ -440,9 +368,6 @@ namespace jv::bt
 			str = "[Change] " + str;
 			ImGui::Text(str.c_str());
 			ImGui::PopStyleColor();
-
-			TryDrawTutorialText(stbt, "[HIGH]: Highest stock point.");
-			TryDrawTutorialText(stbt, "[LOW]: Lowest stock point.");
 
 			str = std::format("{:.2f}", max);
 			str = "[High] " + str;

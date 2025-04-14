@@ -76,14 +76,8 @@ namespace jv::bt
 		menu.SetIndex(stbt.arena, stbt, 0);
 
 		// Initialize basic settings.
-		auto t = GetTime();
-		stbt.to = *std::gmtime(&t);
-		t = GetTime(DAYS_DEFAULT);
-		stbt.from = *std::gmtime(&t);
 		stbt.graphType = 0;
-		stbt.ma = 0;
-		stbt.days = DAYS_DEFAULT;
-		stbt.enableTutorialMode = false;
+		stbt.range = DAYS_DEFAULT;
 
 		return stbt;
 	}

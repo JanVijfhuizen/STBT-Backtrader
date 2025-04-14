@@ -58,7 +58,7 @@ namespace jv::bt
 
 		ImGui::Begin(name, nullptr, WIN_FLAGS | FLAGS);
 		ImGui::SetWindowPos({ 400, 0 });
-		ImGui::SetWindowSize({ 400, static_cast<float>(large ? 500 : 124) });
+		ImGui::SetWindowSize({ 400, static_cast<float>(large ? 500 : 80) });
 	}
 
 	void MI_Main::DrawBottomRightWindow(const char* name)
@@ -69,13 +69,5 @@ namespace jv::bt
 		ImGui::Begin(name, nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos(pos);
 		ImGui::SetWindowSize(size);
-	}
-	void MI_Main::TryDrawTutorialText(STBT& stbt, const char* text)
-	{
-		if (!stbt.enableTutorialMode)
-			return;
-		ImGui::PushStyleColor(ImGuiCol_Text, { 0, .6, 0, 1 });
-		ImGui::Text(text);
-		ImGui::PopStyleColor();
 	}
 }

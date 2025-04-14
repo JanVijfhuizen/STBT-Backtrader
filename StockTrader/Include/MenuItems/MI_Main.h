@@ -17,7 +17,5 @@ namespace jv::bt
 
 		static void DrawTopRightWindow(const char* name, bool large = false, bool transparent = false);
 		static void DrawBottomRightWindow(const char* name);
-
-		static void TryDrawTutorialText(STBT& stbt, const char* text);
 	};
 }

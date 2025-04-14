@@ -5,7 +5,7 @@ namespace jv::bt
 {
 	Log Log::Create(Arena& arena, const STBTScope& scope, const uint32_t start, const uint32_t end)
 	{
-		const uint32_t length = end - start;
+		const uint32_t length = start - end;
 		const uint32_t timeSeriesCount = scope.GetTimeSeriesCount();
 		return Create(arena, length, timeSeriesCount);
 	}

@@ -7,13 +7,13 @@ namespace jv::bt
 {
 	struct RunInfo final
 	{
-		time_t from;
-		time_t to;
-		uint32_t daysDiff;
+		uint32_t range;
 		uint32_t length;
-		uint32_t runLength;
 		uint32_t buffer;
-		bool valid;
+		uint32_t totalRuns;
+
+		uint32_t from;
+		uint32_t to;
 	};
 
 	class MI_Backtrader final : public MI_Main
@@ -43,11 +43,12 @@ namespace jv::bt
 		bool running;
 		int runType;
 
+		RunInfo runInfo;
+
 		STBTTrade* trades;
 		STBTScope stbtScope;
 		uint32_t runIndex;
 		uint32_t runDayIndex;
-		uint32_t runOffset;
 
 		// Scope while running one or more runs.
 		uint64_t runningScope;
@@ -73,7 +74,6 @@ namespace jv::bt
 		void Unload(STBT& stbt) override;
 		void BackTest(STBT& stbt, bool render);
 		void DrawLog(STBT& stbt);
-		[[nodiscard]] RunInfo GetRunInfo(STBT& stbt);
 
 		void DrawPortfolioSubMenu(STBT& stbt);
 		void DrawAlgorithmSubMenu(STBT& stbt);

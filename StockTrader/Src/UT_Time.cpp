@@ -3,6 +3,14 @@
 
 namespace jv::bt
 {
+	bool CompDates(const time_t a, const time_t b)
+	{
+		auto at = std::localtime(&a);
+		auto bt = std::localtime(&b);
+
+		return at->tm_year == bt->tm_year && at->tm_mon == bt->tm_mon && at->tm_mday == bt->tm_mday;
+	}
+
 	std::time_t GetTime(const uint32_t days)
 	{
 		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();

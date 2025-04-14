@@ -193,7 +193,7 @@ namespace jv::bt
 		{
 			index = i;
 			auto timeSeries = stbt.tracker.ConvertDataToTimeSeries(stbt.arena, str);
-			if (timeSeries.date != GetTime())
+			if (!CompDates(timeSeries.date, GetTime()))
 				stbt.output.Add() = "WARNING: Symbol data is outdated.";
 			return timeSeries;
 		}

@@ -145,7 +145,13 @@ namespace jv::bt
 	{
 		if(!running)
 			MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
+		
 		BackTest(stbt, true);
+		// Instead of going recursively, do this. Otherwise I'd get a stack overflow.
+		const auto runInfo = GetRunInfo(stbt);
+		if(runType == static_cast<int>(RunType::instant))
+			while(running && runDayIndex != runInfo.runLength)
+				BackTest(stbt, false);
 		return false;
 	}
 
@@ -364,8 +370,6 @@ namespace jv::bt
 			}
 
 			RenderGraphs(stbt, runInfo, render);
-			if (runType == static_cast<int>(RunType::instant) && running && runDayIndex != runInfo.runLength)
-				BackTest(stbt, false);
 		}
 	}
 	void MI_Backtrader::DrawLog(STBT& stbt)

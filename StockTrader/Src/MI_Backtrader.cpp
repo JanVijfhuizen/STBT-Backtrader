@@ -280,6 +280,35 @@ namespace jv::bt
 					const float fee = std::atof(feeBuffer);
 					const auto& stocks = portfolio.stocks;
 
+					// Execute trades called on yesterday.
+					for (uint32_t i = 0; i < timeSeries.length; i++)
+					{
+						const auto open = timeSeries[i].open[dayOffsetIndex];
+						auto& trade = trades[i];
+						auto& stock = portfolio.stocks[i];
+						const float feeMod = (1.f + fee * (trade.change > 0 ? 1 : -1));
+
+						// Limit max buys.
+						if (trade.change > 0)
+						{
+							const uint32_t maxBuys = floor(portfolio.liquidity / (open * feeMod));
+							trade.change = Min<int32_t>(maxBuys, trade.change);
+						}
+						// Limit max sells.
+						if (trade.change < 0)
+						{
+							const int32_t maxSells = stock.count;
+							trade.change = Max<int32_t>(-maxSells, trade.change);
+						}
+
+						float change = trade.change * open;
+						change *= feeMod;
+
+						stock.count += trade.change;
+						portfolio.liquidity -= change;
+						trade.change = 0;
+					}
+
 					// Update portfolio BEFORE doing trades for the next day.
 					float portfolioValue = 0;
 					for (uint32_t i = 0; i < timeSeries.length; i++)
@@ -290,40 +319,9 @@ namespace jv::bt
 						runLog.stockCloses[i][runDayIndex] = close;
 					}
 
+					// Update remaining info also BEFORE trading.
 					runLog.portValues[runDayIndex] = portfolioValue;
 					runLog.liquidities[runDayIndex] = portfolio.liquidity;
-
-					// Execute trades IF it's not the last day.
-					if (dayOffsetIndex < runInfo.length - 1)
-					{
-						for (uint32_t i = 0; i < timeSeries.length; i++)
-						{
-							const auto open = timeSeries[i].open[dayOffsetIndex - 1];
-							auto& trade = trades[i];
-							auto& stock = portfolio.stocks[i];
-							const float feeMod = (1.f + fee * (trade.change > 0 ? 1 : -1));
-
-							// Limit max buys.
-							if (trade.change > 0)
-							{
-								const uint32_t maxBuys = floor(portfolio.liquidity / (open * feeMod));
-								trade.change = Min<int32_t>(maxBuys, trade.change);
-							}
-							// Limit max sells.
-							if (trade.change < 0)
-							{
-								const int32_t maxSells = stock.count;
-								trade.change = Max<int32_t>(-maxSells, trade.change);
-							}
-
-							float change = trade.change * open;
-							change *= feeMod;
-
-							stock.count += trade.change;
-							portfolio.liquidity -= change;
-							trade.change = 0;
-						}
-					}
 
 					float close = 0;
 					float closeStart = 0;
@@ -336,7 +334,7 @@ namespace jv::bt
 					}
 
 					const float pct = close / closeStart;
-					const float rel = (portfolioValue + portfolio.liquidity) / 
+					const float rel = (portfolioValue + portfolio.liquidity) /
 						(runLog.portValues[0] + runLog.liquidities[0]) / pct;
 
 					runLog.marktPct[runDayIndex] = pct;

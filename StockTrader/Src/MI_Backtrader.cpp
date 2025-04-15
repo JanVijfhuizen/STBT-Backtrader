@@ -280,35 +280,7 @@ namespace jv::bt
 					const float fee = std::atof(feeBuffer);
 					const auto& stocks = portfolio.stocks;
 
-					// Execute trades.
-					for (uint32_t i = 0; i < timeSeries.length; i++)
-					{
-						const auto open = timeSeries[i].open[dayOffsetIndex];
-						auto& trade = trades[i];
-						auto& stock = portfolio.stocks[i];
-						const float feeMod = (1.f + fee * (trade.change > 0 ? 1 : -1));
-
-						// Limit max buys.
-						if (trade.change > 0)
-						{
-							const uint32_t maxBuys = floor(portfolio.liquidity / (open * feeMod));
-							trade.change = Min<int32_t>(maxBuys, trade.change);
-						}
-						// Limit max sells.
-						if (trade.change < 0)
-						{
-							const int32_t maxSells = stock.count;
-							trade.change = Max<int32_t>(-maxSells, trade.change);
-						}
-
-						float change = trade.change * open;
-						change *= feeMod;
-
-						stock.count += trade.change;
-						portfolio.liquidity -= change;
-						trade.change = 0;
-					}
-
+					// Update portfolio BEFORE doing trades for the next day.
 					float portfolioValue = 0;
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 					{
@@ -320,6 +292,38 @@ namespace jv::bt
 
 					runLog.portValues[runDayIndex] = portfolioValue;
 					runLog.liquidities[runDayIndex] = portfolio.liquidity;
+
+					// Execute trades IF it's not the last day.
+					if (dayOffsetIndex < runInfo.length - 1)
+					{
+						for (uint32_t i = 0; i < timeSeries.length; i++)
+						{
+							const auto open = timeSeries[i].open[dayOffsetIndex - 1];
+							auto& trade = trades[i];
+							auto& stock = portfolio.stocks[i];
+							const float feeMod = (1.f + fee * (trade.change > 0 ? 1 : -1));
+
+							// Limit max buys.
+							if (trade.change > 0)
+							{
+								const uint32_t maxBuys = floor(portfolio.liquidity / (open * feeMod));
+								trade.change = Min<int32_t>(maxBuys, trade.change);
+							}
+							// Limit max sells.
+							if (trade.change < 0)
+							{
+								const int32_t maxSells = stock.count;
+								trade.change = Max<int32_t>(-maxSells, trade.change);
+							}
+
+							float change = trade.change * open;
+							change *= feeMod;
+
+							stock.count += trade.change;
+							portfolio.liquidity -= change;
+							trade.change = 0;
+						}
+					}
 
 					float close = 0;
 					float closeStart = 0;
@@ -371,13 +375,13 @@ namespace jv::bt
 			const float portV = runLog.portValues[start + i];
 			const float liqV = runLog.liquidities[start + i];
 
-			std::string totalText = "Total Value: ";
-			totalText += std::to_string((int)(portV + liqV));
-			ImGui::Text(totalText.c_str());
-
 			std::string portText = "Port Value: ";
 			portText += std::to_string((int)portV);
 			ImGui::Text(portText.c_str());
+
+			std::string totalText = "Total Value: ";
+			totalText += std::to_string((int)(portV + liqV));
+			ImGui::Text(totalText.c_str());
 
 			std::string liquidText = "Liquidity: ";
 			liquidText += std::to_string((int)liqV);
@@ -594,7 +598,7 @@ namespace jv::bt
 	}
 	void MI_Backtrader::RenderRun(STBT& stbt, const RunInfo& runInfo, bool& canFinish, bool& canEnd)
 	{
-		if (runDayIndex == -1)
+		if (runDayIndex == -1 || runDayIndex == 0)
 			return;
 
 		MI_Symbols::DrawBottomRightWindow("Current Run");
@@ -672,24 +676,28 @@ namespace jv::bt
 
 		MI_Symbols::DrawTopRightWindow("Stocks", true, true);
 		
+		float fLiquidity = runLog.liquidities[runDayIndex - 1];
 		std::string liquidity = "Liquidity: ";
-		uint32_t ILiq = round(portfolio.liquidity);
+		uint32_t ILiq = round(fLiquidity);
 		liquidity += std::to_string(ILiq);
 		ImGui::Text(liquidity.c_str());
 
-		const uint32_t dayOffsetIndex = runInfo.from - runDayIndex;
+		const uint32_t dayOffsetIndex = runInfo.from - runDayIndex + 1;
 		std::string portValue = "Port Value: ";
 		float v = 0;
 
 		for (uint32_t i = 0; i < timeSeries.length; i++)
 		{
+			auto& portStock = runLog.numsInPort[i];
+			const uint32_t stockCount = portStock[runDayIndex - 1];
+
 			const auto& stock = portfolio.stocks[i];
-			const float val = stock.count * timeSeries[i].close[dayOffsetIndex]; // HERE
+			const float val = stockCount * timeSeries[i].close[dayOffsetIndex];
 			v += val;
 
 			std::string t = stock.symbol;
 			t += ": ";
-			t += std::to_string(stock.count);
+			t += std::to_string(stockCount);
 			t += ", ";
 			t += std::to_string(int(round(val)));
 			t += " ";
@@ -711,13 +719,13 @@ namespace jv::bt
 				ImGui::PopStyleColor();
 		}
 		uint32_t iV = round(v);
-
 		portValue += std::to_string(iV);
 		ImGui::Text(portValue.c_str());
 
 		std::string totalValue = "Total Value: ";
-		iV += portfolio.liquidity;
-		totalValue += std::to_string(iV);
+		v += fLiquidity;
+		uint32_t iT = round(v);
+		totalValue += std::to_string(iT);
 		ImGui::Text(totalValue.c_str());
 
 		ImGui::End();
@@ -730,7 +738,7 @@ namespace jv::bt
 			return;
 
 		const uint32_t dayOffsetIndex = runInfo.from - runDayIndex;
-		const uint32_t l = runDayIndex >= runInfo.length ? runInfo.length - 1 : runDayIndex;
+		const uint32_t l = runDayIndex >= runInfo.length ? runInfo.length : runDayIndex;
 		const auto tScope = stbt.tempArena.CreateScope();
 
 		const uint32_t i = l - 1;

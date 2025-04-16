@@ -230,9 +230,9 @@ namespace jv::bt
 					stepCompleted = false;
 					tpStart = std::chrono::steady_clock::now();
 
-					portPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runInfo.length);
-					relPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runInfo.length);
-					pctPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runInfo.length);
+					portPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
+					relPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
+					pctPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
 				}
 				// If this run is completed, either start a new run or quit.
 				if (runDayIndex == runInfo.length)

@@ -637,9 +637,13 @@ namespace jv::bt
 
 		if (runDayIndex >= runInfo.length && (pauseOnFinish || pauseOnFinishAll))
 		{
-			if (ImGui::Button("Continue"))
-				canFinish = true;
-			ImGui::SameLine();
+			if (pauseOnFinish)
+			{
+				if (ImGui::Button("Continue"))
+					canFinish = true;
+				ImGui::SameLine();
+			}
+			
 			if (runIndex < runInfo.totalRuns - 1 && ImGui::Button("Break"))
 				canEnd = true;
 		}

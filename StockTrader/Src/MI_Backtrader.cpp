@@ -638,11 +638,11 @@ namespace jv::bt
 		{
 			if (ImGui::Button("Continue"))
 				canFinish = true;
-			if (pauseOnFinish)
+			ImGui::SameLine();
+			if (runIndex < runInfo.totalRuns - 1 && ImGui::Button("Break"))
 			{
-				ImGui::SameLine();
-				if (runIndex < runInfo.length - 1 && ImGui::Button("Break"))
-					canEnd = true;
+				runIndex = runInfo.totalRuns;
+				canEnd = true;
 			}
 		}
 		else if (runType == static_cast<int>(RunType::stepwise) && stepCompleted)
@@ -652,6 +652,7 @@ namespace jv::bt
 			ImGui::SameLine();
 			if (ImGui::Button("Break"))
 			{
+				runIndex = runInfo.totalRuns;
 				runDayIndex = runInfo.length;
 				stepCompleted = false;
 				canFinish = true;

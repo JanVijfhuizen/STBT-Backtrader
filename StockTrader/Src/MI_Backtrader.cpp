@@ -205,7 +205,7 @@ namespace jv::bt
 					{
 						const uint32_t maxDiff = runInfo.range - runInfo.buffer - runInfo.length;
 						const uint32_t randOffset = rand() % maxDiff;
-						runInfo.to = maxDiff;
+						runInfo.to = randOffset;
 						runInfo.from = runInfo.to + runInfo.length;
 					}
 
@@ -620,6 +620,7 @@ namespace jv::bt
 
 		if (runType != static_cast<int>(RunType::stepwise))
 		{
+			/*
 			std::string elapsed = "Elapsed/Remaining: " + ConvertSecondsToHHMMSS(timeElapsed / 1e6) + "/";
 
 			float e = timeElapsed;
@@ -630,15 +631,19 @@ namespace jv::bt
 			elapsed += ConvertSecondsToHHMMSS(e / 1e6);
 			ImGui::Text(elapsed.c_str());
 			//ImGui::Text(ConvertSecondsToHHMMSS(totalDuration / 1e6).c_str());
+			*/
 		}
 
 		if (runDayIndex >= runInfo.length && (pauseOnFinish || pauseOnFinishAll))
 		{
 			if (ImGui::Button("Continue"))
 				canFinish = true;
-			ImGui::SameLine();
-			if (runIndex < runInfo.length - 1 && ImGui::Button("Break"))
-				canEnd = true;
+			if (pauseOnFinish)
+			{
+				ImGui::SameLine();
+				if (runIndex < runInfo.length - 1 && ImGui::Button("Break"))
+					canEnd = true;
+			}
 		}
 		else if (runType == static_cast<int>(RunType::stepwise) && stepCompleted)
 		{
@@ -725,6 +730,16 @@ namespace jv::bt
 		uint32_t iT = round(v);
 		totalValue += std::to_string(iT);
 		ImGui::Text(totalValue.c_str());
+
+		if (runIndex > 0)
+		{
+			auto relToMarkAvr = genPoints[runInfo.length - 1].close / genPoints[0].close * 100 - 100;
+			std::stringstream stream;
+			stream << std::fixed << std::setprecision(2) << relToMarkAvr;
+			std::string s = stream.str();
+			std::string relToMarkAvrStr = "Rel AVR: " + s + "%%";
+			ImGui::Text(relToMarkAvrStr.c_str());
+		}
 
 		ImGui::End();
 	}

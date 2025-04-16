@@ -10,7 +10,7 @@ namespace jv
 		void* (*alloc)(uint32_t size);
 		void (*free)(void* ptr);
 		void* memory = nullptr;
-		uint32_t memorySize = 4096 * 256 * 4;
+		uint32_t memorySize = 4096 * 256 * 32;
 	};
 
 	struct ArenaAllocMetaData final

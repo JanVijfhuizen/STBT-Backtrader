@@ -194,6 +194,7 @@ namespace jv::bt
 			else if (runIndex >= runInfo.totalRuns)
 			{
 				running = false;
+				runDayIndex = -1;
 			}
 			else
 			{
@@ -640,10 +641,7 @@ namespace jv::bt
 				canFinish = true;
 			ImGui::SameLine();
 			if (runIndex < runInfo.totalRuns - 1 && ImGui::Button("Break"))
-			{
-				runIndex = runInfo.totalRuns;
 				canEnd = true;
-			}
 		}
 		else if (runType == static_cast<int>(RunType::stepwise) && stepCompleted)
 		{

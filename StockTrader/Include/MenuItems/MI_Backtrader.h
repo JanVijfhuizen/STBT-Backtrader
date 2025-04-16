@@ -62,6 +62,7 @@ namespace jv::bt
 
 		// Portfolio, Relative (Port to Stock Mark Average), Percentage, General (Average all runs)
 		Array<jv::gr::GraphPoint> portPoints, relPoints, pctPoints, genPoints;
+		Array<float> avrDeviations;
 		std::chrono::system_clock::time_point runTimePoint;
 
 		void Load(STBT& stbt) override;

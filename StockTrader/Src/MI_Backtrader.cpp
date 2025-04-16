@@ -251,6 +251,7 @@ namespace jv::bt
 							p.high = p.close;
 							p.low = p.close;
 						}
+						avrDeviations[runIndex] = relPoints[runInfo.length - 1].close;
 
 						if (bot.cleanup)
 							bot.cleanup(stbtScope, bot.userPtr, stbt.output);
@@ -590,7 +591,8 @@ namespace jv::bt
 					runInfo.to = 0;
 					
 					runningScope = stbt.arena.CreateScope();
-					genPoints = CreateArray<jv::gr::GraphPoint>(stbt.tempArena, runInfo.length + buffer);
+					genPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length + buffer);
+					avrDeviations = CreateArray<float>(stbt.arena, runInfo.totalRuns);
 				}
 			}
 		}
@@ -637,13 +639,9 @@ namespace jv::bt
 
 		if (runDayIndex >= runInfo.length && (pauseOnFinish || pauseOnFinishAll))
 		{
-			if (pauseOnFinish)
-			{
-				if (ImGui::Button("Continue"))
-					canFinish = true;
-				ImGui::SameLine();
-			}
-			
+			if (ImGui::Button("Continue"))
+				canFinish = true;
+			ImGui::SameLine();
 			if (runIndex < runInfo.totalRuns - 1 && ImGui::Button("Break"))
 				canEnd = true;
 		}
@@ -736,12 +734,25 @@ namespace jv::bt
 
 		if (runIndex > 0)
 		{
+			// Relative to market average.
 			auto relToMarkAvr = genPoints[runInfo.length - 1].close / genPoints[0].close * 100 - 100;
 			std::stringstream stream;
 			stream << std::fixed << std::setprecision(2) << relToMarkAvr;
 			std::string s = stream.str();
 			std::string relToMarkAvrStr = "Rel AVR: " + s + "%%";
 			ImGui::Text(relToMarkAvrStr.c_str());
+
+			// Relative to market deviation.
+			float dev = 0;
+			for (uint32_t i = 0; i < runIndex; i++)
+				dev += pow(avrDeviations[i] - relToMarkAvr, 2);
+			dev /= runIndex;
+
+			std::stringstream streamDev;
+			streamDev << std::fixed << std::setprecision(2) << dev;
+			std::string sD = streamDev.str();
+			std::string avrRelDev = "Rel DEV: " + sD;
+			ImGui::Text(avrRelDev.c_str());
 		}
 
 		ImGui::End();

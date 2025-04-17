@@ -59,11 +59,13 @@ namespace jv::bt
 		std::chrono::steady_clock::time_point tpStart;
 		double timeElapsed;
 		uint32_t highlightedGraphIndex;
+		int showIndex;
+		std::chrono::system_clock::time_point runTimePoint;
 
 		// Portfolio, Relative (Port to Stock Mark Average), Percentage, General (Average all runs)
 		Array<jv::gr::GraphPoint> portPoints, relPoints, pctPoints, genPoints;
-		Array<float> avrDeviations;
-		std::chrono::system_clock::time_point runTimePoint;
+		float* avrDeviations;
+		glm::vec2* scatterBeta;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);
@@ -81,5 +83,6 @@ namespace jv::bt
 		void DrawRunSubMenu(STBT& stbt);
 		void RenderRun(STBT& stbt, const RunInfo& runInfo, bool& canFinish, bool& canEnd);
 		void RenderGraphs(STBT& stbt, const RunInfo& runInfo, bool render);
+		void RenderAllRunDetails(STBT& stbt, const RunInfo& runInfo);
 	};
 }

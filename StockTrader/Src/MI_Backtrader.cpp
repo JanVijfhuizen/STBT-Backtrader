@@ -24,6 +24,23 @@ namespace jv::bt
 		btmiRunInfo
 	};
 
+	enum ShowIndex
+	{
+		current,
+		betaScatter
+	};
+
+	void RenderShowIndexDropDown(MI_Backtrader& bt)
+	{
+		const char* windowNames[2]
+		{
+			"Current Run",
+			"Beta Scatter"
+		};
+
+		ImGui::Combo("Show", &bt.showIndex, windowNames, 2);
+	}
+
 	void MI_Backtrader::Load(STBT& stbt)
 	{
 		const auto tempScope = stbt.tempArena.CreateScope();
@@ -68,6 +85,7 @@ namespace jv::bt
 		pauseOnFinishAll = true;
 		running = false;
 		runType = 0;
+		showIndex = 0;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
 
@@ -253,6 +271,10 @@ namespace jv::bt
 						}
 						avrDeviations[runIndex] = relPoints[runInfo.length - 1].close;
 
+						// Save market & portfolio profit percentage seperately
+						scatterBeta[runIndex].x = relPoints[runInfo.length - 1].close - 1.f;
+						scatterBeta[runIndex].y = pctPoints[runInfo.length - 1].close - 1.f;
+
 						if (bot.cleanup)
 							bot.cleanup(stbtScope, bot.userPtr, stbt.output);
 						runDayIndex = -1;
@@ -350,7 +372,10 @@ namespace jv::bt
 				}
 			}
 
-			RenderGraphs(stbt, runInfo, render);
+			if (showIndex == static_cast<int>(ShowIndex::betaScatter) && render)
+				RenderAllRunDetails(stbt, runInfo);
+			else
+				RenderGraphs(stbt, runInfo, render);
 		}
 	}
 	void MI_Backtrader::DrawLog(STBT& stbt)
@@ -526,6 +551,7 @@ namespace jv::bt
 
 		const char* items[]{ "Default", "Stepwise", "Instant"};
 		ImGui::Combo("Type", &runType, items, 3);
+		RenderShowIndexDropDown(*this);
 
 		ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
 		ImGui::Checkbox("Pause On Finish ALL", &pauseOnFinishAll);
@@ -592,7 +618,8 @@ namespace jv::bt
 					
 					runningScope = stbt.arena.CreateScope();
 					genPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length + buffer);
-					avrDeviations = CreateArray<float>(stbt.arena, runInfo.totalRuns);
+					avrDeviations = stbt.arena.New<float>(runInfo.totalRuns);
+					scatterBeta = stbt.arena.New<glm::vec2>(runInfo.totalRuns);
 				}
 			}
 		}
@@ -639,11 +666,19 @@ namespace jv::bt
 
 		if (runDayIndex >= runInfo.length && (pauseOnFinish || pauseOnFinishAll))
 		{
+			RenderShowIndexDropDown(*this);
+
 			if (ImGui::Button("Continue"))
 				canFinish = true;
-			ImGui::SameLine();
-			if (runIndex < runInfo.totalRuns - 1 && ImGui::Button("Break"))
-				canEnd = true;
+			if (runIndex < runInfo.totalRuns - 1)
+			{
+				ImGui::SameLine();
+				if (ImGui::Button("Break"))
+				{
+					runIndex = runInfo.totalRuns;
+					canEnd = true;
+				}
+			}	
 		}
 		else if (runType == static_cast<int>(RunType::stepwise) && stepCompleted)
 		{
@@ -677,6 +712,9 @@ namespace jv::bt
 		}
 
 		ImGui::End();
+
+		if (showIndex != static_cast<int>(ShowIndex::current))
+			return;
 
 		MI_Symbols::DrawTopRightWindow("Stocks", true, true);
 		
@@ -899,5 +937,24 @@ namespace jv::bt
 		}
 
 		stbt.tempArena.DestroyScope(tScope);
+	}
+	void MI_Backtrader::RenderAllRunDetails(STBT& stbt, const RunInfo& runInfo)
+	{
+		const auto tempScope = stbt.tempArena.CreateScope();
+
+		glm::vec2 grPos = { 0, 0 };
+		grPos.x += .5f;
+		grPos.y += .14f;
+
+		gr::DrawScatterGraphInfo info{};
+		info.aspectRatio = stbt.renderer.GetAspectRatio();
+		info.position = grPos;
+		info.points = scatterBeta;
+		info.length = runIndex;
+		info.title = "Algorithm / Market Beta";
+		info.scale = glm::vec2(1.3);
+		stbt.renderer.DrawScatterGraph(info);
+
+		stbt.tempArena.DestroyScope(tempScope);
 	}
 }

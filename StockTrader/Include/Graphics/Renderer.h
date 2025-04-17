@@ -46,8 +46,8 @@ namespace jv::gr
 	{
 		glm::vec2 position;
 		glm::vec2* points;
-		uint32_t* colorIndices;
-		glm::vec4* colors;
+		uint32_t* colorIndices = nullptr;
+		glm::vec4* colors = nullptr;
 		uint32_t length;
 
 		const char* title = nullptr;

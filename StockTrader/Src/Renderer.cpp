@@ -208,6 +208,11 @@ namespace jv::gr
 			height = Max(height, abs(p.y));
 		}
 
+		const float BORDER_OFFSET = 1.2f;
+
+		width *= BORDER_OFFSET;
+		height *= BORDER_OFFSET;
+
 		width /= aspScale.x;
 		height /= aspScale.y;
 
@@ -215,7 +220,10 @@ namespace jv::gr
 		{
 			auto p = info.points[i];
 			p /= glm::vec2(width, height);
-			DrawPoint(pos + p, info.colors[info.colorIndices[i]], 4);
+
+			auto color = info.colors && info.colorIndices ? 
+				info.colors[info.colorIndices[i]] : glm::vec4(0, 1, 0, 1);
+			DrawPoint(pos + p, color, 4);
 		}
 
 		bool interacted = false;

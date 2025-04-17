@@ -194,8 +194,6 @@ namespace jv::gr
 	{
 		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1) * .5f;
 
-		float width = 0, height = 0;
-
 		const auto pos = info.position;
 		const auto c = glm::vec4(1);
 		DrawLine(glm::vec2(pos.x - aspScale.x, pos.y), glm::vec2(pos.x + aspScale.x, pos.y), c);
@@ -203,23 +201,8 @@ namespace jv::gr
 
 		for (uint32_t i = 0; i < info.length; i++)
 		{
-			const auto& p = info.points[i];
-			width = Max(width, abs(p.x));
-			height = Max(height, abs(p.y));
-		}
-
-		const float BORDER_OFFSET = 1.2f;
-
-		width *= BORDER_OFFSET;
-		height *= BORDER_OFFSET;
-
-		width /= aspScale.x;
-		height /= aspScale.y;
-
-		for (uint32_t i = 0; i < info.length; i++)
-		{
 			auto p = info.points[i];
-			p /= glm::vec2(width, height);
+			p *= info.aspectRatio;
 
 			auto color = info.colors && info.colorIndices ? 
 				info.colors[info.colorIndices[i]] : glm::vec4(0, 1, 0, 1);

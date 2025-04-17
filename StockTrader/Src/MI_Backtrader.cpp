@@ -272,8 +272,8 @@ namespace jv::bt
 						avrDeviations[runIndex] = relPoints[runInfo.length - 1].close;
 
 						// Save market & portfolio profit percentage seperately
-						scatterBeta[runIndex].x = relPoints[runInfo.length - 1].close - 1.f;
-						scatterBeta[runIndex].y = pctPoints[runInfo.length - 1].close - 1.f;
+						scatterBeta[runIndex].y = relPoints[runInfo.length - 1].close - 1.f;
+						scatterBeta[runIndex].x = pctPoints[runInfo.length - 1].close - 1.f;
 
 						if (bot.cleanup)
 							bot.cleanup(stbtScope, bot.userPtr, stbt.output);
@@ -951,7 +951,7 @@ namespace jv::bt
 		info.position = grPos;
 		info.points = scatterBeta;
 		info.length = runIndex;
-		info.title = "Algorithm / Market Beta";
+		info.title = "Beta: [X] Market, [Y] Algorithm";
 		info.scale = glm::vec2(1.3);
 		stbt.renderer.DrawScatterGraph(info);
 

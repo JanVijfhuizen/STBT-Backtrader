@@ -83,6 +83,7 @@ namespace jv::bt
 		void DrawRunSubMenu(STBT& stbt);
 		void RenderRun(STBT& stbt, const RunInfo& runInfo, bool& canFinish, bool& canEnd);
 		void RenderGraphs(STBT& stbt, const RunInfo& runInfo, bool render);
-		void RenderAllRunDetails(STBT& stbt, const RunInfo& runInfo);
+		void RenderScatter(STBT& stbt, const RunInfo& runInfo, bool render);
+		void RenderBellCurve(STBT& stbt, const RunInfo& runInfo, bool render);
 	};
 }

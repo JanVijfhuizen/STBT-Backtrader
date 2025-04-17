@@ -27,18 +27,20 @@ namespace jv::bt
 	enum ShowIndex
 	{
 		current,
-		betaScatter
+		betaScatter,
+		bellCurve
 	};
 
 	void RenderShowIndexDropDown(MI_Backtrader& bt)
 	{
-		const char* windowNames[2]
+		const char* windowNames[3]
 		{
 			"Current Run",
-			"Beta Scatter"
+			"Beta Scatter",
+			"Bell Curve"
 		};
 
-		ImGui::Combo("Show", &bt.showIndex, windowNames, 2);
+		ImGui::Combo("Show", &bt.showIndex, windowNames, 3);
 	}
 
 	void MI_Backtrader::Load(STBT& stbt)
@@ -372,10 +374,18 @@ namespace jv::bt
 				}
 			}
 
-			if (showIndex == static_cast<int>(ShowIndex::betaScatter) && render)
-				RenderAllRunDetails(stbt, runInfo);
-			else
-				RenderGraphs(stbt, runInfo, render);
+			RenderGraphs(stbt, runInfo, render && (showIndex == ShowIndex::current));
+			switch (showIndex)
+			{
+			case ShowIndex::betaScatter:
+				RenderScatter(stbt, runInfo, render);
+				break;
+			case ShowIndex::bellCurve:
+				RenderBellCurve(stbt, runInfo, render);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 	void MI_Backtrader::DrawLog(STBT& stbt)
@@ -938,8 +948,49 @@ namespace jv::bt
 
 		stbt.tempArena.DestroyScope(tScope);
 	}
-	void MI_Backtrader::RenderAllRunDetails(STBT& stbt, const RunInfo& runInfo)
+
+	void MI_Backtrader::RenderBellCurve(STBT& stbt, const RunInfo& runInfo, const bool render)
 	{
+		if (!render)
+			return;
+
+		const uint32_t CHUNKS = 25;
+		uint32_t distribution[CHUNKS]{};
+
+		for (uint32_t i = 0; i < runIndex; i++)
+		{
+			const float f = scatterBeta[i].y;
+			const float fPos = static_cast<float>(CHUNKS) / 2 + f;
+			const uint32_t pos = round(fPos);
+			++distribution[pos];
+		}
+
+		glm::vec2 points[CHUNKS];
+		for (uint32_t i = 0; i < CHUNKS; i++)
+		{
+			points[i].y = static_cast<float>(distribution[i]) / runIndex;
+			points[i].x = -.5f + (1.f / CHUNKS * i);
+		}
+
+		glm::vec2 grPos = { 0, 0 };
+		grPos.x += .5f;
+		grPos.y += .14f;
+
+		gr::DrawScatterGraphInfo info{};
+		info.aspectRatio = stbt.renderer.GetAspectRatio();
+		info.position = grPos;
+		info.points = points;
+		info.length = CHUNKS;
+		info.title = "Bell Curve Algorithm Performance";
+		info.scale = glm::vec2(1.3);
+		stbt.renderer.DrawScatterGraph(info);
+	}
+
+	void MI_Backtrader::RenderScatter(STBT& stbt, const RunInfo& runInfo, const bool render)
+	{
+		if (!render)
+			return;
+
 		const auto tempScope = stbt.tempArena.CreateScope();
 
 		glm::vec2 grPos = { 0, 0 };

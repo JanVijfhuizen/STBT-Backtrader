@@ -6,7 +6,8 @@ namespace jv::gr
 	enum class GraphType 
 	{
 		line,
-		candle
+		candle,
+		point
 	};
 
 	struct GraphPoint final
@@ -48,8 +49,10 @@ namespace jv::gr
 		GLFWwindow* window;
 		Mesh planeMesh;
 		Mesh lineMesh;
+		Mesh pointMesh;
 		Shader defaultShader;
 		Shader lineShader;
+		Shader pointShader;
 		uint32_t boundIndicesLength;
 
 		float graphBorderThickness = .02f;
@@ -66,6 +69,7 @@ namespace jv::gr
 
 		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
+		void DrawPoint(glm::vec2 position, glm::vec4 color, float size);
 		bool DrawGraph(DrawGraphInfo info);
 	};
 

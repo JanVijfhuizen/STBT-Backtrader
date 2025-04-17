@@ -54,10 +54,15 @@ namespace jv::gr
 			0, 1
 		};
 
+		float pointVertex = 0;
+		unsigned int pointIndex = 0;
+
 		renderer.planeMesh = gr::CreateMesh(reinterpret_cast<float*>(planeVertices), planeIndices, gr::VertType::triangle, gr::MeshType::mStatic, 4, 6);
 		renderer.lineMesh = gr::CreateMesh(lineVertices, lineIndices, gr::VertType::line, gr::MeshType::mStatic, 2, 2);
+		renderer.pointMesh = gr::CreateMesh(&pointVertex, &pointIndex, gr::VertType::points, gr::MeshType::mStatic, 1, 1);
 		renderer.defaultShader = gr::LoadShader("Shaders/Triangle.vert", "Shaders/Triangle.frag");
 		renderer.lineShader = gr::LoadShader("Shaders/Line.vert", "Shaders/Line.frag");
+		renderer.pointShader = gr::LoadShader("Shaders/Point.vert", "Shaders/Point.frag");
 
 		renderer.BindMesh(renderer.planeMesh);
 		renderer.BindShader(renderer.defaultShader);
@@ -73,6 +78,8 @@ namespace jv::gr
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		glEnable(GL_PROGRAM_POINT_SIZE);
 		
 		return renderer;
 	}
@@ -80,8 +87,10 @@ namespace jv::gr
 	{
 		gr::DestroyMesh(renderer.planeMesh);
 		gr::DestroyMesh(renderer.lineMesh);
+		gr::DestroyMesh(renderer.pointMesh);
 		gr::DestroyShader(renderer.defaultShader);
 		gr::DestroyShader(renderer.lineShader);
+		gr::DestroyShader(renderer.pointShader);
 		glfwTerminate();
 	}
 	bool Renderer::Render()
@@ -111,6 +120,9 @@ namespace jv::gr
 			break;
 		case VertType::line:
 			glDrawElements(GL_LINES, boundIndicesLength, GL_UNSIGNED_INT, 0);
+			break;
+		case VertType::points:
+			glDrawElements(GL_POINTS, boundIndicesLength, GL_UNSIGNED_INT, 0);
 			break;
 		}
 	}
@@ -163,6 +175,21 @@ namespace jv::gr
 			gr::GetShaderUniform(lineShader, "color"), color);
 		Draw(VertType::line);
 	}
+
+	void Renderer::DrawPoint(const glm::vec2 position, const glm::vec4 color, const float size)
+	{
+		BindMesh(pointMesh);
+		BindShader(pointShader);
+		gr::SetShaderUniform2f(pointShader,
+			gr::GetShaderUniform(pointShader, "pos"), position);
+		gr::SetShaderUniform4f(pointShader,
+			gr::GetShaderUniform(pointShader, "color"), color);
+		gr::SetShaderUniform1f(pointShader,
+			gr::GetShaderUniform(pointShader, "size"), size);
+		
+		Draw(VertType::points);
+	}
+
 	bool Renderer::DrawGraph(DrawGraphInfo info)
 	{
 		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1);
@@ -179,9 +206,19 @@ namespace jv::gr
 		const float stepSize = (float)l / len;
 
 		float lineWidth = 1.f / (l2 - 1) * aspScale.x;
-		float org = -lineWidth * (l2 - 1) / 2 + info.position.x;
+		float off = lineWidth * (l2 - 1) / 2;
+		float org = -off + info.position.x;
 		float ceiling = 0;
 		float floor = FLT_MAX;
+
+		if (info.type == GraphType::point)
+		{
+			const auto s = info.scale * .5f;
+			const auto pos = info.position;
+			const auto c = glm::vec4(1);
+			DrawLine(glm::vec2(org, pos.y), glm::vec2(pos.x + off, pos.y), c);
+			DrawLine(glm::vec2(pos.x, pos.y - s.y), glm::vec2(pos.x, pos.y + s.y), c);
+		}
 
 		for (uint32_t i = 0; i < info.length; i++)
 		{
@@ -220,7 +257,11 @@ namespace jv::gr
 
 			const float yPos = jv::RLerp<float>(close, floor, ceiling) * aspScale.y - aspScale.y / 2;		
 
-			if (i > 0)
+			if (info.type == GraphType::point)
+			{
+
+			}
+			else if (i > 0)
 			{
 				if (info.type == GraphType::line)
 				{

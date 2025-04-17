@@ -69,6 +69,11 @@ namespace jv::gr
 	{
 		return glGetUniformLocation(shader.program, name);
 	}
+	void SetShaderUniform1f(const Shader& shader, const unsigned int i, const float f)
+	{
+		glUseProgram(shader.program);
+		glUniform1f(i, f);
+	}
 	void SetShaderUniform2f(const Shader& shader, const unsigned int i, const glm::vec2 v)
 	{
 		glUseProgram(shader.program);

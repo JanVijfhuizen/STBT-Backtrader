@@ -10,7 +10,7 @@ namespace jv::gr
 
 	enum class VertType
 	{
-		line, triangle
+		line, triangle, points
 	};
 
 	struct Mesh final

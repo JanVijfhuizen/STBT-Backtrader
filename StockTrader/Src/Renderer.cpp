@@ -190,7 +190,76 @@ namespace jv::gr
 		Draw(VertType::points);
 	}
 
-	bool Renderer::DrawGraph(DrawGraphInfo info)
+	bool Renderer::DrawScatterGraph(const DrawScatterGraphInfo info)
+	{
+		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1) * .5f;
+
+		float width = 0, height = 0;
+
+		const auto pos = info.position;
+		const auto c = glm::vec4(1);
+		DrawLine(glm::vec2(pos.x - aspScale.x, pos.y), glm::vec2(pos.x + aspScale.x, pos.y), c);
+		DrawLine(glm::vec2(pos.x, pos.y - aspScale.y), glm::vec2(pos.x, pos.y + aspScale.y), c);
+
+		for (uint32_t i = 0; i < info.length; i++)
+		{
+			const auto& p = info.points[i];
+			width = Max(width, abs(p.x));
+			height = Max(height, abs(p.y));
+		}
+
+		width /= aspScale.x;
+		height /= aspScale.y;
+
+		for (uint32_t i = 0; i < info.length; i++)
+		{
+			auto p = info.points[i];
+			p /= glm::vec2(width, height);
+			DrawPoint(pos + p, info.colors[info.colorIndices[i]], 4);
+		}
+
+		bool interacted = false;
+		if (info.title)
+		{
+			glm::vec2 convPos = info.position;
+			convPos += glm::vec2(1);
+			convPos *= .5f;
+			convPos.y = 1.f - convPos.y;
+
+			convPos *= RESOLUTION;
+
+			glm::vec2 winSize = { info.scale.x * RESOLUTION.x / 4, 36 };
+
+			convPos.x -= winSize.x * info.aspectRatio;
+			convPos.y += info.scale.y * RESOLUTION.y / 4;
+			winSize.x *= 2;
+			winSize.x *= info.aspectRatio;
+
+			const float WIN_OFFSET = 6;
+
+			ImGuiWindowFlags FLAGS = 0;
+			//FLAGS |= ImGuiWindowFlags_NoBackground;
+			FLAGS |= ImGuiWindowFlags_NoTitleBar;
+			ImGui::Begin(info.title, nullptr, WIN_FLAGS | FLAGS);
+			ImGui::SetWindowPos({ convPos.x, convPos.y + WIN_OFFSET });
+			ImGui::SetWindowSize({ winSize.x, winSize.y });
+
+			if (info.textIsButton)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+				interacted = ImGui::ButtonCenter(info.title);
+				ImGui::PopStyleColor();
+			}
+			else
+				ImGui::TextCenter(info.title);
+
+			ImGui::End();
+		}
+
+		return interacted;
+	}
+
+	bool Renderer::DrawLineGraph(DrawLineGraphInfo info)
 	{
 		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1);
 
@@ -210,15 +279,6 @@ namespace jv::gr
 		float org = -off + info.position.x;
 		float ceiling = 0;
 		float floor = FLT_MAX;
-
-		if (info.type == GraphType::point)
-		{
-			const auto s = info.scale * .5f;
-			const auto pos = info.position;
-			const auto c = glm::vec4(1);
-			DrawLine(glm::vec2(org, pos.y), glm::vec2(pos.x + off, pos.y), c);
-			DrawLine(glm::vec2(pos.x, pos.y - s.y), glm::vec2(pos.x, pos.y + s.y), c);
-		}
 
 		for (uint32_t i = 0; i < info.length; i++)
 		{
@@ -257,11 +317,7 @@ namespace jv::gr
 
 			const float yPos = jv::RLerp<float>(close, floor, ceiling) * aspScale.y - aspScale.y / 2;		
 
-			if (info.type == GraphType::point)
-			{
-
-			}
-			else if (i > 0)
+			if (i > 0)
 			{
 				if (info.type == GraphType::line)
 				{

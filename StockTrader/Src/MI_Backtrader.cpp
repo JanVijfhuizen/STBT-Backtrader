@@ -697,7 +697,12 @@ namespace jv::bt
 
 			const auto& stock = portfolio.stocks[i];
 			const float val = stockCount * timeSeries[i].close[dayOffsetIndex];
+			const int32_t change = trades[i].change;
+
 			v += val;
+
+			if (stock.count == 0 && change <= 0)
+				continue;
 
 			std::string t = stock.symbol;
 			t += ": ";
@@ -705,8 +710,7 @@ namespace jv::bt
 			t += ", ";
 			t += std::to_string(int(round(val)));
 			t += " ";
-
-			const int32_t change = trades[i].change;
+			
 			if (change != 0)
 			{
 				ImVec4 col = change > 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
@@ -801,9 +805,9 @@ namespace jv::bt
 		grPos.x += .36f;
 		grPos.y += .02f;
 
-		jv::gr::DrawGraphInfo drawInfos[3]{};
+		jv::gr::DrawLineGraphInfo drawInfos[3]{};
 
-		jv::gr::DrawGraphInfo drawInfo{};
+		jv::gr::DrawLineGraphInfo drawInfo{};
 		drawInfo.aspectRatio = ratio;
 		drawInfo.position = grPos;
 		drawInfo.scale = glm::vec2(.9);
@@ -859,16 +863,16 @@ namespace jv::bt
 			genInfo.title = nullptr;
 			genInfo.points = genPoints.ptr;
 			genInfo.color = glm::vec4(0, 1, 0, 1);
-			stbt.renderer.DrawGraph(genInfo);
+			stbt.renderer.DrawLineGraph(genInfo);
 		}
 
 		stbt.renderer.SetLineWidth(2);
-		if (stbt.renderer.DrawGraph(drawInfos[0]))
+		if (stbt.renderer.DrawLineGraph(drawInfos[0]))
 			highlightedGraphIndex = 0;
 		stbt.renderer.SetLineWidth(1);
 
 		for (uint32_t i = 0; i < 2; i++)
-			if (stbt.renderer.DrawGraph(drawInfos[i + 1]))
+			if (stbt.renderer.DrawLineGraph(drawInfos[i + 1]))
 				highlightedGraphIndex = highlightedGraphIndex == i + 1 ? 0 : i + 1;
 
 		const uint32_t zoom = std::stoi(zoomBuffer);
@@ -883,7 +887,7 @@ namespace jv::bt
 			drawInfo.length = zoom;
 			drawInfo.color = colors[3];
 			drawInfo.title = zoomPort.c_str();
-			stbt.renderer.DrawGraph(drawInfo);
+			stbt.renderer.DrawLineGraph(drawInfo);
 
 			std::string zoomMarket = "mark" + std::to_string(zoom);
 			drawInfo.position.x -= .3f;
@@ -891,7 +895,7 @@ namespace jv::bt
 			drawInfo.points = &pctPoints.ptr[l - zoom];
 			drawInfo.color = colors[4];
 			drawInfo.title = zoomMarket.c_str();
-			stbt.renderer.DrawGraph(drawInfo);
+			stbt.renderer.DrawLineGraph(drawInfo);
 		}
 
 		stbt.tempArena.DestroyScope(tScope);

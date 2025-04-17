@@ -6,8 +6,7 @@ namespace jv::gr
 	enum class GraphType 
 	{
 		line,
-		candle,
-		point
+		candle
 	};
 
 	struct GraphPoint final
@@ -25,7 +24,7 @@ namespace jv::gr
 		bool resizeable = false;
 	};
 
-	struct DrawGraphInfo final
+	struct DrawLineGraphInfo final
 	{
 		glm::vec2 position;
 		GraphPoint* points;
@@ -40,6 +39,21 @@ namespace jv::gr
 		glm::vec4 color{1, 0, 0, 1};
 		uint32_t stopAt = UINT32_MAX;
 		uint32_t maxLinesDrawn = 100;
+		bool textIsButton = false;
+	};
+
+	struct DrawScatterGraphInfo final
+	{
+		glm::vec2 position;
+		glm::vec2* points;
+		uint32_t* colorIndices;
+		glm::vec4* colors;
+		uint32_t length;
+
+		const char* title = nullptr;
+		glm::vec2 scale{ 1 };
+		float aspectRatio = 1;
+		bool noBackground = false;
 		bool textIsButton = false;
 	};
 
@@ -70,7 +84,8 @@ namespace jv::gr
 		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
 		void DrawPoint(glm::vec2 position, glm::vec4 color, float size);
-		bool DrawGraph(DrawGraphInfo info);
+		bool DrawScatterGraph(DrawScatterGraphInfo info);
+		bool DrawLineGraph(DrawLineGraphInfo info);
 	};
 
 	[[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);

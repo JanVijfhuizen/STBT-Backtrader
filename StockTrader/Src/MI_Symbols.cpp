@@ -279,7 +279,7 @@ namespace jv::bt
 			auto color = randColors[i];
 			color *= .2f + .8f * (sId == i);
 
-			jv::gr::DrawGraphInfo drawInfo{};
+			jv::gr::DrawLineGraphInfo drawInfo{};
 			drawInfo.aspectRatio = ratio;
 			drawInfo.position = { .5f, 0 };
 			drawInfo.points = points.ptr;
@@ -287,7 +287,7 @@ namespace jv::bt
 			drawInfo.type = static_cast<gr::GraphType>(stbt.graphType);
 			drawInfo.normalize = normalizeGraph;
 			drawInfo.color = color;
-			stbt.renderer.DrawGraph(drawInfo);
+			stbt.renderer.DrawLineGraph(drawInfo);
 		}
 		stbt.renderer.SetLineWidth(1);
 

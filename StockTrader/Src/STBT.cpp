@@ -36,6 +36,35 @@ namespace jv::bt
 		
 		ImGui::End();
 
+		glm::vec4 color{ 1 };
+		glm::vec2 points[100];
+		uint32_t cInds[100];
+
+		for (uint32_t i = 0; i < 10; i++)
+		{
+			for (uint32_t j = 0; j < 10; j++)
+			{
+				const uint32_t ind = i * 10 + j;
+				cInds[ind] = 0;
+				points[ind] = glm::vec2(i, j) * .1f;
+			}
+		}
+
+		glm::vec2 grPos = { 0, 0 };
+		grPos.x += .36f;
+		grPos.y += .02f;
+
+		gr::DrawScatterGraphInfo info{};
+		info.colors = &color;
+		info.colorIndices = cInds;
+		info.aspectRatio = renderer.GetAspectRatio();
+		info.position = grPos;
+		info.points = points;
+		info.length = 100;
+		info.title = "hello world";
+		info.scale = glm::vec2(.9f);
+		renderer.DrawScatterGraph(info);
+
 		const bool ret = renderer.Render();
 		frameArena.Clear();
 		

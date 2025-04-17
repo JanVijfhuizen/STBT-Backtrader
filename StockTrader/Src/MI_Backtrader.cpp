@@ -957,10 +957,16 @@ namespace jv::bt
 		const uint32_t CHUNKS = 25;
 		uint32_t distribution[CHUNKS]{};
 
+		float width = 0;
+		for (uint32_t i = 0; i < runIndex; i++)
+			width = Max(width, abs(scatterBeta[i].y));
+
+		const float m = static_cast<float>(CHUNKS) / 2;
+
 		for (uint32_t i = 0; i < runIndex; i++)
 		{
-			const float f = scatterBeta[i].y;
-			const float fPos = static_cast<float>(CHUNKS) / 2 + f;
+			const float f = scatterBeta[i].y / width;
+			const float fPos = m + f * m;
 			const uint32_t pos = round(fPos);
 			++distribution[pos];
 		}

@@ -23,6 +23,7 @@ namespace jv::bt
 		Array<std::string> names;
 		Array<bool> enabled;
 		Array<char*> buffers;
+		Array<glm::vec4> colors;
 		Portfolio portfolio;
 
 		uint64_t subScope;

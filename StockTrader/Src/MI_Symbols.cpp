@@ -13,6 +13,7 @@ namespace jv::bt
 		names = GetSymbolNames(stbt);
 		enabled = GetEnabled(stbt, names, enabled);
 		timeSeries = CreateArray<TimeSeries>(stbt.arena, 1);
+		colors = LoadRandColors(stbt.arena, names.length);
 		// If no symbol has been selected or if the index is currently out of range.
 		if (symbolIndex != -1 && symbolIndex >= names.length)
 			symbolIndex = -1;
@@ -111,7 +112,16 @@ namespace jv::bt
 	{
 		if (reload)
 			return false;
-		TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
+
+		SymbolsDataDrawInfo drawInfo{};
+		drawInfo.timeSeries = timeSeries.ptr;
+		drawInfo.names = names.ptr;
+		drawInfo.enabled = enabled.ptr;
+		drawInfo.colors = colors.ptr;
+		drawInfo.length = timeSeries.length;
+		drawInfo.symbolIndex = &symbolIndex;
+		drawInfo.normalizeGraph = &normalizeGraph;
+		RenderSymbolData(stbt, drawInfo);
 		return false;
 	}
 
@@ -230,14 +240,20 @@ namespace jv::bt
 		return arr;
 	}
 
-	Array<gr::GraphPoint> MI_Symbols::RenderSymbolData(STBT& stbt, Array<TimeSeries>& timeSeries,
-		const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, const bool normalizeGraph)
+	Array<gr::GraphPoint> MI_Symbols::RenderSymbolGraph(STBT& stbt, const SymbolGraphDrawInfo& drawInfo)
 	{
+		const uint32_t length = drawInfo.length;
+		const bool normalizeGraph = drawInfo.normalizeGraph;
+		auto timeSeries = drawInfo.timeSeries;
+		auto enabled = drawInfo.enabled;
+		auto colors = drawInfo.colors;
+		auto& symbolIndex = *drawInfo.symbolIndex;
+
 		// Get symbol index to normal index.
 		uint32_t sId = 0;
-		if (timeSeries.length > 1)
+		if (length > 1)
 		{
-			for (uint32_t i = 0; i < names.length; i++)
+			for (uint32_t i = 0; i < length; i++)
 			{
 				if (!enabled[i])
 					continue;
@@ -245,7 +261,7 @@ namespace jv::bt
 					break;
 				++sId;
 			}
-			if (sId == timeSeries.length)
+			if (sId == length)
 			{
 				sId = 0;
 				for (uint32_t j = 0; j < stbt.range; j++)
@@ -257,11 +273,10 @@ namespace jv::bt
 			}
 		}
 
-		auto randColors = LoadRandColors(stbt.frameArena, timeSeries.length);
 		const float ratio = stbt.renderer.GetAspectRatio();
 
-		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, timeSeries.length);
-		for (uint32_t i = 0; i < timeSeries.length; i++)
+		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, length);
+		for (uint32_t i = 0; i < drawInfo.length; i++)
 		{
 			auto& series = timeSeries[i];
 			auto& points = graphPoints[i] = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, stbt.range);
@@ -276,31 +291,46 @@ namespace jv::bt
 
 			stbt.renderer.SetLineWidth(1.f + (sId == i) * 1.f);
 
-			auto color = randColors[i];
+			auto color = colors[i];
 			color *= .2f + .8f * (sId == i);
 
-			jv::gr::DrawLineGraphInfo drawInfo{};
-			drawInfo.aspectRatio = ratio;
-			drawInfo.position = { .5f, 0 };
-			drawInfo.points = points.ptr;
-			drawInfo.length = points.length;
-			drawInfo.type = static_cast<gr::GraphType>(stbt.graphType);
-			drawInfo.normalize = normalizeGraph;
-			drawInfo.color = color;
-			stbt.renderer.DrawLineGraph(drawInfo);
+			jv::gr::DrawLineGraphInfo drawLineInfo{};
+			drawLineInfo.aspectRatio = ratio;
+			drawLineInfo.position = { .5f, 0 };
+			drawLineInfo.points = points.ptr;
+			drawLineInfo.length = points.length;
+			drawLineInfo.type = static_cast<gr::GraphType>(stbt.graphType);
+			drawLineInfo.normalize = normalizeGraph;
+			drawLineInfo.color = color;
+			stbt.renderer.DrawLineGraph(drawLineInfo);
 		}
 		stbt.renderer.SetLineWidth(1);
 
 		return graphPoints[sId];
 	}
 
-	void MI_Symbols::TryRenderSymbol(STBT& stbt, Array<TimeSeries>& timeSeries,
-		const Array<std::string>& names, const Array<bool>& enabled, uint32_t& symbolIndex, bool& normalizeGraph)
+	void MI_Symbols::RenderSymbolData(STBT& stbt, const SymbolsDataDrawInfo& drawInfo)
 	{
+		const uint32_t length = drawInfo.length;
+		bool* normalizeGraph = drawInfo.normalizeGraph;
+		auto timeSeries = drawInfo.timeSeries;
+		auto enabled = drawInfo.enabled;
+		auto colors = drawInfo.colors;
+		auto names = drawInfo.names;
+		auto& symbolIndex = *drawInfo.symbolIndex;
+
 		if (symbolIndex == -1)
 			return;
 
-		auto graphPoints = RenderSymbolData(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
+		SymbolGraphDrawInfo graphDrawInfo{};
+		graphDrawInfo.timeSeries = timeSeries;
+		graphDrawInfo.names = names;
+		graphDrawInfo.enabled = enabled;
+		graphDrawInfo.colors = colors;
+		graphDrawInfo.length = length;
+		graphDrawInfo.symbolIndex = &symbolIndex;
+		graphDrawInfo.normalizeGraph = *normalizeGraph;	
+		auto graphPoints = RenderSymbolGraph(stbt, graphDrawInfo);
 
 		DrawTopRightWindow("Settings");
 
@@ -324,14 +354,14 @@ namespace jv::bt
 		}
 
 		uint32_t l = UINT32_MAX;
-		for(auto& t : timeSeries)
-			l = Min(l, t.length);
+		for (uint32_t i = 0; i < length; i++)
+			l = Min(l, timeSeries[i].length);
 		if (l < stbt.range)
 			stbt.range = l;
 
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
-		ImGui::Checkbox("Norm", &normalizeGraph);
+		ImGui::Checkbox("Norm", normalizeGraph);
 		ImGui::SameLine();
 		if (ImGui::Button("Lifetime"))
 			stbt.range = l;

@@ -71,6 +71,7 @@ namespace jv::bt
 			timeSeries[index++] = MI_Symbols::LoadSymbol(stbt, i, names, _);			
 		}
 
+		colors = LoadRandColors(stbt.arena, timeSeries.length);
 		portfolio = Portfolio::Create(stbt.arena, namesCharPtrs.ptr, names.length);
 		for (uint32_t i = 0; i < c; i++)
 			portfolio.stocks[i].symbol = namesCharPtrs[i];
@@ -161,8 +162,18 @@ namespace jv::bt
 
 	bool MI_Backtrader::DrawFree(STBT& stbt, uint32_t& index)
 	{
-		if(!running)
-			MI_Symbols::TryRenderSymbol(stbt, timeSeries, names, enabled, symbolIndex, normalizeGraph);
+		if (!running)
+		{
+			SymbolsDataDrawInfo drawInfo{};
+			drawInfo.timeSeries = timeSeries.ptr;
+			drawInfo.names = names.ptr;
+			drawInfo.enabled = enabled.ptr;
+			drawInfo.colors = colors.ptr;
+			drawInfo.length = timeSeries.length;
+			drawInfo.symbolIndex = &symbolIndex;
+			drawInfo.normalizeGraph = &normalizeGraph;
+			MI_Symbols::RenderSymbolData(stbt, drawInfo);
+		}
 		
 		BackTest(stbt, true);
 		// Instead of going recursively, do this. Otherwise I'd get a stack overflow.
@@ -951,6 +962,7 @@ namespace jv::bt
 
 	void MI_Backtrader::RenderBellCurve(STBT& stbt, const RunInfo& runInfo, const bool render)
 	{
+		return;
 		if (!render)
 			return;
 

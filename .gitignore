@@ -11,10 +11,10 @@
 *.user
 *.userosscache
 *.sln.docstates
-/DeepLearning/Symbols/
-/DeepLearning/Symbols-Copy/
-/DeepLearning/license.txt
-/DeepLearning/temp.txt
+*.sym
+Symbols-Copy
+license.txt
+temp.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

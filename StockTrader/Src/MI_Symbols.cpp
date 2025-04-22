@@ -169,6 +169,10 @@ namespace jv::bt
 		std::string path("Symbols/");
 		std::string ext(".sym");
 
+		const char* SYMBOLS_DIR = "Symbols";
+		if (!std::filesystem::is_directory(SYMBOLS_DIR))
+			std::filesystem::create_directories(SYMBOLS_DIR);
+
 		uint32_t length = 0;
 		for (auto& p : std::filesystem::recursive_directory_iterator(path))
 			if (p.path().extension() == ext)

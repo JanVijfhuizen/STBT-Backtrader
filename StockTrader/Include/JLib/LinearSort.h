@@ -4,7 +4,7 @@ namespace jv
 {
 	// Linear sort.
 	template <typename T>
-	void LinearSort(T* arr, const size_t length, bool (*comparer)(T& a, T& b))
+	__declspec(dllexport) void LinearSort(T* arr, const size_t length, bool (*comparer)(T& a, T& b))
 	{
 		for (size_t i = 1; i < length; ++i)
 		{
@@ -28,7 +28,22 @@ namespace jv
 
 	// Linear sort.
 	template <typename T>
-	void ExtLinearSort(T* arr, uint32_t* indexes, const size_t length, bool (*comparer)(T& a, T& b))
+	__declspec(dllexport) void ApplyExtLinearSort(Arena& tempArena, T* arr, uint32_t* indexes, const size_t length)
+	{
+		auto tempScope = tempArena.CreateScope();
+		auto tArr = tempArena.New<T>(length);
+
+		for (size_t i = 0; i < length; ++i)
+			tArr[i] = arr[indexes[i]];
+		for (size_t i = 0; i < length; ++i)
+			arr[i] = tArr[i];
+
+		tempArena.DestroyScope(tempScope);
+	}
+
+	// Linear sort.
+	template <typename T>
+	__declspec(dllexport) void ExtLinearSort(T* arr, uint32_t* indexes, const size_t length, bool (*comparer)(T& a, T& b))
 	{
 		for (size_t i = 1; i < length; ++i)
 		{
@@ -50,7 +65,7 @@ namespace jv
 		}
 	}
 
-	void CreateSortableIndices(uint32_t* arr, uint32_t length) 
+	__declspec(dllexport) void CreateSortableIndices(uint32_t* arr, uint32_t length)
 	{
 		for (uint32_t i = 0; i < length; i++)
 			arr[i] = i;

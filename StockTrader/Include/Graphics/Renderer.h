@@ -24,7 +24,7 @@ namespace jv::gr
 		bool resizeable = false;
 	};
 
-	struct DrawGraphInfo final
+	struct DrawLineGraphInfo final
 	{
 		glm::vec2 position;
 		GraphPoint* points;
@@ -42,14 +42,31 @@ namespace jv::gr
 		bool textIsButton = false;
 	};
 
+	struct DrawScatterGraphInfo final
+	{
+		glm::vec2 position;
+		glm::vec2* points;
+		uint32_t* colorIndices = nullptr;
+		glm::vec4* colors = nullptr;
+		uint32_t length;
+
+		const char* title = nullptr;
+		glm::vec2 scale{ 1 };
+		float aspectRatio = 1;
+		bool noBackground = false;
+		bool textIsButton = false;
+	};
+
 	struct Renderer final
 	{
 		glm::vec2 resolution;
 		GLFWwindow* window;
 		Mesh planeMesh;
 		Mesh lineMesh;
+		Mesh pointMesh;
 		Shader defaultShader;
 		Shader lineShader;
+		Shader pointShader;
 		uint32_t boundIndicesLength;
 
 		float graphBorderThickness = .02f;
@@ -66,7 +83,9 @@ namespace jv::gr
 
 		void DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color);
 		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
-		bool DrawGraph(DrawGraphInfo info);
+		void DrawPoint(glm::vec2 position, glm::vec4 color, float size);
+		bool DrawScatterGraph(DrawScatterGraphInfo info);
+		bool DrawLineGraph(DrawLineGraphInfo info);
 	};
 
 	[[nodiscard]] Renderer CreateRenderer(RendererCreateInfo info);

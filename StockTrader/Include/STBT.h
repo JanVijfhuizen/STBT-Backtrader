@@ -10,15 +10,17 @@ namespace jv::bt
 	{
 	public:
 		// Get the money in the bank.
-		[[nodiscard]] float GetLiquidity() const;
+		__declspec(dllexport) [[nodiscard]] float GetLiquidity() const;
+		// Get the value of the current portfolio
+		__declspec(dllexport) [[nodiscard]] float GetPortValue(uint32_t current) const;
 		// Get the number of stocks of target symbol I in the portfolio. 
-		[[nodiscard]] uint32_t GetNInPort(uint32_t index) const;
+		__declspec(dllexport) [[nodiscard]] uint32_t GetNInPort(uint32_t index) const;
 		// Get a timeseries for target symbol.
-		[[nodiscard]] TimeSeries GetTimeSeries(uint32_t index) const;
+		__declspec(dllexport) [[nodiscard]] TimeSeries GetTimeSeries(uint32_t index) const;
 		// Get the length of the scope (days).
-		[[nodiscard]] uint32_t GetLength() const;
+		__declspec(dllexport) [[nodiscard]] uint32_t GetLength() const;
 		// Get the amount of unique symbols.
-		[[nodiscard]] uint32_t GetTimeSeriesCount() const;
+		__declspec(dllexport) [[nodiscard]] uint32_t GetTimeSeriesCount() const;
 
 		[[nodiscard]] static STBTScope Create(Portfolio* portfolio, Array<TimeSeries> timeSeries);
 
@@ -40,11 +42,13 @@ namespace jv::bt
 		const char* description = "NO DESCRIPTION GIVEN";
 
 		// Executes once at the start of a run.
-		bool(*init)(const STBTScope& scope, void* userPtr) = nullptr;
+		bool(*init)(const STBTScope& scope, void* userPtr, uint32_t start, uint32_t end,
+			uint32_t runIndex, uint32_t nRuns, uint32_t buffer, Queue<const char*>& output) = nullptr;
 		// Executes every day in a run.
-		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, void* userPtr);
+		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, 
+			void* userPtr, Queue<const char*>& output);
 		// Executes at the end of a run.
-		void(*cleanup)(const STBTScope& scope, void* userPtr) = nullptr;
+		void(*cleanup)(const STBTScope& scope, void* userPtr, Queue<const char*>& output) = nullptr;
 		// A custom pointer can be given here.
 		void* userPtr = nullptr;
 
@@ -74,15 +78,10 @@ namespace jv::bt
 		Menu<STBT> menu;
 
 		Array<STBTBot> bots;
-
-		bool enableTutorialMode;
-
+		
 		char license[32];
-		tm from, to;
 		int graphType;
-		uint32_t days;
-		// Moving Average.
-		uint32_t ma;
+		uint32_t range;
 
 		__declspec(dllexport) bool Update();
 	};

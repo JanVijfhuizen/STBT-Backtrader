@@ -1,50 +1,43 @@
 #include "pch.h"
 #include <STBT.h>
+#include <Algorithms/GeneticAlgorithm.h>
+#include <TraderUtils.h>
+#include <Traders/GATrader.h>
+#include <Traders/TradTrader.h>
 
-bool SimpleTradeBot(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades, uint32_t current, void* userPtr)
+void* MAlloc(const uint32_t size)
 {
-	for (uint32_t i = 0; i < 4; i++)
-	{
-		trades[i].change = rand() % 3;
-		trades[i].change -= 1;
-	}
+	return malloc(size);
+}
 
-	return true;
+void MFree(void* ptr)
+{
+	return free(ptr);
 }
 
 int main()
 {
-	bool bools[2];
-	const char* boolNames[2]
+	jv::Arena arena, tempArena;
 	{
-		"finishOnValleyReached",
-		"testing bool"
-	};
+		jv::ArenaCreateInfo arenaCreateInfo{};
+		arenaCreateInfo.alloc = MAlloc;
+		arenaCreateInfo.free = MFree;
+		arena = jv::Arena::Create(arenaCreateInfo);
+		tempArena = jv::Arena::Create(arenaCreateInfo);
+	}
 
-	char buffer[16]{};
-	char* buffers[1];
-	buffers[0] = buffer;
-	const char* bufferName = "some buffer";
-	uint32_t bufferSize = 16;
+	auto tradTrader = jv::TradTrader::Create(arena, tempArena);
+	auto gaTrader = jv::GATrader::Create(arena, tempArena);
 
-	jv::bt::STBTBot bots[3];
-	bots[0].name = "empty test bot";
-	bots[2].name = "other bot";
-	bots[1].name = "Basic Trade Bot";
-	bots[1].description = "Does some basic trading.";
-	bots[1].author = "jv";
-	bots[1].update = SimpleTradeBot;
-	bots[1].bools = bools;
-	bots[1].boolsNames = boolNames;
-	bots[1].boolsLength = 2;
-	bots[1].buffers = buffers;
-	bots[1].buffersNames = &bufferName;
-	bots[1].bufferSizes = &bufferSize;
-	bots[1].buffersLength = 1;
+	const char* bName = "Training";
+	jv::bt::STBTBot bots[2];
+	bots[0] = gaTrader.GetBot();
+	bots[1] = tradTrader.GetBot();
 
-	auto stbt = jv::bt::CreateSTBT(bots, 3);
-
+	auto stbt = jv::bt::CreateSTBT(bots, 2);
 	while (!stbt.Update())
 		continue;
+
+	jv::Arena::Destroy(arena);
 	return 0;
 }

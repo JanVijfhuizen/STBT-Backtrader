@@ -76,14 +76,8 @@ namespace jv::bt
 		menu.SetIndex(stbt.arena, stbt, 0);
 
 		// Initialize basic settings.
-		auto t = GetTime();
-		stbt.to = *std::gmtime(&t);
-		t = GetTime(DAYS_DEFAULT);
-		stbt.from = *std::gmtime(&t);
 		stbt.graphType = 0;
-		stbt.ma = 0;
-		stbt.days = DAYS_DEFAULT;
-		stbt.enableTutorialMode = false;
+		stbt.range = DAYS_DEFAULT;
 
 		return stbt;
 	}
@@ -99,6 +93,15 @@ namespace jv::bt
 	float STBTScope::GetLiquidity() const
 	{
 		return portfolio->liquidity;
+	}
+
+	float STBTScope::GetPortValue(const uint32_t current) const
+	{
+		const uint32_t l = GetTimeSeriesCount();
+		float ret = portfolio->liquidity;
+		for (uint32_t i = 0; i < l; i++)
+			ret += GetNInPort(i) * GetTimeSeries(i).close[current];
+		return ret;
 	}
 
 	uint32_t STBTScope::GetNInPort(const uint32_t index) const

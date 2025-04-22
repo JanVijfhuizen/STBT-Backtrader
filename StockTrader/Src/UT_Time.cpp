@@ -3,6 +3,14 @@
 
 namespace jv::bt
 {
+	bool CompDates(const time_t a, const time_t b)
+	{
+		auto at = std::localtime(&a);
+		auto bt = std::localtime(&b);
+
+		return at->tm_year == bt->tm_year && at->tm_mon == bt->tm_mon && at->tm_mday == bt->tm_mday;
+	}
+
 	std::time_t GetTime(const uint32_t days)
 	{
 		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
@@ -45,41 +53,6 @@ namespace jv::bt
 		return true;
 	}
 
-	void ClampDates(STBT& stbt, std::time_t& tFrom, std::time_t& tTo,
-		std::time_t& tCurrent, const Array<TimeSeries>& timeSeries, uint32_t& length, const uint32_t buffer)
-	{
-		if (!GetMaxTimeLength(stbt, tCurrent, timeSeries, length, buffer))
-			return;
-
-		tFrom = mktime(&stbt.from);
-		tTo = mktime(&stbt.to);
-
-		auto minTime = tTo > tFrom ? tTo : tFrom;
-		minTime -= (60 * 60 * 24) * length;
-		auto& floor = tTo > tFrom ? tFrom : tTo;
-		if (floor < minTime)
-		{
-			floor = minTime;
-			(tTo > tFrom ? stbt.from : stbt.to) = *std::gmtime(&floor);
-		}
-
-		if (tFrom >= tCurrent)
-		{
-			tFrom = tCurrent;
-			stbt.from = *std::gmtime(&tCurrent);
-		}
-		if (tTo >= tCurrent)
-		{
-			tTo = tCurrent;
-			stbt.to = *std::gmtime(&tCurrent);
-		}
-		if (tFrom > tTo)
-		{
-			auto tTemp = tTo;
-			tTo = tFrom;
-			tFrom = tTemp;
-		}
-	}
 	std::string ConvertSecondsToHHMMSS(int value)
 	{
 		{

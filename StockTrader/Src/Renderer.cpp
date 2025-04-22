@@ -54,10 +54,15 @@ namespace jv::gr
 			0, 1
 		};
 
+		float pointVertex = 0;
+		unsigned int pointIndex = 0;
+
 		renderer.planeMesh = gr::CreateMesh(reinterpret_cast<float*>(planeVertices), planeIndices, gr::VertType::triangle, gr::MeshType::mStatic, 4, 6);
 		renderer.lineMesh = gr::CreateMesh(lineVertices, lineIndices, gr::VertType::line, gr::MeshType::mStatic, 2, 2);
+		renderer.pointMesh = gr::CreateMesh(&pointVertex, &pointIndex, gr::VertType::points, gr::MeshType::mStatic, 1, 1);
 		renderer.defaultShader = gr::LoadShader("Shaders/Triangle.vert", "Shaders/Triangle.frag");
 		renderer.lineShader = gr::LoadShader("Shaders/Line.vert", "Shaders/Line.frag");
+		renderer.pointShader = gr::LoadShader("Shaders/Point.vert", "Shaders/Point.frag");
 
 		renderer.BindMesh(renderer.planeMesh);
 		renderer.BindShader(renderer.defaultShader);
@@ -73,6 +78,8 @@ namespace jv::gr
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		glEnable(GL_PROGRAM_POINT_SIZE);
 		
 		return renderer;
 	}
@@ -80,8 +87,10 @@ namespace jv::gr
 	{
 		gr::DestroyMesh(renderer.planeMesh);
 		gr::DestroyMesh(renderer.lineMesh);
+		gr::DestroyMesh(renderer.pointMesh);
 		gr::DestroyShader(renderer.defaultShader);
 		gr::DestroyShader(renderer.lineShader);
+		gr::DestroyShader(renderer.pointShader);
 		glfwTerminate();
 	}
 	bool Renderer::Render()
@@ -111,6 +120,9 @@ namespace jv::gr
 			break;
 		case VertType::line:
 			glDrawElements(GL_LINES, boundIndicesLength, GL_UNSIGNED_INT, 0);
+			break;
+		case VertType::points:
+			glDrawElements(GL_POINTS, boundIndicesLength, GL_UNSIGNED_INT, 0);
 			break;
 		}
 	}
@@ -163,7 +175,82 @@ namespace jv::gr
 			gr::GetShaderUniform(lineShader, "color"), color);
 		Draw(VertType::line);
 	}
-	bool Renderer::DrawGraph(DrawGraphInfo info)
+
+	void Renderer::DrawPoint(const glm::vec2 position, const glm::vec4 color, const float size)
+	{
+		BindMesh(pointMesh);
+		BindShader(pointShader);
+		gr::SetShaderUniform2f(pointShader,
+			gr::GetShaderUniform(pointShader, "pos"), position);
+		gr::SetShaderUniform4f(pointShader,
+			gr::GetShaderUniform(pointShader, "color"), color);
+		gr::SetShaderUniform1f(pointShader,
+			gr::GetShaderUniform(pointShader, "size"), size);
+		
+		Draw(VertType::points);
+	}
+
+	bool Renderer::DrawScatterGraph(const DrawScatterGraphInfo info)
+	{
+		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1) * .5f;
+
+		const auto pos = info.position;
+		const auto c = glm::vec4(1);
+		DrawLine(glm::vec2(pos.x - aspScale.x, pos.y), glm::vec2(pos.x + aspScale.x, pos.y), c);
+		DrawLine(glm::vec2(pos.x, pos.y - aspScale.y), glm::vec2(pos.x, pos.y + aspScale.y), c);
+
+		for (uint32_t i = 0; i < info.length; i++)
+		{
+			auto p = info.points[i];
+			p *= info.aspectRatio;
+
+			auto color = info.colors && info.colorIndices ? 
+				info.colors[info.colorIndices[i]] : glm::vec4(0, 1, 0, 1);
+			DrawPoint(pos + p, color, 4);
+		}
+
+		bool interacted = false;
+		if (info.title)
+		{
+			glm::vec2 convPos = info.position;
+			convPos += glm::vec2(1);
+			convPos *= .5f;
+			convPos.y = 1.f - convPos.y;
+
+			convPos *= RESOLUTION;
+
+			glm::vec2 winSize = { info.scale.x * RESOLUTION.x / 4, 36 };
+
+			convPos.x -= winSize.x * info.aspectRatio;
+			convPos.y += info.scale.y * RESOLUTION.y / 4;
+			winSize.x *= 2;
+			winSize.x *= info.aspectRatio;
+
+			const float WIN_OFFSET = 6;
+
+			ImGuiWindowFlags FLAGS = 0;
+			//FLAGS |= ImGuiWindowFlags_NoBackground;
+			FLAGS |= ImGuiWindowFlags_NoTitleBar;
+			ImGui::Begin(info.title, nullptr, WIN_FLAGS | FLAGS);
+			ImGui::SetWindowPos({ convPos.x, convPos.y + WIN_OFFSET });
+			ImGui::SetWindowSize({ winSize.x, winSize.y });
+
+			if (info.textIsButton)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+				interacted = ImGui::ButtonCenter(info.title);
+				ImGui::PopStyleColor();
+			}
+			else
+				ImGui::TextCenter(info.title);
+
+			ImGui::End();
+		}
+
+		return interacted;
+	}
+
+	bool Renderer::DrawLineGraph(DrawLineGraphInfo info)
 	{
 		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1);
 
@@ -179,7 +266,8 @@ namespace jv::gr
 		const float stepSize = (float)l / len;
 
 		float lineWidth = 1.f / (l2 - 1) * aspScale.x;
-		float org = -lineWidth * (l2 - 1) / 2 + info.position.x;
+		float off = lineWidth * (l2 - 1) / 2;
+		float org = -off + info.position.x;
 		float ceiling = 0;
 		float floor = FLT_MAX;
 
@@ -283,7 +371,7 @@ namespace jv::gr
 			text += " [";
 			text += pct >= 0 ? "+" : "-";
 			text += std::to_string(static_cast<uint32_t>(abs(pct) * 100));
-			text += "%%]";
+			text += "%]";
 
 			ImVec4 tradeCol = pct >= 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
 			ImGui::PushStyleColor(ImGuiCol_Text, tradeCol);

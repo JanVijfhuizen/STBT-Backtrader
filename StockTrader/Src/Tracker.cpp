@@ -18,11 +18,14 @@ namespace jv::bt
 		uint32_t month = 1 + parts->tm_mon;
 		uint32_t day = parts->tm_mday;
 
+		uint32_t pYear, pMonth, pDay;
+
 		const std::string symbolName = symbol;
 		const std::string extension = ".sym";
 		const auto fileName = path + symbolName + extension;
 		
 		{
+			bool validButOutdated = false;
 			std::ifstream f(fileName);
 			if (f.good())
 			{
@@ -32,11 +35,15 @@ namespace jv::bt
 
 				if (line[0] != '{')
 				{
-					upToDate = day == std::stoi(line);
+					pDay = std::stoi(line);
 					getline(f, line);
-					upToDate = upToDate && month == std::stoi(line);
+					pMonth = std::stoi(line);
 					getline(f, line);
-					upToDate = upToDate && year == std::stoi(line);
+					pYear = std::stoi(line);
+					upToDate = day == pDay;
+					upToDate = upToDate && month == pMonth;
+					upToDate = upToDate && year == pYear;
+					validButOutdated = !upToDate;
 				}
 
 				f.clear();
@@ -49,10 +56,25 @@ namespace jv::bt
 					return buf.str();
 				}
 			}
+			bool getDataCompact = validButOutdated;
+			if (validButOutdated)
+			{
+				std::tm tm = { 0 };
+				tm.tm_year = pYear - 1900;
+				tm.tm_mon = pMonth - 1;
+				tm.tm_mday = pDay;
+
+				std::time_t time2 = std::mktime(&tm);
+				const int seconds_per_day = 60 * 60 * 24;
+				std::time_t difference = (now_c - time2) / seconds_per_day;
+				// 100 is the compact version of alpha vantage's API call.
+				if (difference > 100)
+					getDataCompact = false;
+			}
 
 			_curl = curl_easy_init();
 			assert(_curl);
-			const auto url = CreateUrl(tempArena, symbol, key);
+			const auto url = CreateUrl(tempArena, symbol, key, getDataCompact);
 			curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 			std::string readBuffer;
@@ -74,14 +96,70 @@ namespace jv::bt
 			}
 
 			// Save newly downloaded symbol data.
-			
 			if (readBuffer[0] != '{')
 			{
-				std::ofstream outFile(fileName);
-				outFile << day << std::endl;
-				outFile << month << std::endl;
-				outFile << year << std::endl;
-				outFile << readBuffer;
+				if (!getDataCompact)
+				{
+					std::ofstream outFile(fileName);
+					outFile << day << std::endl;
+					outFile << month << std::endl;
+					outFile << year << std::endl;
+					outFile << readBuffer;
+				}
+				// Otherwise append to existing data.
+				else 
+				{
+					std::ofstream outFile("temp.txt");
+					outFile << day << std::endl;
+					outFile << month << std::endl;
+					outFile << year << std::endl;
+
+					// Contains newest line from old data.
+					std::string line;
+
+					// Remove meta data.
+					for (uint32_t i = 0; i < 3; i++)
+						getline(f, line);
+					// Add default metadata.
+					getline(f, line);
+					outFile << line << std::endl;
+					getline(f, line);
+
+					// Copy new data, but first see how much needs to be copied.
+					std::stringstream ss(readBuffer);
+					std::string newLine;
+
+					uint32_t lineIndex = 0;
+					bool found = false;
+					while (getline(ss, newLine))
+					{
+						if (newLine == line)
+						{
+							found = true;
+							break;
+						}
+						++lineIndex;
+					}
+
+					ss.clear();
+					ss.seekg(0);
+					// Ignore meta data.
+					getline(ss, newLine);
+					for (uint32_t i = 0; i < lineIndex; i++)
+					{
+						getline(ss, newLine);
+						outFile << newLine << std::endl;
+					}
+
+					// Move remaining data to file.
+					std::string rLine;
+					while (getline(f, rLine))
+						outFile << rLine << std::endl;
+
+					f.close();
+					outFile.close();
+					std::filesystem::copy("temp.txt", fileName.c_str(), std::filesystem::copy_options::update_existing);
+				}
 			}	
 		}
 
@@ -203,7 +281,7 @@ namespace jv::bt
 		gp << "pause 1e9\n";
 	}
 
-	std::string Tracker::CreateUrl(Arena& tempArena, const char* symbol, const char* key)
+	std::string Tracker::CreateUrl(Arena& tempArena, const char* symbol, const char* key, const bool compact)
 	{
 		const auto scope = tempArena.CreateScope();
 
@@ -212,6 +290,8 @@ namespace jv::bt
 		str.append("&outputsize=full&apikey=");
 		str.append(key);
 		str.append("&datatype=csv");
+		if (compact)
+			str.append("&outputsize=compact");
 		tempArena.DestroyScope(scope);
 		return str;
 	}

@@ -22,7 +22,7 @@ namespace jv::bt
 		CURL* _curl = nullptr;
 		CURLcode _res{};
 
-		[[nodiscard]] static std::string CreateUrl(Arena& tempArena, const char* symbol, const char* key);
+		[[nodiscard]] static std::string CreateUrl(Arena& tempArena, const char* symbol, const char* key, bool compact = false);
 		static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
 	};
 }

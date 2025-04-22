@@ -12,6 +12,7 @@ namespace jv::gr
 	void LinkShader(Shader& shader);
 	void DestroyShader(const Shader& shader);
 	[[nodiscard]] unsigned int GetShaderUniform(const Shader& shader, const char* name);
+	void SetShaderUniform1f(const Shader& shader, unsigned int i, float f);
 	void SetShaderUniform2f(const Shader& shader, unsigned int i, glm::vec2 v);
 	void SetShaderUniform4f(const Shader& shader, unsigned int i, glm::vec4 v);
 }

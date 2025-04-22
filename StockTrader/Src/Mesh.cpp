@@ -30,6 +30,9 @@ namespace jv::gr
 		case VertType::line:
 			vertSize = sizeof(float);
 			break;
+		case VertType::points:
+			vertSize = sizeof(float);
+			break;
 		}
 
 		glGenVertexArrays(1, &mesh.vao);
@@ -49,6 +52,9 @@ namespace jv::gr
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertSize, nullptr);
 			break;
 		case VertType::line:
+			glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, vertSize, nullptr);
+			break;
+		case VertType::points:
 			glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, vertSize, nullptr);
 			break;
 		}

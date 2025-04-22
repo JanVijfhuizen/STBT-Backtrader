@@ -41,9 +41,6 @@ namespace jv
 	bool TradTraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
 		uint32_t current, void* userPtr, jv::Queue<const char*>& output)
 	{
-		trades[0].change = 1e9;
-		return true;
-
 		auto& trader = *reinterpret_cast<TradTrader*>(userPtr);
 		const auto tempScope = trader.tempArena->CreateScope();
 		const uint32_t l = scope.GetTimeSeriesCount();

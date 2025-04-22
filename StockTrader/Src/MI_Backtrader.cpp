@@ -962,7 +962,6 @@ namespace jv::bt
 
 	void MI_Backtrader::RenderBellCurve(STBT& stbt, const RunInfo& runInfo, const bool render)
 	{
-		return;
 		if (!render)
 			return;
 
@@ -973,13 +972,13 @@ namespace jv::bt
 		for (uint32_t i = 0; i < runIndex; i++)
 			width = Max(width, abs(scatterBeta[i].y));
 
-		const float m = static_cast<float>(CHUNKS) / 2;
+		const float m = static_cast<float>(CHUNKS - 1) / 2;
 
 		for (uint32_t i = 0; i < runIndex; i++)
 		{
 			const float f = scatterBeta[i].y / width;
-			const float fPos = m + f * m;
-			const uint32_t pos = round(fPos);
+			float fPos = m + f * m;
+			uint32_t pos = round(fPos);
 			++distribution[pos];
 		}
 
@@ -987,19 +986,23 @@ namespace jv::bt
 		for (uint32_t i = 0; i < CHUNKS; i++)
 		{
 			points[i].y = static_cast<float>(distribution[i]) / runIndex;
-			points[i].x = -.5f + (1.f / CHUNKS * i);
+			points[i].x = -.5f + (1.f / static_cast<float>(CHUNKS - 1) * i);
 		}
 
 		glm::vec2 grPos = { 0, 0 };
 		grPos.x += .5f;
 		grPos.y += .14f;
 
+		std::string title = "Bell Curve [X WIDTH] ";
+		title += std::format("{:.2f}", width * 100);
+		title += "%%";
+
 		gr::DrawScatterGraphInfo info{};
 		info.aspectRatio = stbt.renderer.GetAspectRatio();
 		info.position = grPos;
 		info.points = points;
 		info.length = CHUNKS;
-		info.title = "Bell Curve Algorithm Performance";
+		info.title = title.c_str();
 		info.scale = glm::vec2(1.3);
 		stbt.renderer.DrawScatterGraph(info);
 	}

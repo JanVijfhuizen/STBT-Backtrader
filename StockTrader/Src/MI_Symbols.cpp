@@ -253,13 +253,14 @@ namespace jv::bt
 		uint32_t sId = 0;
 		if (length > 1)
 		{
-			for (uint32_t i = 0; i < length; i++)
+			uint32_t i = 0;
+			while(true)
 			{
-				if (!enabled[i])
-					continue;
 				if (i == symbolIndex)
 					break;
-				++sId;
+				if (!enabled[i++])
+					continue;
+				++sId; 
 			}
 			if (sId == length)
 			{

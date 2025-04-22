@@ -12,6 +12,7 @@
 *.userosscache
 *.sln.docstates
 *.sym
+
 Symbols-Copy
 license.txt
 temp.txt

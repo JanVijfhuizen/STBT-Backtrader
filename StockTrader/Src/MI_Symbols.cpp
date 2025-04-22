@@ -248,6 +248,7 @@ namespace jv::bt
 		auto enabled = drawInfo.enabled;
 		auto colors = drawInfo.colors;
 		auto& symbolIndex = *drawInfo.symbolIndex;
+		const bool reverse = drawInfo.reverse;
 
 		// Get symbol index to normal index.
 		uint32_t sId = 0;
@@ -277,17 +278,19 @@ namespace jv::bt
 		const float ratio = stbt.renderer.GetAspectRatio();
 
 		auto graphPoints = CreateArray<Array<jv::gr::GraphPoint>>(stbt.frameArena, length);
-		for (uint32_t i = 0; i < drawInfo.length; i++)
+		for (uint32_t i = 0; i < length; i++)
 		{
 			auto& series = timeSeries[i];
 			auto& points = graphPoints[i] = CreateArray<jv::gr::GraphPoint>(stbt.frameArena, stbt.range);
 
-			for (uint32_t i = 0; i < stbt.range; i++)
+			for (uint32_t j = 0; j < stbt.range; j++)
 			{
-				points[i].open = series.open[i];
-				points[i].close = series.close[i];
-				points[i].high = series.high[i];
-				points[i].low = series.low[i];
+				const uint32_t cJ = reverse ? stbt.range - j - 1 : j;
+
+				points[j].open = series.open[cJ];
+				points[j].close = series.close[cJ];
+				points[j].high = series.high[cJ];
+				points[j].low = series.low[cJ];
 			}
 
 			stbt.renderer.SetLineWidth(1.f + (sId == i) * 1.f);
@@ -331,6 +334,7 @@ namespace jv::bt
 		graphDrawInfo.length = length;
 		graphDrawInfo.symbolIndex = &symbolIndex;
 		graphDrawInfo.normalizeGraph = *normalizeGraph;	
+		graphDrawInfo.reverse = true;
 		auto graphPoints = RenderSymbolGraph(stbt, graphDrawInfo);
 
 		DrawTopRightWindow("Settings");

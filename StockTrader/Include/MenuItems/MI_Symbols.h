@@ -11,6 +11,7 @@ namespace jv::bt
 		glm::vec4* colors;
 		uint32_t length;
 		bool normalizeGraph;
+		bool reverse = false;
 
 		// Reference.
 		uint32_t* symbolIndex;

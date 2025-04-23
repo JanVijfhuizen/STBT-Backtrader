@@ -287,6 +287,8 @@ namespace jv::bt
 						// Save market & portfolio profit percentage seperately
 						scatterBeta[runIndex].y = relPoints[runInfo.length - 1].close - 1.f;
 						scatterBeta[runIndex].x = pctPoints[runInfo.length - 1].close - 1.f;
+						// TODO
+						scatterBeta[runIndex].y = portPoints[0].close / portPoints[runInfo.length - 1].close - 1.f;
 
 						if (bot.cleanup)
 							bot.cleanup(stbtScope, bot.userPtr, stbt.output);

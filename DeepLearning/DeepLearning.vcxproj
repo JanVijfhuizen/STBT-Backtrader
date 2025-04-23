@@ -24,8 +24,10 @@
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\TraderUtils.h" />
     <ClInclude Include="Include\Traders\TradTrader.h" />
+    <ClInclude Include="Include\Traders\MainTrader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\MainTrader.cpp" />
     <ClCompile Include="Src\GATrader.cpp" />
     <ClCompile Include="Src\GeneticAlgorithm.cpp" />
     <ClCompile Include="Src\DeepLearning.cpp" />

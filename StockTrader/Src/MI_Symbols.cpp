@@ -81,7 +81,7 @@ namespace jv::bt
 		}
 
 		ImGui::SameLine();
-		ImGui::InputText("#", nameBuffer, 5, ImGuiInputTextFlags_CharsUppercase);
+		ImGui::InputText("#", nameBuffer, 9, ImGuiInputTextFlags_CharsUppercase);
 
 		for (uint32_t i = 0; i < names.length; i++)
 		{

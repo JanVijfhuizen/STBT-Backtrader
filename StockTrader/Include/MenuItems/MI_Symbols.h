@@ -46,7 +46,7 @@ namespace jv::bt
 		// Normalize graph on the screen.
 		bool normalizeGraph = true;
 
-		char nameBuffer[6];
+		char nameBuffer[10];
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

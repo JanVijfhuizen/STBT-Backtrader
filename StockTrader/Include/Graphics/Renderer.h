@@ -55,6 +55,7 @@ namespace jv::gr
 		float aspectRatio = 1;
 		bool noBackground = false;
 		bool textIsButton = false;
+		float pointSize = 4;
 	};
 
 	struct Renderer final

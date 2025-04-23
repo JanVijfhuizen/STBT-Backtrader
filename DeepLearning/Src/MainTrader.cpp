@@ -8,23 +8,30 @@ namespace jv
 		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
 		jv::Queue<const char*>& output)
 	{
+		auto mt = reinterpret_cast<MainTrader*>(userPtr);
+		mt->runScope = mt->arena->CreateScope();
 		return true;
 	}
 
 	bool MainTraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
 		uint32_t current, void* userPtr, jv::Queue<const char*>& output)
 	{
+		auto mt = reinterpret_cast<MainTrader*>(userPtr);
 		return true;
 	}
 
 	void MainTraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output)
 	{
-		
+		auto mt = reinterpret_cast<MainTrader*>(userPtr);
+		mt->arena->DestroyScope(mt->runScope);
 	}
 
 	MainTrader MainTrader::Create(Arena& arena, Arena& tempArena)
 	{
-		return MainTrader();
+		MainTrader mt{};
+		mt.arena = &arena;
+		mt.tempArena = &tempArena;
+		return mt;
 	}
 	bt::STBTBot MainTrader::GetBot()
 	{

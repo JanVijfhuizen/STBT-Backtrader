@@ -205,8 +205,8 @@ namespace jv::gr
 			p *= info.aspectRatio;
 
 			auto color = info.colors && info.colorIndices ? 
-				info.colors[info.colorIndices[i]] : glm::vec4(0, 1, 0, 1);
-			DrawPoint(pos + p, color, 4);
+				info.colors[info.colorIndices[i]] : info.colors ? info.colors[0] : glm::vec4(0, 1, 0, 1);
+			DrawPoint(pos + p, color, info.pointSize);
 		}
 
 		bool interacted = false;

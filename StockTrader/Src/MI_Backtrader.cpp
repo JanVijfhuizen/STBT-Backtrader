@@ -273,9 +273,18 @@ namespace jv::bt
 						// Save the average of all runs.
 						for (uint32_t i = 0; i < runInfo.length; i++)
 						{
-							auto& p = genPoints[i];
+							auto& r = gRelPoints[i];
+							r.close *= runIndex;
+							r.close += relPoints[i].close;
+							r.close /= runIndex + 1;
+
+							r.open = r.close;
+							r.high = r.close;
+							r.low = r.close;
+
+							auto& p = gPortPoints[i];
 							p.close *= runIndex;
-							p.close += relPoints[i].close;
+							p.close += portPoints[i].close;
 							p.close /= runIndex + 1;
 
 							p.open = p.close;
@@ -284,11 +293,12 @@ namespace jv::bt
 						}
 						avrDeviations[runIndex] = relPoints[runInfo.length - 1].close;
 
-						// Save market & portfolio profit percentage seperately
-						scatterBeta[runIndex].y = relPoints[runInfo.length - 1].close - 1.f;
+						// Save market & portfolio profit percentage seperately			
 						scatterBeta[runIndex].x = pctPoints[runInfo.length - 1].close - 1.f;
-						// TODO
-						scatterBeta[runIndex].y = portPoints[0].close / portPoints[runInfo.length - 1].close - 1.f;
+						scatterBeta[runIndex].y = portPoints[runInfo.length - 1].close / portPoints[0].close - 1.f;
+
+						scatterBetaRel[runIndex].x = scatterBeta[runIndex].x;
+						scatterBetaRel[runIndex].y = relPoints[runInfo.length - 1].close - 1.f;
 
 						if (bot.cleanup)
 							bot.cleanup(stbtScope, bot.userPtr, stbt.output);
@@ -640,9 +650,11 @@ namespace jv::bt
 					runInfo.to = 0;
 					
 					runningScope = stbt.arena.CreateScope();
-					genPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length + buffer);
+					gRelPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length + buffer);
+					gPortPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length + buffer);
 					avrDeviations = stbt.arena.New<float>(runInfo.totalRuns);
 					scatterBeta = stbt.arena.New<glm::vec2>(runInfo.totalRuns);
+					scatterBetaRel = stbt.arena.New<glm::vec2>(runInfo.totalRuns);
 				}
 			}
 		}
@@ -799,8 +811,18 @@ namespace jv::bt
 
 		if (runIndex > 0)
 		{
+			{
+				// Average portfolio performance.
+				auto avr = gPortPoints[runInfo.length - 1].close / gPortPoints[0].close * 100 - 100;
+				std::stringstream stream;
+				stream << std::fixed << std::setprecision(2) << avr;
+				std::string s = stream.str();
+				std::string avrStr = "AVR: " + s + "%%";
+				ImGui::Text(avrStr.c_str());
+			}
+			
 			// Relative to market average.
-			auto relToMarkAvr = genPoints[runInfo.length - 1].close / genPoints[0].close * 100 - 100;
+			auto relToMarkAvr = gRelPoints[runInfo.length - 1].close / gRelPoints[0].close * 100 - 100;
 			std::stringstream stream;
 			stream << std::fixed << std::setprecision(2) << relToMarkAvr;
 			std::string s = stream.str();
@@ -917,14 +939,24 @@ namespace jv::bt
 			b.title = t.title;
 		}
 
+		// If gains are debugged.
+		if (highlightedGraphIndex == 0 && runIndex > 0)
+		{
+			auto gPortInfo = drawInfos[0];
+			gPortInfo.title = nullptr;
+			gPortInfo.points = gPortPoints.ptr;
+			gPortInfo.color = glm::vec4(0, 1, 0, 1);
+			stbt.renderer.DrawLineGraph(gPortInfo);
+		}
+
 		// If relative gains are debugged.
 		if (highlightedGraphIndex == 2 && runIndex > 0)
 		{
-			auto genInfo = drawInfos[0];
-			genInfo.title = nullptr;
-			genInfo.points = genPoints.ptr;
-			genInfo.color = glm::vec4(0, 1, 0, 1);
-			stbt.renderer.DrawLineGraph(genInfo);
+			auto gRelInfo = drawInfos[0];
+			gRelInfo.title = nullptr;
+			gRelInfo.points = gRelPoints.ptr;
+			gRelInfo.color = glm::vec4(0, 1, 0, 1);
+			stbt.renderer.DrawLineGraph(gRelInfo);
 		}
 
 		stbt.renderer.SetLineWidth(2);
@@ -968,45 +1000,65 @@ namespace jv::bt
 			return;
 
 		const uint32_t CHUNKS = 25;
-		uint32_t distribution[CHUNKS]{};
+		
+		glm::vec2* arrs[]
+		{
+			scatterBeta,
+			scatterBetaRel
+		};
 
+		glm::vec4 colors[]
+		{
+			glm::vec4(1, 0, 0, 1),
+			glm::vec4(0, 1, 0, 1)
+		};
+
+		// Get max width for both scatters.
 		float width = 0;
-		for (uint32_t i = 0; i < runIndex; i++)
-			width = Max(width, abs(scatterBeta[i].y));
+		for (uint32_t i = 0; i < 2; i++)
+			for (uint32_t j = 0; j < runIndex; j++)
+				width = Max(width, abs(arrs[i][j].y));
 
-		const float m = static_cast<float>(CHUNKS - 1) / 2;
-
-		for (uint32_t i = 0; i < runIndex; i++)
+		for (uint32_t i = 0; i < 2; i++)
 		{
-			const float f = scatterBeta[i].y / width;
-			float fPos = m + f * m;
-			uint32_t pos = round(fPos);
-			++distribution[pos];
+			uint32_t distribution[CHUNKS]{};
+			auto arr = arrs[i];
+
+			const float m = static_cast<float>(CHUNKS - 1) / 2;
+
+			for (uint32_t i = 0; i < runIndex; i++)
+			{
+				const float f = arr[i].y / width;
+				float fPos = m + f * m;
+				uint32_t pos = round(fPos);
+				++distribution[pos];
+			}
+
+			glm::vec2 points[CHUNKS];
+			for (uint32_t i = 0; i < CHUNKS; i++)
+			{
+				points[i].y = static_cast<float>(distribution[i]) / runIndex;
+				points[i].x = -.5f + (1.f / static_cast<float>(CHUNKS - 1) * i);
+			}
+
+			glm::vec2 grPos = { 0, 0 };
+			grPos.x += .5f;
+			grPos.y += .14f;
+
+			std::string title = "Bell Curve [R] Pct [G] Rel [X] ";
+			title += std::format("{:.2f}", width * 100);
+			title += "%%";
+			
+			gr::DrawScatterGraphInfo info{};
+			info.aspectRatio = stbt.renderer.GetAspectRatio();
+			info.position = grPos;
+			info.points = points;
+			info.length = CHUNKS;
+			info.title = i == 0 ? title.c_str() : nullptr;
+			info.scale = glm::vec2(1.3);
+			info.colors = &colors[i];
+			stbt.renderer.DrawScatterGraph(info);
 		}
-
-		glm::vec2 points[CHUNKS];
-		for (uint32_t i = 0; i < CHUNKS; i++)
-		{
-			points[i].y = static_cast<float>(distribution[i]) / runIndex;
-			points[i].x = -.5f + (1.f / static_cast<float>(CHUNKS - 1) * i);
-		}
-
-		glm::vec2 grPos = { 0, 0 };
-		grPos.x += .5f;
-		grPos.y += .14f;
-
-		std::string title = "Bell Curve [X WIDTH] ";
-		title += std::format("{:.2f}", width * 100);
-		title += "%%";
-
-		gr::DrawScatterGraphInfo info{};
-		info.aspectRatio = stbt.renderer.GetAspectRatio();
-		info.position = grPos;
-		info.points = points;
-		info.length = CHUNKS;
-		info.title = title.c_str();
-		info.scale = glm::vec2(1.3);
-		stbt.renderer.DrawScatterGraph(info);
 	}
 
 	void MI_Backtrader::RenderScatter(STBT& stbt, const RunInfo& runInfo, const bool render)

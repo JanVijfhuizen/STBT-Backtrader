@@ -64,9 +64,11 @@ namespace jv::bt
 		std::chrono::system_clock::time_point runTimePoint;
 
 		// Portfolio, Relative (Port to Stock Mark Average), Percentage, General (Average all runs)
-		Array<jv::gr::GraphPoint> portPoints, relPoints, pctPoints, genPoints;
+		Array<jv::gr::GraphPoint> portPoints, relPoints, pctPoints;
+		Array<jv::gr::GraphPoint> gPortPoints, gRelPoints;
 		float* avrDeviations;
 		glm::vec2* scatterBeta;
+		glm::vec2* scatterBetaRel;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

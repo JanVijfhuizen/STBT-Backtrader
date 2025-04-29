@@ -33,6 +33,12 @@
     <ClInclude Include="Include\Traders\MainTrader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Traders\TMM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Traders\Modules\ModMA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\pch.cpp">
@@ -54,6 +60,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\MainTrader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\TMM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\ModMA.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

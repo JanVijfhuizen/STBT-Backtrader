@@ -2,6 +2,7 @@
 #include "Traders/MainTrader.h"
 #include "TraderUtils.h"
 #include "Jlib/VectorUtils.h"
+#include <Traders/Modules/ModMA.h>
 
 namespace jv
 {
@@ -11,71 +12,32 @@ namespace jv
 		jv::Queue<const char*>& output)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		mt->runScope = mt->arena->CreateScope();
 
-		mt->start = start;
-		mt->end = end;
+		mt->modMA = {};
+		mt->manager = tmm::Manager::Create(*mt->arena, 1);
+		mt->manager.Set(0, &mt->modMA);
 
-		const uint32_t count = scope.GetTimeSeriesCount();
-		mt->mas1 = mt->arena->New<float*>(count);
-		mt->mas2 = mt->arena->New<float*>(count);
-
-		for (uint32_t i = 0; i < count; i++)
-		{
-			auto close = scope.GetTimeSeries(i).close;
-			mt->mas1[i] = TraderUtils::CreateMA(*mt->arena, start, end, mt->mas1Len, close);
-			mt->mas2[i] = TraderUtils::CreateMA(*mt->arena, start, end, mt->mas2Len, close);
-		}
-
-		mt->threshPos = mt->arena->New<float>(count);
-		mt->threshNeg = mt->arena->New<float>(count);
-
-		return true;
+		tmm::Info info{};
+		info.start = start;
+		info.end = end;
+		info.runIndex = runIndex;
+		info.nRuns = nRuns;
+		info.buffer = buffer;
+		return mt->manager.Init(*mt->arena, info, scope, output);
 	}
 
 	bool MainTraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
 		uint32_t current, void* userPtr, jv::Queue<const char*>& output)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		auto tempScope = mt->tempArena->CreateScope();
-
-		const uint32_t count = scope.GetTimeSeriesCount();
-		auto buys = CreateVector<uint32_t>(*mt->tempArena, count);
-		auto sells = CreateVector<uint32_t>(*mt->tempArena, count);
-
-		const uint32_t index = mt->start - current;
-
-		for (uint32_t i = 0; i < count; i++)
-		{
-			const float diff = mt->mas1[i][current] - mt->mas2[i][current];
-			if (diff > mt->threshPos[i])
-				buys.Add() = i;
-			else if (diff < -mt->threshNeg[i])
-				sells.Add() = i;
-		}
-
-		// Buy with an even distribution.
-		const auto liq = scope.GetLiquidity();
-		float stackPrice = 0;
-
-		for (auto& buy : buys)
-			stackPrice += scope.GetTimeSeries(buy).close[current];
-
-		const uint32_t stackAmount = Max<float>(liq / stackPrice, 1);
-		for (auto& buy : buys)
-			trades[buy].change = stackAmount;
-
-		for (auto& sell : sells)
-			trades[sell].change = -1e5;
-
-		mt->tempArena->DestroyScope(tempScope);
+		
 		return true;
 	}
 
 	void MainTraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		mt->arena->DestroyScope(mt->runScope);
+		tmm::Manager::Destroy(*mt->arena, mt->manager);
 	}
 
 	MainTrader MainTrader::Create(Arena& arena, Arena& tempArena)
@@ -83,7 +45,12 @@ namespace jv
 		MainTrader mt{};
 		mt.arena = &arena;
 		mt.tempArena = &tempArena;
+		mt.scope = arena.CreateScope();
 		return mt;
+	}
+	void MainTrader::Destroy(Arena& arena, MainTrader& trader)
+	{
+		arena.DestroyScope(trader.scope);
 	}
 	bt::STBTBot MainTrader::GetBot()
 	{

@@ -17,6 +17,13 @@ namespace jv
 		mt->manager = tmm::Manager::Create(*mt->arena, 1);
 		mt->manager.Set(0, &mt->modMA);
 
+		const uint32_t min = Max(mt->modMA.mas1Len, mt->modMA.mas2Len);
+		if (buffer < min)
+		{
+			output.Add() = "ABORTED: Buffer too small.";
+			return false;
+		}
+
 		tmm::Info info{};
 		info.start = start;
 		info.end = end;
@@ -27,11 +34,10 @@ namespace jv
 	}
 
 	bool MainTraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
-		uint32_t current, void* userPtr, jv::Queue<const char*>& output)
+		const uint32_t current, void* userPtr, jv::Queue<const char*>& output)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		
-		return true;
+		return mt->manager.Update(*mt->tempArena, scope, trades, output, current);
 	}
 
 	void MainTraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output)

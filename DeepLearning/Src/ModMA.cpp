@@ -6,8 +6,8 @@ namespace jv
 {
 	bool ModMA::Init(Arena& arena, const tmm::Info& info, const bt::STBTScope& scope, Queue<const char*>& output)
 	{
-		this->start = start;
-		this->end = end;
+		start = info.start;
+		end = info.end;
 
 		const uint32_t count = scope.GetTimeSeriesCount();
 		mas1 = arena.New<float*>(count);
@@ -23,7 +23,7 @@ namespace jv
 		return true;
 	}
 
-	bool ModMA::Update(Arena& tempArena, bt::STBTScope& scope, 
+	bool ModMA::Update(Arena& tempArena, const bt::STBTScope& scope, 
 		float* values, Queue<const char*>& output, const uint32_t current)
 	{
 		auto tempScope = tempArena.CreateScope();
@@ -36,7 +36,7 @@ namespace jv
 
 		for (uint32_t i = 0; i < count; i++)
 		{
-			const float pct = mas2[i][current] / mas1[i][current];
+			const float pct = mas2[i][index] / mas1[i][index];
 			if (pct > (1.f + buyThreshPct))
 				buys.Add() = i;
 			else if (pct < (1.f - sellThreshPct))

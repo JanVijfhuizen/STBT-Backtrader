@@ -18,7 +18,7 @@ namespace jv
 
 		bool Init(Arena& arena, const tmm::Info& info,
 			const jv::bt::STBTScope& scope, Queue<const char*>& output) override;
-		bool Update(Arena& tempArena, bt::STBTScope& scope, 
+		bool Update(Arena& tempArena, const bt::STBTScope& scope, 
 			float* values, Queue<const char*>& output, uint32_t current) override;
 		void Cleanup(Arena& arena, Queue<const char*>& output) override;
 		uint32_t GetValuesLength(const bt::STBTScope& scope) override;

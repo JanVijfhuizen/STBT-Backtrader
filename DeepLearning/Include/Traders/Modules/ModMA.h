@@ -6,10 +6,10 @@ namespace jv
 	class ModMA final : public tmm::Module
 	{
 	public:
-		uint32_t mas1Len = 30;
-		uint32_t mas2Len = 100;
-		float buyThreshPct = .1f;
-		float sellThreshPct = .1f;
+		uint32_t mas1Len = 5;
+		uint32_t mas2Len = 30;
+		float buyThreshPct = .01f;
+		float sellThreshPct = .01f;
 
 		uint32_t start;
 		uint32_t end;

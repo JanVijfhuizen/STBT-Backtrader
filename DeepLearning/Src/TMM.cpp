@@ -76,7 +76,7 @@ namespace jv::tmm
 		for (uint32_t i = 0; i < values.length; i++)
 		{
 			for (uint32_t j = 0; j < l; j++)
-				result[i] += values[i][j];
+				result[j] += values[i][j];
 		}
 
 		// Buy with an even distribution.
@@ -88,7 +88,7 @@ namespace jv::tmm
 				stackPrice += scope.GetTimeSeries(i).close[current];
 		const uint32_t stackAmount = Max<float>(liq / stackPrice, 1);
 
-		for (uint32_t i = 0; i < values.length; i++)
+		for (uint32_t i = 0; i < l; i++)
 		{
 			if (result[i] > 1e-2f)
 				trades[i].change = stackAmount;

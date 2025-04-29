@@ -329,6 +329,8 @@ namespace jv::bt
 					const float fee = std::atof(feeBuffer);
 					const auto& stocks = portfolio.stocks;
 
+					const float dayLiquidity = portfolio.liquidity;
+
 					// Execute trades called on yesterday.
 					for (uint32_t i = 0; i < timeSeries.length; i++)
 					{
@@ -340,7 +342,7 @@ namespace jv::bt
 						// Limit max buys.
 						if (trade.change > 0)
 						{
-							const uint32_t maxBuys = floor(portfolio.liquidity / (open * feeMod));
+							const uint32_t maxBuys = floor(dayLiquidity / (open * feeMod));
 							trade.change = Min<int32_t>(maxBuys, trade.change);
 						}
 						// Limit max sells.
@@ -420,7 +422,7 @@ namespace jv::bt
 		const uint32_t length = Min(runDayIndex, drawCap);
 		const uint32_t start = drawCap > runDayIndex ? 0 : runDayIndex - drawCap;
 
-		for (uint32_t i = 0; i < length; i++)
+		for (int32_t i = length - 1; i >= 0; i--)
 		{	
 			std::string dayText = "---DAY ";
 			dayText += std::to_string(runDayIndex - length + i + 1);
@@ -999,7 +1001,7 @@ namespace jv::bt
 		if (!render)
 			return;
 
-		const uint32_t CHUNKS = 25;
+		const uint32_t CHUNKS = 100;
 		
 		glm::vec2* arrs[]
 		{

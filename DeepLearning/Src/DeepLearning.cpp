@@ -30,6 +30,7 @@ int main()
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);
 	auto gaTrader = jv::GATrader::Create(arena, tempArena);
 	auto mainTrader = jv::MainTrader::Create(arena, tempArena);
+	mainTrader.InitGA();
 
 	const char* bName = "Training";
 	jv::bt::STBTBot bots[3];

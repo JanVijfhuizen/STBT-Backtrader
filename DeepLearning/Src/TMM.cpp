@@ -73,11 +73,14 @@ namespace jv::tmm
 		const uint32_t l = scope.GetTimeSeriesCount();
 		float* result = tempArena.New<float>(l);
 
+		// Get average result of modules.
 		for (uint32_t i = 0; i < values.length; i++)
 		{
 			for (uint32_t j = 0; j < l; j++)
 				result[j] += values[i][j];
 		}
+		for (uint32_t i = 0; i < l; i++)
+			result[i] /= l;
 
 		// Buy with an even distribution.
 		const auto liq = scope.GetLiquidity();

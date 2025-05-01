@@ -46,6 +46,9 @@ namespace jv
 				this->rating = bestRating;
 				result = info.copy(arena, cpyGen[0], info.userPtr);
 				genScope = arena.CreateScope();
+
+				if (debug)
+					std::cout << "GAR: " << bestRating << std::endl;
 			}
 
 			tempArena.DestroyScope(tempScope);

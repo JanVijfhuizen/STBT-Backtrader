@@ -31,6 +31,8 @@ namespace jv
 		uint32_t genId;
 		uint32_t trainId;
 
+		bool debug;
+
 		[[nodiscard]] void* GetTrainee();
 		void Rate(Arena& arena, Arena& tempArena, float rating);
 

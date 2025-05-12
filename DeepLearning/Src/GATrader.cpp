@@ -4,10 +4,10 @@
 
 namespace jv 
 {
-	bool GATraderInit(const jv::bt::STBTScope& scope, void* userPtr,
+	bool GATraderInit(const bt::STBTScope& scope, void* userPtr,
 		const uint32_t start, const uint32_t end,
 		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
-		jv::Queue<const char*>& output)
+		Queue<bt::OutputMsg>& output)
 	{
 		auto& gt = *reinterpret_cast<GATrader*>(userPtr);
 		gt.tempScope = gt.tempArena->CreateScope();
@@ -15,13 +15,13 @@ namespace jv
 		gt.startV = scope.GetPortValue(start);
 		gt.start = start;
 		gt.end = end;
-		gt.ma30 = jv::TraderUtils::CreateMA(*gt.tempArena, start, end,
-			jv::Min<uint32_t>(buffer, 30), scope.GetTimeSeries(0).close);
+		gt.ma30 = TraderUtils::CreateMA(*gt.tempArena, start, end,
+			Min<uint32_t>(buffer, 30), scope.GetTimeSeries(0).close);
 		return true;
 	}
 
-	bool GATraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
-		uint32_t current, void* userPtr, jv::Queue<const char*>& output)
+	bool GATraderUpdate(const bt::STBTScope& scope, bt::STBTTrade* trades,
+		uint32_t current, void* userPtr, Queue<bt::OutputMsg>& output)
 	{
 		auto& gt = *reinterpret_cast<GATrader*>(userPtr);
 		float* algo = reinterpret_cast<float*>(gt.training ? gt.ga.GetTrainee() : gt.ga.result); //  gt.ga.generation[0] works
@@ -33,7 +33,7 @@ namespace jv
 		return true;
 	}
 
-	void GATraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output)
+	void GATraderCleanup(const bt::STBTScope& scope, void* userPtr, Queue<bt::OutputMsg>& output)
 	{
 		auto& gt = *reinterpret_cast<GATrader*>(userPtr);
 		const float diff = scope.GetPortValue(gt.end) - gt.startV;
@@ -42,16 +42,16 @@ namespace jv
 		gt.tempArena->DestroyScope(gt.tempScope);
 	}
 
-	void* GACreate(jv::Arena& arena, void* userPtr)
+	void* GACreate(Arena& arena, void* userPtr)
 	{
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
 		auto arr = arena.New<float>(ga->width);
 		for (uint32_t i = 0; i < ga->width; i++)
-			arr[i] = jv::RandF(-1, 1);
+			arr[i] = RandF(-1, 1);
 		return arr;
 	}
 
-	void* GACopy(jv::Arena& arena, void* instance, void* userPtr)
+	void* GACopy(Arena& arena, void* instance, void* userPtr)
 	{
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
 		auto arr = arena.New<float>(ga->width);
@@ -63,14 +63,14 @@ namespace jv
 		return arr;
 	}
 
-	void GAMutate(jv::Arena& arena, void* instance, void* userPtr)
+	void GAMutate(Arena& arena, void* instance, void* userPtr)
 	{
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
 		auto arr = reinterpret_cast<float*>(instance);
 
 		for (uint32_t i = 0; i < ga->width; i++)
 		{
-			if (jv::RandF(0, 1) > ga->mutateChance)
+			if (RandF(0, 1) > ga->mutateChance)
 				continue;
 
 			float& f = arr[i];
@@ -80,21 +80,21 @@ namespace jv
 			{
 				// Add/Sub
 			case 0:
-				f += jv::RandF(-ga->mutateAddition, ga->mutateAddition);
+				f += RandF(-ga->mutateAddition, ga->mutateAddition);
 				break;
 				// Mul/Div
 			case 1:
-				f *= 1.f + jv::RandF(-ga->mutateMultiplier, ga->mutateMultiplier);
+				f *= 1.f + RandF(-ga->mutateMultiplier, ga->mutateMultiplier);
 				break;
 				// New
 			case 2:
-				f = jv::RandF(-1, 1);
+				f = RandF(-1, 1);
 				break;
 			}
 		}
 	}
 
-	void* GABreed(jv::Arena& arena, void* a, void* b, void* userPtr)
+	void* GABreed(Arena& arena, void* a, void* b, void* userPtr)
 	{
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
 
@@ -113,29 +113,29 @@ namespace jv
 
 	GATrader GATrader::Create(Arena& arena, Arena& tempArena)
 	{
-		jv::GATrader trader{};
-		jv::GeneticAlgorithmCreateInfo info{};
+		GATrader trader{};
+		GeneticAlgorithmCreateInfo info{};
 		info.length = trader.length;
 		info.userPtr = &trader;
-		info.breed = jv::GABreed;
-		info.create = jv::GACreate;
-		info.mutate = jv::GAMutate;
-		info.copy = jv::GACopy;
+		info.breed = GABreed;
+		info.create = GACreate;
+		info.mutate = GAMutate;
+		info.copy = GACopy;
 		trader.arena = &arena;
 		trader.tempArena = &tempArena;
-		trader.ga = jv::GeneticAlgorithm::Create(arena, info);
+		trader.ga = GeneticAlgorithm::Create(arena, info);
 		return trader;
 	}
 
-	jv::bt::STBTBot GATrader::GetBot()
+	bt::STBTBot GATrader::GetBot()
 	{
-		jv::bt::STBTBot bot;
+		bt::STBTBot bot;
 		bot.name = "GA trader";
 		bot.description = "Genetic Algorithm Trading.";
 		bot.author = "jannie";
-		bot.init = jv::GATraderInit;
-		bot.update = jv::GATraderUpdate;
-		bot.cleanup = jv::GATraderCleanup;
+		bot.init = GATraderInit;
+		bot.update = GATraderUpdate;
+		bot.cleanup = GATraderCleanup;
 		bot.bools = &training;
 		bot.boolsNames = &boolsNames;
 		bot.boolsLength = 1;

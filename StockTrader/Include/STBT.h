@@ -2,6 +2,7 @@
 #include <Graphics/Renderer.h>
 #include "JLib/Queue.h"
 #include "Portfolio.h"
+#include <OutputMsg.h>
 
 namespace jv::bt
 {
@@ -43,12 +44,12 @@ namespace jv::bt
 
 		// Executes once at the start of a run.
 		bool(*init)(const STBTScope& scope, void* userPtr, uint32_t start, uint32_t end,
-			uint32_t runIndex, uint32_t nRuns, uint32_t buffer, Queue<const char*>& output) = nullptr;
+			uint32_t runIndex, uint32_t nRuns, uint32_t buffer, Queue<OutputMsg>& output) = nullptr;
 		// Executes every day in a run.
 		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, 
-			void* userPtr, Queue<const char*>& output);
+			void* userPtr, Queue<OutputMsg>& output);
 		// Executes at the end of a run.
-		void(*cleanup)(const STBTScope& scope, void* userPtr, Queue<const char*>& output) = nullptr;
+		void(*cleanup)(const STBTScope& scope, void* userPtr, Queue<OutputMsg>& output) = nullptr;
 		// A custom pointer can be given here.
 		void* userPtr = nullptr;
 
@@ -74,7 +75,7 @@ namespace jv::bt
 		gr::Renderer renderer;
 		Tracker tracker;
 		Arena arena, tempArena, frameArena;
-		Queue<const char*> output;
+		Queue<OutputMsg> output;
 		Menu<STBT> menu;
 
 		Array<STBTBot> bots;

@@ -138,6 +138,9 @@
     <ClInclude Include="Include\Ext\ImGuiTextUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\OutputMsg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\dllmain.cpp">

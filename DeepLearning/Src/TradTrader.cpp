@@ -11,11 +11,11 @@ namespace jv
 	bool TradTraderInit(const jv::bt::STBTScope& scope, void* userPtr,
 		const uint32_t start, const uint32_t end,
 		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
-		jv::Queue<const char*>& output)
+		jv::Queue<bt::OutputMsg>& output)
 	{
 		if (buffer < T_LEN)
 		{
-			output.Add() = "ABORTED: Buffer needs to be this at least 50.";
+			output.Add() = bt::OutputMsg::Create("Buffer needs to be this at least 50.", bt::OutputMsg::error);
 			return false;
 		}
 
@@ -39,7 +39,7 @@ namespace jv
 	}
 
 	bool TradTraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
-		uint32_t current, void* userPtr, jv::Queue<const char*>& output)
+		uint32_t current, void* userPtr, jv::Queue<bt::OutputMsg>& output)
 	{
 		auto& trader = *reinterpret_cast<TradTrader*>(userPtr);
 		const auto tempScope = trader.tempArena->CreateScope();
@@ -78,7 +78,7 @@ namespace jv
 		return true;
 	}
 
-	void TradTraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output)
+	void TradTraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<bt::OutputMsg>& output)
 	{
 		auto& trader = *reinterpret_cast<TradTrader*>(userPtr);
 		trader.arena->DestroyScope(trader.runScope );

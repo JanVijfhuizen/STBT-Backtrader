@@ -176,6 +176,7 @@
     <ClInclude Include="Include\JLib\VectorUtils.h" />
     <ClInclude Include="Include\Log.h" />
     <ClInclude Include="Include\MenuItems\MI_Main.h" />
+    <ClInclude Include="Include\OutputMsg.h" />
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\Graphics\Shader.h" />
     <ClInclude Include="Include\Portfolio.h" />

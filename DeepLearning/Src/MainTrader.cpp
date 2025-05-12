@@ -34,16 +34,16 @@ namespace jv
 		return "Bots/" + std::string(file) + ".bot";
 	}
 
-	void* MTCreate(jv::Arena& arena, void* userPtr)
+	void* MTCreate(Arena& arena, void* userPtr)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
 		auto arr = arena.New<float>(mt->width);
 		for (uint32_t i = 0; i < mt->width; i++)
-			arr[i] = jv::RandF(-1, 1);
+			arr[i] = RandF(-1, 1);
 		return arr;
 	}
 
-	void* MTCopy(jv::Arena& arena, void* instance, void* userPtr)
+	void* MTCopy(Arena& arena, void* instance, void* userPtr)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
 		auto arr = arena.New<float>(mt->width);
@@ -55,14 +55,14 @@ namespace jv
 		return arr;
 	}
 
-	void MTMutate(jv::Arena& arena, void* instance, void* userPtr)
+	void MTMutate(Arena& arena, void* instance, void* userPtr)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
 		auto arr = reinterpret_cast<float*>(instance);
 
 		for (uint32_t i = 0; i < mt->width; i++)
 		{
-			if (jv::RandF(0, 1) > mt->mutateChance)
+			if (RandF(0, 1) > mt->mutateChance)
 				continue;
 
 			float& f = arr[i];
@@ -72,21 +72,21 @@ namespace jv
 			{
 				// Add/Sub
 			case 0:
-				f += jv::RandF(-mt->mutateAddition, mt->mutateAddition);
+				f += RandF(-mt->mutateAddition, mt->mutateAddition);
 				break;
 				// Mul/Div
 			case 1:
-				f *= 1.f + jv::RandF(-mt->mutateMultiplier, mt->mutateMultiplier);
+				f *= 1.f + RandF(-mt->mutateMultiplier, mt->mutateMultiplier);
 				break;
 				// New
 			case 2:
-				f = jv::RandF(-1, 1);
+				f = RandF(-1, 1);
 				break;
 			}
 		}
 	}
 
-	void* MTBreed(jv::Arena& arena, void* a, void* b, void* userPtr)
+	void* MTBreed(Arena& arena, void* a, void* b, void* userPtr)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
 
@@ -103,10 +103,10 @@ namespace jv
 		return c;
 	}
 
-	bool MainTraderInit(const jv::bt::STBTScope& scope, void* userPtr,
+	bool MainTraderInit(const bt::STBTScope& scope, void* userPtr,
 		const uint32_t start, const uint32_t end,
 		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
-		jv::Queue<const char*>& output)
+		Queue<bt::OutputMsg>& output)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
 		mt->isFinalRun = runIndex == nRuns - 1;
@@ -144,7 +144,7 @@ namespace jv
 		const uint32_t min = Max(mt->modMA.mas1Len, mt->modMA.mas2Len);
 		if (buffer < min)
 		{
-			output.Add() = "ABORTED: Buffer too small.";
+			output.Add() = bt::OutputMsg::Create("Buffer too small.", bt::OutputMsg::error);
 			return false;
 		}
 
@@ -157,15 +157,15 @@ namespace jv
 		return mt->manager.Init(*mt->arena, info, scope, output);
 	}
 
-	bool MainTraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
-		const uint32_t current, void* userPtr, jv::Queue<const char*>& output)
+	bool MainTraderUpdate(const bt::STBTScope& scope, bt::STBTTrade* trades,
+		const uint32_t current, void* userPtr, Queue<bt::OutputMsg>& output)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
 		mt->end = current;
 		return mt->manager.Update(*mt->tempArena, scope, trades, output, current);
 	}
 
-	void MainTraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output)
+	void MainTraderCleanup(const bt::STBTScope& scope, void* userPtr, Queue<bt::OutputMsg>& output)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
 
@@ -177,7 +177,7 @@ namespace jv
 			if (++mt->currentInstanceRun >= mt->runsPerInstance)
 			{
 				mt->ga.debug = true;
-				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating);
+				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating);	
 				mt->rating = 0;
 			}
 		}
@@ -238,14 +238,14 @@ namespace jv
 	}
 	void MainTrader::InitGA()
 	{
-		jv::GeneticAlgorithmCreateInfo info{};
+		GeneticAlgorithmCreateInfo info{};
 		info.length = 80;
 		info.userPtr = this;
 		info.breed = MTBreed;
 		info.create = MTCreate;
 		info.mutate = MTMutate;
 		info.copy = MTCopy;
-		ga = jv::GeneticAlgorithm::Create(*arena, info);
+		ga = GeneticAlgorithm::Create(*arena, info);
 
 		currentInstanceRun = 0;
 	}

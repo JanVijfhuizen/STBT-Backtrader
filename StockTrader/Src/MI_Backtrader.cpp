@@ -611,13 +611,13 @@ namespace jv::bt
 			if (algoIndex == -1)
 			{
 				valid = false;
-				stbt.output.Add() = "ERROR: No algorithm selected!";
+				stbt.output.Add() = OutputMsg::Create("No algorithm selected!", OutputMsg::error);
 			}
 
 			if (symbolIndex == -1)
 			{
 				valid = false;
-				stbt.output.Add() = "ERROR: No symbols available!";
+				stbt.output.Add() = OutputMsg::Create("No symbols available!", OutputMsg::error);
 			}
 
 			if (valid)
@@ -628,7 +628,7 @@ namespace jv::bt
 				if (stbt.range - 1 < buffer)
 				{
 					valid = false;
-					stbt.output.Add() = "ERROR: Buffer range is out of scope!";
+					stbt.output.Add() = OutputMsg::Create("Buffer range is out of scope!", OutputMsg::error);
 				}
 
 				const uint32_t daysDiff = stbt.range - 1 - buffer;
@@ -636,7 +636,7 @@ namespace jv::bt
 				if (randomizeDate && daysDiff < buffer + length)
 				{
 					valid = false;
-					stbt.output.Add() = "ERROR: Length is out of scope!";
+					stbt.output.Add() = OutputMsg::Create("Length is out of scope!", OutputMsg::error);
 				}
 
 				if (valid)

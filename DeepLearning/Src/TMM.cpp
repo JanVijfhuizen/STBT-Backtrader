@@ -17,7 +17,7 @@ namespace jv::tmm
 	{
 		modules[index] = module;
 	}
-	bool Manager::Init(Arena& arena, const Info& info, const jv::bt::STBTScope& scope, jv::Queue<const char*>& output)
+	bool Manager::Init(Arena& arena, const Info& info, const jv::bt::STBTScope& scope, jv::Queue<bt::OutputMsg>& output)
 	{
 		runScope = arena.CreateScope();
 		for (uint32_t i = 0; i < length; i++)
@@ -31,7 +31,7 @@ namespace jv::tmm
 		return true;
 	}
 	bool Manager::Update(Arena& tempArena, const jv::bt::STBTScope& scope, 
-		jv::bt::STBTTrade* trades, jv::Queue<const char*>& output, const uint32_t current)
+		jv::bt::STBTTrade* trades, jv::Queue<bt::OutputMsg>& output, const uint32_t current)
 	{
 		auto tempScope = tempArena.CreateScope();
 		Array<float*> values = CreateArray<float*>(tempArena, length);
@@ -57,7 +57,7 @@ namespace jv::tmm
 		tempArena.DestroyScope(tempScope);
 		return true;
 	}
-	void Manager::Cleanup(Arena& arena, jv::Queue<const char*>& output)
+	void Manager::Cleanup(Arena& arena, jv::Queue<bt::OutputMsg>& output)
 	{
 		for (int32_t i = length - 1; i >= 0; i--)
 			modules[i]->Cleanup(arena, output);
@@ -68,7 +68,7 @@ namespace jv::tmm
 		arena.DestroyScope(manager.scope);
 	}
 	void DefaultTrader(Arena& tempArena, const bt::STBTScope& scope, Array<float*> values, 
-		bt::STBTTrade* trades, Queue<const char*>& output, const uint32_t current)
+		bt::STBTTrade* trades, Queue<bt::OutputMsg>& output, const uint32_t current)
 	{
 		const uint32_t l = scope.GetTimeSeriesCount();
 		float* result = tempArena.New<float>(l);

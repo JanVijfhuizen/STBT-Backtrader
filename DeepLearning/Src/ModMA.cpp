@@ -4,7 +4,7 @@
 
 namespace jv
 {
-	bool ModMA::Init(Arena& arena, const tmm::Info& info, const bt::STBTScope& scope, Queue<const char*>& output)
+	bool ModMA::Init(Arena& arena, const tmm::Info& info, const bt::STBTScope& scope, Queue<bt::OutputMsg>& output)
 	{
 		start = info.start;
 		end = info.end;
@@ -24,7 +24,7 @@ namespace jv
 	}
 
 	bool ModMA::Update(Arena& tempArena, const bt::STBTScope& scope, 
-		float* values, Queue<const char*>& output, const uint32_t current)
+		float* values, Queue<bt::OutputMsg>& output, const uint32_t current)
 	{
 		auto tempScope = tempArena.CreateScope();
 
@@ -52,7 +52,7 @@ namespace jv
 		return true;
 	}
 
-	void ModMA::Cleanup(Arena& arena, Queue<const char*>& output)
+	void ModMA::Cleanup(Arena& arena, Queue<bt::OutputMsg>& output)
 	{
 	}
 	uint32_t ModMA::GetValuesLength(const bt::STBTScope& scope)

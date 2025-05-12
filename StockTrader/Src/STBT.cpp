@@ -32,7 +32,7 @@ namespace jv::bt
 		ImGui::SetWindowPos({ 0, 400 });
 		ImGui::SetWindowSize({ 200.f * (menu.index == 0 ? 1 : 2), 200});
 		for (auto& a : output)
-			ImGui::Text(a);
+			ImGui::Text(a.buffer);
 		
 		ImGui::End();
 
@@ -61,7 +61,7 @@ namespace jv::bt
 		stbt.frameArena = Arena::Create(arenaCreateInfo);
 
 		// Create output log and copy bots.
-		stbt.output = CreateQueue<const char*>(stbt.arena, 50);
+		stbt.output = CreateQueue<OutputMsg>(stbt.arena, 50);
 		stbt.bots = CreateArray<STBTBot>(stbt.arena, botCount);
 		for (uint32_t i = 0; i < botCount; i++)
 			stbt.bots[i] = bots[i];

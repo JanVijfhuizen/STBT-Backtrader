@@ -17,7 +17,7 @@ namespace jv::bt
 
 		std::string strLicense = stbt.license;
 		if (strLicense == "")
-			stbt.output.Add() = "WARNING: Missing licensing.";
+			stbt.output.Add() = OutputMsg::Create("Missing licensing.", OutputMsg::warning);
 	}
 
 	void MI_Licensing::Load(STBT& stbt)

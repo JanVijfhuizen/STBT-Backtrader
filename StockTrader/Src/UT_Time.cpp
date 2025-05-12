@@ -42,7 +42,7 @@ namespace jv::bt
 				tCurrent = current;
 			else if (tCurrent != current)
 			{
-				stbt.output.Add() = "ERROR: Some symbol data is outdated.";
+				stbt.output.Add() = OutputMsg::Create("Symbol data is outdated.", OutputMsg::error);
 				return false;
 			}
 			length = Min<uint32_t>(length, series.length);

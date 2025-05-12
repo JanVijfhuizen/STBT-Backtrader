@@ -17,10 +17,10 @@ namespace jv
 		float** mas2;
 
 		bool Init(Arena& arena, const tmm::Info& info,
-			const jv::bt::STBTScope& scope, Queue<const char*>& output) override;
+			const jv::bt::STBTScope& scope, Queue<bt::OutputMsg>& output) override;
 		bool Update(Arena& tempArena, const bt::STBTScope& scope, 
-			float* values, Queue<const char*>& output, uint32_t current) override;
-		void Cleanup(Arena& arena, Queue<const char*>& output) override;
+			float* values, Queue<bt::OutputMsg>& output, uint32_t current) override;
+		void Cleanup(Arena& arena, Queue<bt::OutputMsg>& output) override;
 		uint32_t GetValuesLength(const bt::STBTScope& scope) override;
 	};
 }

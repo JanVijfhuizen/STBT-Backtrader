@@ -29,6 +29,11 @@ namespace jv
 		}
 	};
 
+	[[nodiscard]] std::string ConvToFilePath(const char* file)
+	{
+		return "Bots/" + std::string(file) + ".bot";
+	}
+
 	void* MTCreate(jv::Arena& arena, void* userPtr)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
@@ -104,6 +109,25 @@ namespace jv
 		jv::Queue<const char*>& output)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(userPtr);
+		mt->isFinalRun = runIndex == nRuns - 1;
+
+		// Replace GA result if there is a savefile that it can be loaded from.
+		if(!mt->training)
+			if (!std::string(mt->loadFile).empty())
+			{
+				const auto path = ConvToFilePath(mt->loadFile);
+				std::ifstream fin(path);
+				if (fin.is_open())
+				{
+					float* result = reinterpret_cast<float*>(mt->ga.result);
+					std::string line;
+					for (uint32_t i = 0; i < mt->width; i++)
+					{
+						std::getline(fin, line);
+						result[i] = std::stof(line);
+					}
+				}
+			}
 
 		mt->modMA = {};
 		mt->manager = tmm::Manager::Create(*mt->arena, 1);
@@ -158,6 +182,23 @@ namespace jv
 			}
 		}
 
+		// Save result of training to a file, so that it can be used later.
+		if (mt->isFinalRun && mt->training)
+		{
+			if (!std::string(mt->saveFile).empty())
+			{
+				const auto path = ConvToFilePath(mt->saveFile);
+				std::ofstream fout(path);
+				assert(fout.is_open());
+
+				float* result = reinterpret_cast<float*>(mt->ga.result);
+				for (uint32_t i = 0; i < mt->width; i++)
+					fout << result[i] << std::endl;
+
+				fout.close();
+			}
+		}
+
 		tmm::Manager::Destroy(*mt->arena, mt->manager);
 	}
 
@@ -175,6 +216,9 @@ namespace jv
 	}
 	bt::STBTBot MainTrader::GetBot()
 	{
+		buffers[0] = loadFile;
+		buffers[1] = saveFile;
+
 		bt::STBTBot bot{};
 		bot.name = "Main trader";
 		bot.description = "First Big Attempt.";
@@ -186,6 +230,10 @@ namespace jv
 		bot.bools = &training;
 		bot.boolsNames = &boolsNames;
 		bot.boolsLength = 1;
+		bot.buffers = buffers;
+		bot.bufferNames = bufferNames;
+		bot.buffersLength = 2;
+		bot.bufferSizes = bufferSizes;
 		return bot;
 	}
 	void MainTrader::InitGA()

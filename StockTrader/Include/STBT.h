@@ -57,7 +57,7 @@ namespace jv::bt
 		const char** boolsNames;
 		uint32_t boolsLength = 0;
 		char** buffers;
-		const char** buffersNames;
+		const char** bufferNames;
 		uint32_t* bufferSizes;
 		uint32_t buffersLength = 0;
 	};

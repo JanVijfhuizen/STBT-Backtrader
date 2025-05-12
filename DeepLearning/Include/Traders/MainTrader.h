@@ -5,6 +5,8 @@
 
 namespace jv
 {
+	constexpr uint32_t MT_BUFFER_SIZE = 16;
+
 	struct MainTrader final
 	{
 		Arena* arena;
@@ -16,6 +18,19 @@ namespace jv
 
 		bool training = true;
 		const char* boolsNames = "Training";
+		char loadFile[MT_BUFFER_SIZE] = "";
+		char saveFile[MT_BUFFER_SIZE] = "";
+		char* buffers[2];
+		const char* bufferNames[2]
+		{
+			"LoadFile",
+			"SaveFile"
+		};
+		uint32_t bufferSizes[2]
+		{
+			MT_BUFFER_SIZE,
+			MT_BUFFER_SIZE
+		};
 
 		// Optimizer
 		GeneticAlgorithm ga;
@@ -31,6 +46,8 @@ namespace jv
 
 		float startV;
 		uint32_t end;
+
+		bool isFinalRun;
 
 		[[nodiscard]] static MainTrader Create(Arena& arena, Arena& tempArena);
 		static void Destroy(Arena& arena, MainTrader& trader);

@@ -253,7 +253,7 @@ namespace jv::bt
 					runDayIndex = 0;
 					if (bot.init)
 						if (!bot.init(stbtScope, bot.userPtr, runInfo.from, runInfo.to, 
-							runIndex, runInfo.length, runInfo.buffer, stbt.output))
+							runIndex, runInfo.totalRuns, runInfo.buffer, stbt.output))
 							runDayIndex = runInfo.length;
 
 					runScope = stbt.arena.CreateScope();
@@ -547,8 +547,10 @@ namespace jv::bt
 
 				for (uint32_t i = 0; i < bot.buffersLength; i++)
 				{
-					ImGui::Text(bot.buffersNames[i]);
+					ImGui::Text(bot.bufferNames[i]);
+					ImGui::PushID(i);
 					ImGui::InputText("##", bot.buffers[i], bot.bufferSizes[i]);
+					ImGui::PopID();
 				}
 			}
 		}

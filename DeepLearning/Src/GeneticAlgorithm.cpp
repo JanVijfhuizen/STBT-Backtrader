@@ -14,7 +14,7 @@ namespace jv
 		return generation[trainId];
 	}
 
-	void GeneticAlgorithm::Rate(Arena& arena, Arena& tempArena, const float rating)
+	void GeneticAlgorithm::Rate(Arena& arena, Arena& tempArena, const float rating, Queue<bt::OutputMsg>& output)
 	{
 		// Finish generation and start new one if applicable.
 		genRatings[trainId++] = rating;
@@ -48,7 +48,10 @@ namespace jv
 				genScope = arena.CreateScope();
 
 				if (debug)
-					std::cout << "GAR: " << bestRating << std::endl;
+				{
+					auto str = "GAR: " + std::to_string(bestRating);
+					output.Add() = bt::OutputMsg::Create(str.c_str());
+				}
 			}
 
 			tempArena.DestroyScope(tempScope);

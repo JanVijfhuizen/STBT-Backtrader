@@ -179,7 +179,7 @@ namespace jv
 			if (++mt->currentInstanceRun >= mt->runsPerInstance)
 			{
 				mt->ga.debug = true;
-				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating);	
+				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating, output);	
 				mt->rating = 0;
 			}
 		}

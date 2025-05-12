@@ -38,7 +38,7 @@ namespace jv
 		auto& gt = *reinterpret_cast<GATrader*>(userPtr);
 		const float diff = scope.GetPortValue(gt.end) - gt.startV;
 		if (gt.training)
-			gt.ga.Rate(*gt.arena, *gt.tempArena, diff);
+			gt.ga.Rate(*gt.arena, *gt.tempArena, diff, output);
 		gt.tempArena->DestroyScope(gt.tempScope);
 	}
 

@@ -27,10 +27,15 @@ namespace jv::bt
 		if (quit)
 			return true;
 
+		uint32_t mul = menu.index == 0 ? 1 : 2;
+		mul = outputFocused ? 4 : mul;
+
 		// Draw output window.
-		ImGui::Begin("Output", nullptr, WIN_FLAGS);
+		ImGui::Begin("Output", nullptr, WIN_FLAGS | ImGuiWindowFlags_HorizontalScrollbar);
 		ImGui::SetWindowPos({ 0, 400 });
-		ImGui::SetWindowSize({ 200.f * (menu.index == 0 ? 1 : 2), 200});
+		ImGui::SetWindowSize({ 200.f * mul, 200});
+		outputFocused = ImGui::IsWindowFocused();
+		
 		for (auto& a : output)
 			ImGui::Text(a.buffer);
 		
@@ -78,6 +83,7 @@ namespace jv::bt
 		// Initialize basic settings.
 		stbt.graphType = 0;
 		stbt.range = DAYS_DEFAULT;
+		stbt.outputFocused = true;
 
 		return stbt;
 	}

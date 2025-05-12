@@ -194,6 +194,7 @@
     <ClInclude Include="Include\Utils\UT_Time.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\OutputMsg.cpp" />
     <ClCompile Include="Src\ImGuiTextUtils.cpp" />
     <ClCompile Include="Src\Log.cpp" />
     <ClCompile Include="Src\Portfolio.cpp" />

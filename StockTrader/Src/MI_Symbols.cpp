@@ -59,6 +59,12 @@ namespace jv::bt
 			if (c[0] == '{')
 			{
 				stbt.output.Add() = OutputMsg::Create("Unable to download symbol data.", OutputMsg::error);
+
+				const auto scope = stbt.tempArena.CreateScope();
+				const auto msgs = OutputMsg::CreateMultiple(stbt.tempArena, c.c_str());
+				for (auto& msg : msgs)
+					stbt.output.Add() = msg;
+				stbt.tempArena.DestroyScope(scope);
 				return false;
 			}
 

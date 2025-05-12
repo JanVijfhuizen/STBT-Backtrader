@@ -83,6 +83,7 @@ namespace jv::bt
 		char license[32];
 		int graphType;
 		uint32_t range;
+		bool outputFocused;
 
 		__declspec(dllexport) bool Update();
 	};

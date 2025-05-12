@@ -212,5 +212,8 @@
     <ClCompile Include="Src\ImGuiTextUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Src\OutputMsg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

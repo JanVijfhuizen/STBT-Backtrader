@@ -15,7 +15,8 @@ namespace jv
 	{
 		if (buffer < T_LEN)
 		{
-			output.Add() = bt::OutputMsg::Create("Buffer needs to be this at least 50.", bt::OutputMsg::error);
+			auto str = "Buffer needs to be this at least " + std::to_string(T_LEN) + ".";
+			output.Add() = bt::OutputMsg::Create(str.c_str(), bt::OutputMsg::error);
 			return false;
 		}
 

@@ -145,6 +145,8 @@ namespace jv
 		if (buffer < min)
 		{
 			output.Add() = bt::OutputMsg::Create("Buffer too small.", bt::OutputMsg::error);
+			auto c = "Minimum size needed: " + std::to_string(min);
+			output.Add() = bt::OutputMsg::Create(c.c_str());
 			return false;
 		}
 

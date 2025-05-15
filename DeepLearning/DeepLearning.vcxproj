@@ -27,8 +27,10 @@
     <ClInclude Include="Include\Traders\MainTrader.h" />
     <ClInclude Include="Include\Traders\TMM.h" />
     <ClInclude Include="Include\Traders\Modules\ModMA.h" />
+    <ClInclude Include="Include\Traders\Modules\ModBounds.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\ModBounds.cpp" />
     <ClCompile Include="Src\ModMA.cpp" />
     <ClCompile Include="Src\MainTrader.cpp" />
     <ClCompile Include="Src\GATrader.cpp" />

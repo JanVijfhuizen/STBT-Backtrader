@@ -1003,7 +1003,7 @@ namespace jv::bt
 		if (!render)
 			return;
 
-		const uint32_t CHUNKS = 100;
+		const uint32_t CHUNKS = Min<uint32_t>(5 + 2 * (runIndex * .1f), 99);
 		
 		glm::vec2* arrs[]
 		{
@@ -1025,7 +1025,7 @@ namespace jv::bt
 
 		for (uint32_t i = 0; i < 2; i++)
 		{
-			uint32_t distribution[CHUNKS]{};
+			auto distribution = CreateArray<uint32_t>(stbt.frameArena, CHUNKS);
 			auto arr = arrs[i];
 
 			const float m = static_cast<float>(CHUNKS - 1) / 2;
@@ -1038,13 +1038,6 @@ namespace jv::bt
 				++distribution[pos];
 			}
 
-			glm::vec2 points[CHUNKS];
-			for (uint32_t i = 0; i < CHUNKS; i++)
-			{
-				points[i].y = static_cast<float>(distribution[i]) / runIndex;
-				points[i].x = -.5f + (1.f / static_cast<float>(CHUNKS - 1) * i);
-			}
-
 			glm::vec2 grPos = { 0, 0 };
 			grPos.x += .5f;
 			grPos.y += .14f;
@@ -1052,16 +1045,18 @@ namespace jv::bt
 			std::string title = "Bell Curve [R] Pct [G] Rel [X] ";
 			title += std::format("{:.2f}", width * 100);
 			title += "%%";
-			
-			gr::DrawScatterGraphInfo info{};
+
+			gr::DrawDistributionGraphInfo info{};
 			info.aspectRatio = stbt.renderer.GetAspectRatio();
 			info.position = grPos;
-			info.points = points;
+			info.values = distribution.ptr;
 			info.length = CHUNKS;
 			info.title = i == 0 ? title.c_str() : nullptr;
 			info.scale = glm::vec2(1.3);
-			info.colors = &colors[i];
-			stbt.renderer.DrawScatterGraph(info);
+			info.color = colors[i];
+			info.noBackground = i == 1;
+			info.inverse = i == 1;
+			stbt.renderer.DrawDistributionGraph(info);
 		}
 	}
 

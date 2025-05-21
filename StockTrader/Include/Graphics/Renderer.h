@@ -42,6 +42,21 @@ namespace jv::gr
 		bool textIsButton = false;
 	};
 
+	struct DrawDistributionGraphInfo final
+	{
+		glm::vec2 position;
+		glm::vec4 color;
+		uint32_t length;
+		uint32_t* values;
+
+		const char* title = nullptr;
+		glm::vec2 scale{ 1 };
+		float aspectRatio = 1;
+		bool noBackground = false;
+		bool textIsButton = false;
+		bool inverse = false;
+	};
+
 	struct DrawScatterGraphInfo final
 	{
 		glm::vec2 position;
@@ -86,6 +101,7 @@ namespace jv::gr
 		void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color);
 		void DrawPoint(glm::vec2 position, glm::vec4 color, float size);
 		bool DrawScatterGraph(DrawScatterGraphInfo info);
+		bool DrawDistributionGraph(DrawDistributionGraphInfo info);
 		bool DrawLineGraph(DrawLineGraphInfo info);
 	};
 

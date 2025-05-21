@@ -4,41 +4,37 @@
 
 namespace jv 
 {
-	bool GATraderInit(const bt::STBTScope& scope, void* userPtr,
-		const uint32_t start, const uint32_t end,
-		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
-		Queue<bt::OutputMsg>& output)
+	bool GATraderInit(const bt::STBTBotInfo& info)
 	{
-		auto& gt = *reinterpret_cast<GATrader*>(userPtr);
+		auto& gt = *reinterpret_cast<GATrader*>(info.userPtr);
 		gt.tempScope = gt.tempArena->CreateScope();
 
-		gt.startV = scope.GetPortValue(start);
-		gt.start = start;
-		gt.end = end;
-		gt.ma30 = TraderUtils::CreateMA(*gt.tempArena, start, end,
-			Min<uint32_t>(buffer, 30), scope.GetTimeSeries(0).close);
+		gt.startV = info.scope->GetPortValue(info.start);
+		gt.start = info.start;
+		gt.end = info.end;
+		gt.ma30 = TraderUtils::CreateMA(*gt.tempArena, info.start, info.end,
+			Min<uint32_t>(info.buffer, 30), info.scope->GetTimeSeries(0).close);
 		return true;
 	}
 
-	bool GATraderUpdate(const bt::STBTScope& scope, bt::STBTTrade* trades,
-		uint32_t current, void* userPtr, Queue<bt::OutputMsg>& output)
+	bool GATraderUpdate(const bt::STBTBotUpdateInfo& info)
 	{
-		auto& gt = *reinterpret_cast<GATrader*>(userPtr);
-		float* algo = reinterpret_cast<float*>(gt.training ? gt.ga.GetTrainee() : gt.ga.result); //  gt.ga.generation[0] works
+		auto& gt = *reinterpret_cast<GATrader*>(info.userPtr);
+		float* algo = reinterpret_cast<float*>(info.training ? gt.ga.GetTrainee() : gt.ga.result); //  gt.ga.generation[0] works
 
 		float v;
-		v = algo[current];
-		trades[0].change = v > 0 ? 1e9 : -1e9;
-		gt.end = current;
+		v = algo[info.current];
+		info.trades[0].change = v > 0 ? 1e9 : -1e9;
+		gt.end = info.current;
 		return true;
 	}
 
-	void GATraderCleanup(const bt::STBTScope& scope, void* userPtr, Queue<bt::OutputMsg>& output)
+	void GATraderCleanup(const bt::STBTBotInfo& info)
 	{
-		auto& gt = *reinterpret_cast<GATrader*>(userPtr);
-		const float diff = scope.GetPortValue(gt.end) - gt.startV;
-		if (gt.training)
-			gt.ga.Rate(*gt.arena, *gt.tempArena, diff, output);
+		auto& gt = *reinterpret_cast<GATrader*>(info.userPtr);
+		const float diff = info.scope->GetPortValue(gt.end) - gt.startV;
+		if (info.training)
+			gt.ga.Rate(*gt.arena, *gt.tempArena, diff, *info.output);
 		gt.tempArena->DestroyScope(gt.tempScope);
 	}
 
@@ -136,9 +132,6 @@ namespace jv
 		bot.init = GATraderInit;
 		bot.update = GATraderUpdate;
 		bot.cleanup = GATraderCleanup;
-		bot.bools = &training;
-		bot.boolsNames = &boolsNames;
-		bot.boolsLength = 1;
 		bot.userPtr = this;
 		return bot;
 	}

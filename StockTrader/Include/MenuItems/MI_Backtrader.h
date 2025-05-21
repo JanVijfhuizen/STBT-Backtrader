@@ -39,6 +39,7 @@ namespace jv::bt
 		char feeBuffer[8];
 		char runCountBuffer[8];
 		bool log;
+		bool training;
 		bool pauseOnFinish;
 		bool pauseOnFinishAll;
 		bool running;

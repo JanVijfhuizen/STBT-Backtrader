@@ -13,11 +13,11 @@ namespace jv
 		float buyThresh;
 		float sellThresh;
 
-		[[nodiscard]] static GAResult Get(MainTrader& mt) 
+		[[nodiscard]] static GAResult Get(MainTrader& mt, const bool training) 
 		{
 			GAResult result;
 
-			auto instance = mt.training ? mt.ga.GetTrainee() : mt.ga.result;
+			auto instance = training ? mt.ga.GetTrainee() : mt.ga.result;
 			float* output = reinterpret_cast<float*>(instance);
 
 			result.mas1Len = Clamp<int32_t>(round(output[0] * 30), 1, 30);
@@ -103,16 +103,13 @@ namespace jv
 		return c;
 	}
 
-	bool MainTraderInit(const bt::STBTScope& scope, void* userPtr,
-		const uint32_t start, const uint32_t end,
-		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
-		Queue<bt::OutputMsg>& output)
+	bool MainTraderInit(const bt::STBTBotInfo& info)
 	{
-		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		mt->isFinalRun = runIndex == nRuns - 1;
+		auto mt = reinterpret_cast<MainTrader*>(info.userPtr);
+		mt->isFinalRun = info.runIndex == info.nRuns - 1;
 
 		// Replace GA result if there is a savefile that it can be loaded from.
-		if(!mt->training)
+		if(!info.training)
 			if (!std::string(mt->loadFile).empty())
 			{
 				const auto path = ConvToFilePath(mt->loadFile);
@@ -133,59 +130,58 @@ namespace jv
 		mt->manager = tmm::Manager::Create(*mt->arena, 1);
 		mt->manager.Set(0, &mt->modMA);
 
-		auto res = GAResult::Get(*mt);
+		auto res = GAResult::Get(*mt, info.training);
 		mt->modMA.mas1Len = res.mas1Len;
 		mt->modMA.mas2Len = res.mas2Len;
 		mt->modMA.buyThreshPct = res.buyThresh;
 		mt->modMA.sellThreshPct = res.sellThresh;
 
-		mt->startV = scope.GetPortValue(start);
+		mt->startV = info.scope->GetPortValue(info.start);
 
 		const uint32_t min = Max(mt->modMA.mas1Len, mt->modMA.mas2Len);
-		if (buffer < min)
+		if (info.buffer < min)
 		{
-			output.Add() = bt::OutputMsg::Create("Buffer too small.", bt::OutputMsg::error);
+			info.output->Add() = bt::OutputMsg::Create("Buffer too small.", bt::OutputMsg::error);
 			auto c = "Minimum size needed: " + std::to_string(min);
-			output.Add() = bt::OutputMsg::Create(c.c_str());
+			info.output->Add() = bt::OutputMsg::Create(c.c_str());
 			return false;
 		}
 
-		tmm::Info info{};
-		info.start = start;
-		info.end = end;
-		info.runIndex = runIndex;
-		info.nRuns = nRuns;
-		info.buffer = buffer;
-		return mt->manager.Init(*mt->arena, info, scope, output);
+		tmm::Info tmmInfo{};
+		tmmInfo.start = info.start;
+		tmmInfo.end = info.end;
+		tmmInfo.runIndex = info.runIndex;
+		tmmInfo.nRuns = info.nRuns;
+		tmmInfo.buffer = info.buffer;
+		return mt->manager.Init(*mt->arena, tmmInfo, *info.scope, *info.output);
 	}
 
-	bool MainTraderUpdate(const bt::STBTScope& scope, bt::STBTTrade* trades,
-		const uint32_t current, void* userPtr, Queue<bt::OutputMsg>& output)
+	bool MainTraderUpdate(const bt::STBTBotUpdateInfo& info)
 	{
-		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		mt->end = current;
-		return mt->manager.Update(*mt->tempArena, scope, trades, output, current);
+		auto mt = reinterpret_cast<MainTrader*>(info.userPtr);
+		mt->end = info.current;
+		return mt->manager.Update(*mt->tempArena, *info.scope, info.trades, *info.output, info.current);
 	}
 
-	void MainTraderCleanup(const bt::STBTScope& scope, void* userPtr, Queue<bt::OutputMsg>& output)
+	void MainTraderCleanup(const bt::STBTBotInfo& info)
 	{
-		auto mt = reinterpret_cast<MainTrader*>(userPtr);
+		auto mt = reinterpret_cast<MainTrader*>(info.userPtr);
 
-		const float diff = scope.GetPortValue(mt->end) - mt->startV;
+		const float diff = info.scope->GetPortValue(mt->end) - mt->startV;
 
-		if (mt->training)
+		if (info.training)
 		{
 			mt->rating += diff;
 			if (++mt->currentInstanceRun >= mt->runsPerInstance)
 			{
 				mt->ga.debug = true;
-				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating, output);	
+				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating, *info.output);
 				mt->rating = 0;
 			}
 		}
 
 		// Save result of training to a file, so that it can be used later.
-		if (mt->isFinalRun && mt->training)
+		if (mt->isFinalRun && info.training)
 		{
 			if (!std::string(mt->saveFile).empty())
 			{
@@ -229,9 +225,6 @@ namespace jv
 		bot.update = MainTraderUpdate;
 		bot.cleanup = MainTraderCleanup;
 		bot.userPtr = this;
-		bot.bools = &training;
-		bot.boolsNames = &boolsNames;
-		bot.boolsLength = 1;
 		bot.buffers = buffers;
 		bot.bufferNames = bufferNames;
 		bot.buffersLength = 2;

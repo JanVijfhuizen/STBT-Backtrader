@@ -35,6 +35,25 @@ namespace jv::bt
 		int32_t change = 0;
 	};
 
+	struct STBTBotInfo
+	{
+		STBTScope* scope;
+		Queue<OutputMsg>* output;
+		void* userPtr;
+		uint32_t start;
+		uint32_t end;
+		uint32_t runIndex;
+		uint32_t nRuns;
+		uint32_t buffer;
+		bool training;
+	};
+
+	struct STBTBotUpdateInfo final : STBTBotInfo
+	{
+		STBTTrade* trades;
+		uint32_t current;
+	};
+
 	// AI stock trader. Can be tested in the STBT program.
 	struct STBTBot final
 	{
@@ -43,13 +62,11 @@ namespace jv::bt
 		const char* description = "NO DESCRIPTION GIVEN";
 
 		// Executes once at the start of a run.
-		bool(*init)(const STBTScope& scope, void* userPtr, uint32_t start, uint32_t end,
-			uint32_t runIndex, uint32_t nRuns, uint32_t buffer, Queue<OutputMsg>& output) = nullptr;
+		bool(*init)(const STBTBotInfo& info) = nullptr;
 		// Executes every day in a run.
-		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, 
-			void* userPtr, Queue<OutputMsg>& output);
+		bool(*update)(const STBTBotUpdateInfo& info);
 		// Executes at the end of a run.
-		void(*cleanup)(const STBTScope& scope, void* userPtr, Queue<OutputMsg>& output) = nullptr;
+		void(*cleanup)(const STBTBotInfo& info) = nullptr;
 		// A custom pointer can be given here.
 		void* userPtr = nullptr;
 

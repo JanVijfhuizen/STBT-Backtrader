@@ -16,8 +16,6 @@ namespace jv
 		ModMA modMA;
 		tmm::Manager manager;
 
-		bool training = true;
-		const char* boolsNames = "Training";
 		char loadFile[MT_BUFFER_SIZE] = "";
 		char saveFile[MT_BUFFER_SIZE] = "";
 		char* buffers[2];

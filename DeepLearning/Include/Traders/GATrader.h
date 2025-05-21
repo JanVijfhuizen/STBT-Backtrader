@@ -8,8 +8,6 @@ namespace jv
 		jv::Arena* arena;
 		jv::Arena* tempArena;
 		jv::GeneticAlgorithm ga;
-		bool training = true;
-		const char* boolsNames = "Training";
 
 		// Train instance info.
 		float startV;
@@ -28,14 +26,6 @@ namespace jv
 		[[nodiscard]] static GATrader Create(Arena& arena, Arena& tempArena);
 		[[nodiscard]] jv::bt::STBTBot GetBot();
 	};
-
-	bool GATraderInit(const jv::bt::STBTScope& scope, void* userPtr,
-		const uint32_t start, const uint32_t end,
-		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
-		jv::Queue<const char*>& output);
-	bool GATraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
-		uint32_t current, void* userPtr, jv::Queue<const char*>& output);
-	void GATraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output);
 
 	void* GACreate(jv::Arena& arena, void* userPtr);
 	void* GACopy(jv::Arena& arena, void* instance, void* userPtr);

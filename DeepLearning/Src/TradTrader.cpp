@@ -8,45 +8,41 @@ namespace jv
 	const uint32_t DEV_LEN = 20;
 	const uint32_t T_LEN = MA_LEN + DEV_LEN;
 
-	bool TradTraderInit(const jv::bt::STBTScope& scope, void* userPtr,
-		const uint32_t start, const uint32_t end,
-		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
-		jv::Queue<bt::OutputMsg>& output)
+	bool TradTraderInit(const bt::STBTBotInfo& info)
 	{
-		if (buffer < T_LEN)
+		if (info.buffer < T_LEN)
 		{
 			auto str = "Buffer needs to be this at least " + std::to_string(T_LEN) + ".";
-			output.Add() = bt::OutputMsg::Create(str.c_str(), bt::OutputMsg::error);
+			info.output->Add() = bt::OutputMsg::Create(str.c_str(), bt::OutputMsg::error);
 			return false;
 		}
 
-		auto& trader = *reinterpret_cast<TradTrader*>(userPtr);
+		auto& trader = *reinterpret_cast<TradTrader*>(info.userPtr);
 		trader.runScope = trader.arena->CreateScope();
 
-		const uint32_t l = scope.GetTimeSeriesCount();
-		trader.start = start;
-		trader.end = end;
+		const uint32_t l = info.scope->GetTimeSeriesCount();
+		trader.start = info.start;
+		trader.end = info.end;
 		trader.buffer = l;
 		trader.mas30 = trader.arena->New<float*>(l);
 
-		const auto maLen = Min<uint32_t>(MA_LEN, buffer);
+		const auto maLen = Min<uint32_t>(MA_LEN, info.buffer);
 		for (uint32_t i = 0; i < l; i++)
 		{
-			auto close = scope.GetTimeSeries(i).close;
-			trader.mas30[i] = TraderUtils::CreateMA(*trader.arena, start + DEV_LEN, end, maLen, close);
+			auto close = info.scope->GetTimeSeries(i).close;
+			trader.mas30[i] = TraderUtils::CreateMA(*trader.arena, info.start + DEV_LEN, info.end, maLen, close);
 		}
 
 		return true;
 	}
 
-	bool TradTraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
-		uint32_t current, void* userPtr, jv::Queue<bt::OutputMsg>& output)
+	bool TradTraderUpdate(const bt::STBTBotUpdateInfo& info)
 	{
-		auto& trader = *reinterpret_cast<TradTrader*>(userPtr);
+		auto& trader = *reinterpret_cast<TradTrader*>(info.userPtr);
 		const auto tempScope = trader.tempArena->CreateScope();
-		const uint32_t l = scope.GetTimeSeriesCount();
+		const uint32_t l = info.scope->GetTimeSeriesCount();
 
-		const uint32_t ind = trader.end + current;
+		const uint32_t ind = trader.end + info.current;
 
 		// Collect all stocks that are outside of their bollinger bands.
 		auto bad = CreateVector<uint32_t>(*trader.tempArena, l);
@@ -54,7 +50,7 @@ namespace jv
 
 		for (uint32_t i = 0; i < l; i++)
 		{
-			const float close = scope.GetTimeSeries(i).close[current];
+			const float close = info.scope->GetTimeSeries(i).close[info.current];
 			float& ma30 = trader.mas30[i][ind];
 			const auto dev = TraderUtils::GetStandardDeviation(&ma30, DEV_LEN);
 			const float topBand = ma30 + dev;
@@ -71,17 +67,17 @@ namespace jv
 		
 		// Super simple, buy if below bands, sell if above.
 		for (auto& i : bad)
-			trades[i].change = -1e9;
+			info.trades[i].change = -1e9;
 		for (auto& i : good)
-			trades[i].change = 1e9;
+			info.trades[i].change = 1e9;
 
 		trader.tempArena->DestroyScope(tempScope);
 		return true;
 	}
 
-	void TradTraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<bt::OutputMsg>& output)
+	void TradTraderCleanup(const bt::STBTBotInfo& info)
 	{
-		auto& trader = *reinterpret_cast<TradTrader*>(userPtr);
+		auto& trader = *reinterpret_cast<TradTrader*>(info.userPtr);
 		trader.arena->DestroyScope(trader.runScope );
 	}
 

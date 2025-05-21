@@ -84,6 +84,7 @@ namespace jv::bt
 
 		algoIndex = -1;
 		log = false;
+		training = false;
 		pauseOnFinish = false;
 		pauseOnFinishAll = true;
 		running = false;
@@ -234,6 +235,17 @@ namespace jv::bt
 			}
 			else
 			{
+				STBTBotUpdateInfo botUpdateInfo{};
+				botUpdateInfo.scope = &stbtScope;
+				botUpdateInfo.output = &stbt.output;
+				botUpdateInfo.userPtr = bot.userPtr;
+				botUpdateInfo.start = runInfo.from;
+				botUpdateInfo.end = runInfo.to;
+				botUpdateInfo.runIndex = runIndex;
+				botUpdateInfo.nRuns = runInfo.totalRuns;
+				botUpdateInfo.buffer = runInfo.buffer;
+				botUpdateInfo.training = training;
+
 				// If this is a new run, set everything up.
 				if (runDayIndex == -1)
 				{
@@ -257,8 +269,7 @@ namespace jv::bt
 
 					runDayIndex = 0;
 					if (bot.init)
-						if (!bot.init(stbtScope, bot.userPtr, runInfo.from, runInfo.to, 
-							runIndex, runInfo.totalRuns, runInfo.buffer, stbt.output))
+						if (!bot.init(botUpdateInfo))
 							runDayIndex = runInfo.length;
 
 					runScope = stbt.arena.CreateScope();
@@ -306,7 +317,7 @@ namespace jv::bt
 						scatterBetaRel[runIndex].y = relPoints[runInfo.length - 1].close - 1.f;
 
 						if (bot.cleanup)
-							bot.cleanup(stbtScope, bot.userPtr, stbt.output);
+							bot.cleanup(botUpdateInfo);
 						runDayIndex = -1;
 						runIndex++;
 
@@ -396,7 +407,11 @@ namespace jv::bt
 					runLog.marktPct[runDayIndex] = pct;
 					runLog.marktRel[runDayIndex] = rel;
 
-					if (!bot.update(stbtScope, trades, dayOffsetIndex, bot.userPtr, stbt.output))
+					// Update bot info.
+					botUpdateInfo.trades = trades;
+					botUpdateInfo.current = dayOffsetIndex;
+
+					if (!bot.update(botUpdateInfo))
 						runDayIndex = runInfo.length;
 					else
 						runDayIndex++;
@@ -599,6 +614,7 @@ namespace jv::bt
 		ImGui::Checkbox("Pause On Finish ALL", &pauseOnFinishAll);
 		ImGui::Checkbox("Randomize Date", &randomizeDate);
 		ImGui::Checkbox("Log", &log);
+		ImGui::Checkbox("Training", &training);
 
 		if (randomizeDate)
 		{

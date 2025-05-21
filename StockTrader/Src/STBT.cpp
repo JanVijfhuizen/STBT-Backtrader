@@ -22,29 +22,52 @@ namespace jv::bt
 
 	bool STBT::Update()
 	{
+		const ImVec4 col = { 0, 0, 0, 0 };
+		const ImVec4 col2 = { .2, .25, .2, 1 };
+		const ImVec4 col3 = { .3, .35, .3, 1 };
+		const ImVec4 col4 = { .45, .5, .45, 1 };
+		const ImVec4 col5 = { 1, 1, 1, 1 };
+
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, col2);
+		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, col3);
+		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, col4);
+
+		ImGui::PushStyleColor(ImGuiCol_Button, col2);
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, col4);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, col3);
+
+		ImGui::PushStyleColor(ImGuiCol_Header, col3);
+		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, col3);
+		ImGui::PushStyleColor(ImGuiCol_HeaderActive, col);
+
+		ImGui::PushStyleColor(ImGuiCol_CheckMark, col5);
+		ImGui::PushStyleColor(ImGuiCol_TitleBgActive, col);
+
 		// Update (sub)menu(s).
 		bool quit = menu.Update(arena, *this);
-		if (quit)
-			return true;
+		if (!quit)
+		{
+			uint32_t mul = menu.index == 0 ? 1 : 2;
+			mul = outputFocused ? 4 : mul;
 
-		uint32_t mul = menu.index == 0 ? 1 : 2;
-		mul = outputFocused ? 4 : mul;
+			// Draw output window.
+			ImGui::Begin("Output", nullptr, WIN_FLAGS | ImGuiWindowFlags_HorizontalScrollbar);
+			ImGui::SetWindowPos({ 0, 400 });
+			ImGui::SetWindowSize({ 200.f * mul, 200 });
+			outputFocused = ImGui::IsWindowFocused();
 
-		// Draw output window.
-		ImGui::Begin("Output", nullptr, WIN_FLAGS | ImGuiWindowFlags_HorizontalScrollbar);
-		ImGui::SetWindowPos({ 0, 400 });
-		ImGui::SetWindowSize({ 200.f * mul, 200});
-		outputFocused = ImGui::IsWindowFocused();
-		
-		for (auto& a : output)
-			ImGui::Text(a.buffer);
-		
-		ImGui::End();
+			for (auto& a : output)
+				ImGui::Text(a.buffer);
 
-		const bool ret = renderer.Render();
-		frameArena.Clear();
+			ImGui::End();
+
+			for (uint32_t i = 0; i < 11; i++)
+				ImGui::PopStyleColor();
+			quit = renderer.Render();
+			frameArena.Clear();
+		}
 		
-		return ret;
+		return quit;
 	}
 
 	STBT CreateSTBT(STBTBot* bots, const uint32_t botCount)

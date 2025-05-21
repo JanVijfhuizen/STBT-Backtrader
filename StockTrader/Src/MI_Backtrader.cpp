@@ -89,6 +89,7 @@ namespace jv::bt
 		running = false;
 		runType = 0;
 		showIndex = 0;
+		zoom = 1;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
 
@@ -109,6 +110,10 @@ namespace jv::bt
 
 	bool MI_Backtrader::DrawMainMenu(STBT& stbt, uint32_t& index)
 	{
+		const float zoomDelta = ImGui::GetIO().MouseWheel * 0.25f;
+		zoom += zoomDelta;
+		zoom = Clamp<float>(zoom, 1, 10);
+
 		if (running)
 			return false;
 
@@ -1056,6 +1061,7 @@ namespace jv::bt
 			info.color = colors[i];
 			info.noBackground = i == 1;
 			info.inverse = i == 1;
+			info.zoom = zoom;
 			stbt.renderer.DrawDistributionGraph(info);
 		}
 	}

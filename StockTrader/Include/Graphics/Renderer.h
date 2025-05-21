@@ -55,6 +55,7 @@ namespace jv::gr
 		bool noBackground = false;
 		bool textIsButton = false;
 		bool inverse = false;
+		float zoom = 1;
 	};
 
 	struct DrawScatterGraphInfo final

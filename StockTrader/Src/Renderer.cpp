@@ -263,7 +263,7 @@ namespace jv::gr
 		DrawLine(glm::vec2(pos.x - aspScale.x, pos.y), glm::vec2(pos.x + aspScale.x, pos.y), c);
 		DrawLine(glm::vec2(pos.x, pos.y - aspScale.y), glm::vec2(pos.x, pos.y + aspScale.y), c);
 
-		const float stepSize = info.scale.x / info.length * aspScale.x;
+		const float stepSize = info.scale.x / info.length * aspScale.x * info.zoom;
 		const float off = stepSize * (info.length - 1) / 2;
 		const float org = -off + info.position.x;
 

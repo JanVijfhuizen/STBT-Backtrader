@@ -70,6 +70,8 @@ namespace jv::bt
 		glm::vec2* scatterBeta;
 		glm::vec2* scatterBetaRel;
 
+		float zoom;
+
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);
 		bool DrawSubMenu(STBT& stbt, uint32_t& index);

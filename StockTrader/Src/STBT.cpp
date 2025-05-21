@@ -32,9 +32,9 @@ namespace jv::bt
 		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, col3);
 		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, col4);
 
-		ImGui::PushStyleColor(ImGuiCol_Button, col2);
+		ImGui::PushStyleColor(ImGuiCol_Button, col);
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, col4);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, col3);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, col2);
 
 		ImGui::PushStyleColor(ImGuiCol_Header, col3);
 		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, col3);

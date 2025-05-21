@@ -297,6 +297,9 @@ namespace jv::gr
 
 	bool Renderer::DrawLineGraph(const DrawLineGraphInfo info)
 	{
+		if (info.length == 0)
+			return false;
+
 		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1);
 
 		if (!info.noBackground)

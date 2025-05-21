@@ -5,6 +5,7 @@
 #include <Utils/UT_Colors.h>
 #include <Ext/ImGuiLoadBar.h>
 #include <Utils/UT_Time.h>
+#include <Jlib/QueueUtils.h>
 
 namespace jv::bt
 {
@@ -28,19 +29,21 @@ namespace jv::bt
 	{
 		current,
 		betaScatter,
-		bellCurve
+		bellCurve,
+		progress
 	};
 
 	void RenderShowIndexDropDown(MI_Backtrader& bt)
 	{
-		const char* windowNames[3]
+		const char* windowNames[4]
 		{
 			"Current Run",
 			"Beta Scatter",
-			"Bell Curve"
+			"Bell Curve",
+			"Progress"
 		};
 
-		ImGui::Combo("Show", &bt.showIndex, windowNames, 3);
+		ImGui::Combo("Show", &bt.showIndex, windowNames, 4);
 	}
 
 	void MI_Backtrader::Load(STBT& stbt)
@@ -84,6 +87,7 @@ namespace jv::bt
 
 		algoIndex = -1;
 		log = false;
+		approximateLines = false;
 		training = false;
 		pauseOnFinish = false;
 		pauseOnFinishAll = true;
@@ -107,6 +111,9 @@ namespace jv::bt
 		stbt.tempArena.DestroyScope(tempScope);
 		subScope = stbt.arena.CreateScope();
 		highlightedGraphIndex = 0;
+
+		progress = CreateQueue<float>(stbt.arena, 128);
+		prevProgress = FLT_MIN;
 	}
 
 	bool MI_Backtrader::DrawMainMenu(STBT& stbt, uint32_t& index)
@@ -235,17 +242,6 @@ namespace jv::bt
 			}
 			else
 			{
-				STBTBotUpdateInfo botUpdateInfo{};
-				botUpdateInfo.scope = &stbtScope;
-				botUpdateInfo.output = &stbt.output;
-				botUpdateInfo.userPtr = bot.userPtr;
-				botUpdateInfo.start = runInfo.from;
-				botUpdateInfo.end = runInfo.to;
-				botUpdateInfo.runIndex = runIndex;
-				botUpdateInfo.nRuns = runInfo.totalRuns;
-				botUpdateInfo.buffer = runInfo.buffer;
-				botUpdateInfo.training = training;
-
 				// If this is a new run, set everything up.
 				if (runDayIndex == -1)
 				{
@@ -269,8 +265,11 @@ namespace jv::bt
 
 					runDayIndex = 0;
 					if (bot.init)
-						if (!bot.init(botUpdateInfo))
+					{
+						auto botInfo = GetBotInfo(stbt);
+						if (!bot.init(botInfo))
 							runDayIndex = runInfo.length;
+					}
 
 					runScope = stbt.arena.CreateScope();
 					runLog = Log::Create(stbt.arena, stbtScope, runInfo.from, runInfo.to);
@@ -317,7 +316,11 @@ namespace jv::bt
 						scatterBetaRel[runIndex].y = relPoints[runInfo.length - 1].close - 1.f;
 
 						if (bot.cleanup)
-							bot.cleanup(botUpdateInfo);
+						{
+							auto botInfo = GetBotInfo(stbt);
+							bot.cleanup(botInfo);
+						}
+							
 						runDayIndex = -1;
 						runIndex++;
 
@@ -408,10 +411,11 @@ namespace jv::bt
 					runLog.marktRel[runDayIndex] = rel;
 
 					// Update bot info.
-					botUpdateInfo.trades = trades;
-					botUpdateInfo.current = dayOffsetIndex;
+					auto botInfo = GetBotInfo(stbt);
+					botInfo.trades = trades;
+					botInfo.current = dayOffsetIndex;
 
-					if (!bot.update(botUpdateInfo))
+					if (!bot.update(botInfo))
 						runDayIndex = runInfo.length;
 					else
 						runDayIndex++;
@@ -427,6 +431,9 @@ namespace jv::bt
 				break;
 			case ShowIndex::bellCurve:
 				RenderBellCurve(stbt, runInfo, render);
+				break;
+			case ShowIndex::progress:
+				RenderProgress(stbt, render);
 				break;
 			default:
 				break;
@@ -505,6 +512,23 @@ namespace jv::bt
 
 			ImGui::PopStyleColor();
 		}
+	}
+
+	STBTBotUpdateInfo MI_Backtrader::GetBotInfo(STBT& stbt)
+	{
+		auto& bot = stbt.bots[algoIndex];
+		STBTBotUpdateInfo botUpdateInfo{};
+		botUpdateInfo.scope = &stbtScope;
+		botUpdateInfo.output = &stbt.output;
+		botUpdateInfo.progress = &progress;
+		botUpdateInfo.userPtr = bot.userPtr;
+		botUpdateInfo.start = runInfo.from;
+		botUpdateInfo.end = runInfo.to;
+		botUpdateInfo.runIndex = runIndex;
+		botUpdateInfo.nRuns = runInfo.totalRuns;
+		botUpdateInfo.buffer = runInfo.buffer;
+		botUpdateInfo.training = training;
+		return botUpdateInfo;
 	}
 
 	void MI_Backtrader::DrawPortfolioSubMenu(STBT& stbt)
@@ -613,8 +637,6 @@ namespace jv::bt
 		ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
 		ImGui::Checkbox("Pause On Finish ALL", &pauseOnFinishAll);
 		ImGui::Checkbox("Randomize Date", &randomizeDate);
-		ImGui::Checkbox("Log", &log);
-		ImGui::Checkbox("Training", &training);
 
 		if (randomizeDate)
 		{
@@ -626,7 +648,16 @@ namespace jv::bt
 			}
 		}
 
-		if (ImGui::Button("Run"))
+		ImGui::Checkbox("Approx Lines", &approximateLines);
+		ImGui::Checkbox("Log", &log);
+		ImGui::Checkbox("Training", &training);
+		if (ImGui::Button("Reset progress"))
+		{
+			progress.Clear();
+			prevProgress = FLT_MIN;
+		}
+
+		if (ImGui::Button("Run Simulation"))
 		{
 			bool valid = true;
 			if (algoIndex == -1)
@@ -870,6 +901,16 @@ namespace jv::bt
 		ImGui::End();
 	}
 
+	glm::vec2 GetGrPos()
+	{
+		return { .36f, .02f };
+	}
+
+	glm::vec2 GetGrPos2()
+	{
+		return { .5f, .14f };
+	}
+
 	void MI_Backtrader::RenderGraphs(STBT& stbt, const RunInfo& runInfo, const bool render)
 	{
 		// Draw the graphs. Only possible if there are at least 2 graph points.
@@ -909,9 +950,7 @@ namespace jv::bt
 		auto colors = LoadRandColors(stbt.tempArena, 5);
 		const float ratio = stbt.renderer.GetAspectRatio();
 
-		glm::vec2 grPos = { 0, 0 };
-		grPos.x += .36f;
-		grPos.y += .02f;
+		glm::vec2 grPos = GetGrPos();
 
 		jv::gr::DrawLineGraphInfo drawInfos[3]{};
 
@@ -924,6 +963,7 @@ namespace jv::bt
 		drawInfo.textIsButton = true;
 		drawInfo.color = colors[0];
 		drawInfo.title = "port";
+		drawInfo.maxLinesDrawn = approximateLines ? drawInfo.maxLinesDrawn : -1;
 		drawInfos[0] = drawInfo;
 
 		const float top = .8;
@@ -1059,9 +1099,7 @@ namespace jv::bt
 				++distribution[pos];
 			}
 
-			glm::vec2 grPos = { 0, 0 };
-			grPos.x += .5f;
-			grPos.y += .14f;
+			glm::vec2 grPos = GetGrPos2();
 
 			std::string title = "Bell Curve [R] Pct [G] Rel [X] ";
 			title += std::format("{:.2f}", width * 100);
@@ -1082,6 +1120,53 @@ namespace jv::bt
 		}
 	}
 
+	void MI_Backtrader::RenderProgress(STBT& stbt, bool render)
+	{
+		if(progress.count >= progress.length)
+			prevProgress = Max(prevProgress, progress.Peek());
+
+		if (!render)
+			return;
+
+		const float ratio = stbt.renderer.GetAspectRatio();
+
+		auto arr = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
+		auto arrPrev = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
+
+		float max = prevProgress;
+		for (uint32_t i = 0; i < progress.count; i++)
+		{
+			const float f = progress[i];
+			max = Max(max, f);
+
+			arr[i].open = max;
+			arr[i].close = max;
+			arr[i].high = max;
+			arr[i].low = 0;
+
+			arrPrev[i].open = f;
+			arrPrev[i].close = f;
+			arrPrev[i].high = max;
+			arrPrev[i].low = 0;
+		}
+
+		jv::gr::DrawLineGraphInfo drawInfo{};
+		drawInfo.aspectRatio = ratio;
+		drawInfo.position = GetGrPos2();
+		drawInfo.scale = glm::vec2(1.2);
+		drawInfo.points = arr.ptr;
+		drawInfo.length = arr.length;
+		drawInfo.color = glm::vec4(1, 0, 0, 1);
+		drawInfo.title = "progress";
+		drawInfo.maxLinesDrawn = approximateLines ? drawInfo.maxLinesDrawn : -1;
+		stbt.renderer.DrawLineGraph(drawInfo);
+
+		drawInfo.points = arrPrev.ptr;
+		drawInfo.color = glm::vec4(0, 1, 0, 1);
+		drawInfo.title = nullptr;
+		stbt.renderer.DrawLineGraph(drawInfo);
+	}
+
 	void MI_Backtrader::RenderScatter(STBT& stbt, const RunInfo& runInfo, const bool render)
 	{
 		if (!render)
@@ -1089,9 +1174,7 @@ namespace jv::bt
 
 		const auto tempScope = stbt.tempArena.CreateScope();
 
-		glm::vec2 grPos = { 0, 0 };
-		grPos.x += .5f;
-		grPos.y += .14f;
+		glm::vec2 grPos = GetGrPos2();
 
 		gr::DrawScatterGraphInfo info{};
 		info.aspectRatio = stbt.renderer.GetAspectRatio();

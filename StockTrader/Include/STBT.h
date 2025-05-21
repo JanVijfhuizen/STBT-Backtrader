@@ -39,6 +39,8 @@ namespace jv::bt
 	{
 		STBTScope* scope;
 		Queue<OutputMsg>* output;
+		Queue<float>* progress;
+
 		void* userPtr;
 		uint32_t start;
 		uint32_t end;

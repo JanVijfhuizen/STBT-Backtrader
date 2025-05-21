@@ -34,7 +34,12 @@ namespace jv
 		auto& gt = *reinterpret_cast<GATrader*>(info.userPtr);
 		const float diff = info.scope->GetPortValue(gt.end) - gt.startV;
 		if (info.training)
+		{
 			gt.ga.Rate(*gt.arena, *gt.tempArena, diff, *info.output);
+			if (gt.ga.trainId == 0)
+				info.progress->Add() = gt.ga.genRating;
+		}
+			
 		gt.tempArena->DestroyScope(gt.tempScope);
 	}
 

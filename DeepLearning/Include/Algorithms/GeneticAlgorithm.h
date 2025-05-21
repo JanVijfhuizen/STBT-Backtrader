@@ -28,6 +28,7 @@ namespace jv
 		void* result;
 		float* genRatings;
 		float rating;
+		float genRating;
 		uint32_t genId;
 		uint32_t trainId;
 

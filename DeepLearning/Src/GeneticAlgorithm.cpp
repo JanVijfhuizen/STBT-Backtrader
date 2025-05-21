@@ -40,6 +40,8 @@ namespace jv
 
 			// Copy new best instance to result if applicable.
 			auto bestRating = genRatings[indices[0]];
+			genRating = bestRating;
+
 			if (bestRating > this->rating)
 			{
 				arena.DestroyScope(resScope);
@@ -95,6 +97,7 @@ namespace jv
 		ga.result = info.create(arena, info.userPtr);
 
 		ga.rating = FLT_MIN;
+		ga.genRating = FLT_MIN;
 		ga.genId = 0;
 		ga.trainId = 0;
 		return ga;

@@ -40,6 +40,7 @@ namespace jv::bt
 		char runCountBuffer[8];
 		bool log;
 		bool training;
+		bool approximateLines;
 		bool pauseOnFinish;
 		bool pauseOnFinishAll;
 		bool running;
@@ -72,6 +73,8 @@ namespace jv::bt
 		glm::vec2* scatterBetaRel;
 
 		float zoom;
+		Queue<float> progress;
+		float prevProgress;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);
@@ -83,6 +86,7 @@ namespace jv::bt
 		void Unload(STBT& stbt) override;
 		void BackTest(STBT& stbt, bool render);
 		void DrawLog(STBT& stbt);
+		[[nodiscard]] STBTBotUpdateInfo GetBotInfo(STBT& stbt);
 
 		void DrawPortfolioSubMenu(STBT& stbt);
 		void DrawAlgorithmSubMenu(STBT& stbt);
@@ -91,5 +95,6 @@ namespace jv::bt
 		void RenderGraphs(STBT& stbt, const RunInfo& runInfo, bool render);
 		void RenderScatter(STBT& stbt, const RunInfo& runInfo, bool render);
 		void RenderBellCurve(STBT& stbt, const RunInfo& runInfo, bool render);
+		void RenderProgress(STBT& stbt, bool render);
 	};
 }

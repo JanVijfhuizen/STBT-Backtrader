@@ -754,6 +754,15 @@ namespace jv::bt
 
 		RenderShowIndexDropDown(*this);
 
+		ImGui::SameLine();
+		ImGui::PushItemWidth(40);
+		if (ImGui::InputText("Zoom", zoomBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
+		{
+			int32_t n = std::atoi(zoomBuffer);
+			n = Clamp(n, 2, MAX_ZOOM);
+			snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
+		}
+
 		if (static_cast<RunType>(runType) != RunType::stepwise)
 		{
 			if (ImGui::Button("Pause"))
@@ -764,50 +773,34 @@ namespace jv::bt
 				runType = static_cast<int>(RunType::normal);
 
 		ImGui::SameLine();
-		ImGui::Checkbox("Pause on Finish", &pauseOnFinish);
-
-		ImGui::SameLine();
-		ImGui::PushItemWidth(40);
-		if (ImGui::InputText("Zoom", zoomBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
-		{
-			int32_t n = std::atoi(zoomBuffer);
-			n = Clamp(n, 2, MAX_ZOOM);
-			snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
-		}
-		ImGui::SameLine();
-
 		bool runFinished = runDayIndex >= runInfo.length;
 		bool pauseOnRunFinished = runFinished && pauseOnFinish;
 		bool finalRunFinished = runIndex == runInfo.totalRuns - 1;
+		bool pause = pauseOnRunFinished || (finalRunFinished && pauseOnFinishAll);
 
-		if (runFinished)
+		if (pause)
 		{
 			if (ImGui::Button("Next"))
 				canFinish = true;
-			if (!finalRunFinished)
-			{
-				ImGui::SameLine();
-				if (ImGui::Button("Break"))
-				{
-					runIndex = runInfo.totalRuns;
-					canEnd = true;
-				}
-			}	
 		}
 		else if (runType == static_cast<int>(RunType::stepwise) && stepCompleted)
 		{
 			if (ImGui::Button("Next"))
 				stepCompleted = false;
-			ImGui::SameLine();
-			if (ImGui::Button("Break"))
-			{
-				runIndex = runInfo.totalRuns;
-				runDayIndex = runInfo.length;
-				stepCompleted = false;
-				canFinish = true;
-				canEnd = true;
-			}
 		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Break"))
+		{
+			runIndex = runInfo.totalRuns;
+			runDayIndex = runInfo.length;
+			stepCompleted = false;
+			canFinish = true;
+			canEnd = true;
+		}
+
+		ImGui::SameLine();
+		ImGui::Checkbox("Pause on Finish", &pauseOnFinish);
 
 		ImGui::End();
 
@@ -1013,9 +1006,7 @@ namespace jv::bt
 			b.points = t.points;
 			b.title = t.title;
 		}
-
-		return; // TEMP
-
+	
 		// If gains are debugged.
 		if (highlightedGraphIndex == 0 && runIndex > 0)
 		{

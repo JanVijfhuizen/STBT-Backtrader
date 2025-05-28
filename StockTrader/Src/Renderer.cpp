@@ -405,7 +405,7 @@ namespace jv::gr
 
 			const float WIN_OFFSET = 6;
 			
-			ImGuiWindowFlags FLAGS = 0;
+			ImGuiWindowFlags FLAGS = ImGuiWindowFlags_NoFocusOnAppearing;
 			//FLAGS |= ImGuiWindowFlags_NoBackground;
 			FLAGS |= ImGuiWindowFlags_NoTitleBar;
 			ImGui::Begin(info.title, nullptr, WIN_FLAGS | FLAGS);

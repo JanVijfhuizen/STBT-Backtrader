@@ -75,6 +75,7 @@ namespace jv::bt
 		float zoom;
 		Queue<float> progress;
 		float prevProgress;
+		FPFNTester fpfnTester;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);
@@ -96,5 +97,6 @@ namespace jv::bt
 		void RenderScatter(STBT& stbt, const RunInfo& runInfo, bool render);
 		void RenderBellCurve(STBT& stbt, const RunInfo& runInfo, bool render);
 		void RenderProgress(STBT& stbt, bool render);
+		void RenderFPFN(STBT& stbt, bool render);
 	};
 }

@@ -14,6 +14,7 @@ namespace jv
 		gt.end = info.end;
 		gt.ma30 = TraderUtils::CreateMA(*gt.tempArena, info.start, info.end,
 			Min<uint32_t>(info.buffer, 30), info.scope->GetTimeSeries(0).close);
+
 		return true;
 	}
 
@@ -24,7 +25,14 @@ namespace jv
 
 		float v;
 		v = algo[info.current];
-		info.trades[0].change = v > 0 ? 1e9 : -1e9;
+		const int32_t change = v > 0 ? 1e9 : -1e9;
+		info.trades[0].change = change;
+
+		auto series = info.scope->GetTimeSeries(0);
+		bool res = change > 0;
+		bool exp = series.close[info.current] < series.close[info.current - 1];
+		info.fpfnTester->AddResult(res, exp);
+
 		gt.end = info.current;
 		return true;
 	}
@@ -33,6 +41,7 @@ namespace jv
 	{
 		auto& gt = *reinterpret_cast<GATrader*>(info.userPtr);
 		const float diff = info.scope->GetPortValue(gt.end) - gt.startV;
+
 		if (info.training)
 		{
 			gt.ga.Rate(*gt.arena, *gt.tempArena, diff, *info.output);

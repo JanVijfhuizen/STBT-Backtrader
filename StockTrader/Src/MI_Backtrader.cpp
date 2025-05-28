@@ -30,20 +30,24 @@ namespace jv::bt
 		current,
 		betaScatter,
 		bellCurve,
-		progress
+		progress,
+		FPFN,
+		length
 	};
 
 	void RenderShowIndexDropDown(MI_Backtrader& bt)
 	{
-		const char* windowNames[4]
+		constexpr uint32_t l = static_cast<uint32_t>(ShowIndex::length);
+		const char* windowNames[l]
 		{
 			"Current Run",
 			"Beta Scatter",
 			"Bell Curve",
-			"Progress"
+			"Progress",
+			"FPFN"
 		};
 
-		ImGui::Combo("Show", &bt.showIndex, windowNames, 4);
+		ImGui::Combo("Show", &bt.showIndex, windowNames, l);
 	}
 
 	void MI_Backtrader::Load(STBT& stbt)
@@ -435,6 +439,9 @@ namespace jv::bt
 			case ShowIndex::progress:
 				RenderProgress(stbt, render);
 				break;
+			case ShowIndex::FPFN:
+				RenderFPFN(stbt, render);
+				break;
 			default:
 				break;
 			}
@@ -521,6 +528,7 @@ namespace jv::bt
 		botUpdateInfo.scope = &stbtScope;
 		botUpdateInfo.output = &stbt.output;
 		botUpdateInfo.progress = &progress;
+		botUpdateInfo.fpfnTester = &fpfnTester;
 		botUpdateInfo.userPtr = bot.userPtr;
 		botUpdateInfo.start = runInfo.from;
 		botUpdateInfo.end = runInfo.to;
@@ -656,6 +664,8 @@ namespace jv::bt
 			progress.Clear();
 			prevProgress = FLT_MIN;
 		}
+		if (ImGui::Button("Reset FPFN"))
+			fpfnTester.Reset();
 
 		if (ImGui::Button("Run Simulation"))
 		{
@@ -1168,6 +1178,61 @@ namespace jv::bt
 		drawInfo.color = glm::vec4(0, 1, 0, 1);
 		drawInfo.title = nullptr;
 		stbt.renderer.DrawLineGraph(drawInfo);
+	}
+
+	void MI_Backtrader::RenderFPFN(STBT& stbt, bool render)
+	{
+		if (!render)
+			return;
+
+		uint32_t res[]
+		{
+			fpfnTester.negatives,
+			fpfnTester.positives
+		};
+		uint32_t falseRes[]
+		{
+			fpfnTester.falseNegatives,
+			fpfnTester.falsePositives 
+		};
+
+		uint32_t* arrs[]
+		{
+			res,
+			falseRes
+		};
+
+		glm::vec4 colors[]
+		{
+			glm::vec4(0, 1, 0, 1),
+			glm::vec4(1, 0, 0, 1)
+		};
+
+		uint32_t ceiling = fpfnTester.falseNegatives;
+		ceiling = Max(ceiling, fpfnTester.falsePositives);
+		ceiling = Max(ceiling, fpfnTester.positives);
+		ceiling = Max(ceiling, fpfnTester.negatives);
+
+		for (uint32_t i = 0; i < 2; i++)
+		{
+			glm::vec2 grPos = GetGrPos2();
+
+			std::string title = "False Positives and False Negatives";
+
+			gr::DrawDistributionGraphInfo info{};
+			info.aspectRatio = stbt.renderer.GetAspectRatio();
+			info.position = grPos;
+			info.values = arrs[i];
+			info.length = 2;
+			info.title = i == 0 ? title.c_str() : nullptr;
+			info.scale = glm::vec2(1.3);
+			info.color = colors[i];
+			info.noBackground = i == 1;
+			info.inverse = i == 1;
+			info.zoom = zoom;
+			info.overrideCeiling = ceiling;
+			stbt.renderer.DrawDistributionGraph(info);
+		}
 	}
 
 	void MI_Backtrader::RenderScatter(STBT& stbt, const RunInfo& runInfo, const bool render)

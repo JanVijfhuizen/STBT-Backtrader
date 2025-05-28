@@ -3,6 +3,7 @@
 #include "JLib/Queue.h"
 #include "Portfolio.h"
 #include <OutputMsg.h>
+#include <JLib/FPFNTester.h>
 
 namespace jv::bt
 {
@@ -40,6 +41,7 @@ namespace jv::bt
 		STBTScope* scope;
 		Queue<OutputMsg>* output;
 		Queue<float>* progress;
+		FPFNTester* fpfnTester;
 
 		void* userPtr;
 		uint32_t start;

@@ -208,7 +208,7 @@
     <ClCompile Include="Src\Renderer.cpp" />
     <ClCompile Include="Src\Mesh.cpp" />
     <ClCompile Include="Src\dllmain.cpp" />
-    <ClCompile Include="Include\JLib\Math.cpp" />
+    <ClCompile Include="Src\Math.cpp" />
     <ClCompile Include="Src\Arena.cpp" />
     <ClCompile Include="Src\FPFNTester.cpp" />
     <ClCompile Include="Src\framework.cpp" />

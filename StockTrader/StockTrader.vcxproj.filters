@@ -146,7 +146,7 @@
     <ClCompile Include="Src\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Include\JLib\Math.cpp">
+    <ClCompile Include="Src\Math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\Arena.cpp">

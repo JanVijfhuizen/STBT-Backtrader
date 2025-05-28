@@ -16,5 +16,6 @@ namespace jv
 
 		__declspec(dllexport) void AddResult(bool result, bool expectation);
 		__declspec(dllexport) [[nodiscard]] float GetRating();
+		__declspec(dllexport) void Reset();
 	};
 }

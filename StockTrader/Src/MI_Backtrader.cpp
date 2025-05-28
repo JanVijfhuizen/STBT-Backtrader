@@ -717,9 +717,6 @@ namespace jv::bt
 	}
 	void MI_Backtrader::RenderRun(STBT& stbt, const RunInfo& runInfo, bool& canFinish, bool& canEnd)
 	{
-		if (runDayIndex == -1 || runDayIndex == 0)
-			return;
-
 		MI_Symbols::DrawBottomRightWindow("Current Run");
 
 		const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
@@ -755,13 +752,39 @@ namespace jv::bt
 			*/
 		}
 
-		if (runDayIndex >= runInfo.length && (pauseOnFinish || pauseOnFinishAll))
-		{
-			RenderShowIndexDropDown(*this);
+		RenderShowIndexDropDown(*this);
 
+		if (static_cast<RunType>(runType) != RunType::stepwise)
+		{
+			if (ImGui::Button("Pause"))
+				runType = static_cast<int>(RunType::stepwise);
+		}
+		else
 			if (ImGui::Button("Continue"))
+				runType = static_cast<int>(RunType::normal);
+
+		ImGui::SameLine();
+		ImGui::Checkbox("Pause on Finish", &pauseOnFinish);
+
+		ImGui::SameLine();
+		ImGui::PushItemWidth(40);
+		if (ImGui::InputText("Zoom", zoomBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
+		{
+			int32_t n = std::atoi(zoomBuffer);
+			n = Clamp(n, 2, MAX_ZOOM);
+			snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
+		}
+		ImGui::SameLine();
+
+		bool runFinished = runDayIndex >= runInfo.length;
+		bool pauseOnRunFinished = runFinished && pauseOnFinish;
+		bool finalRunFinished = runIndex == runInfo.totalRuns - 1;
+
+		if (runFinished)
+		{
+			if (ImGui::Button("Next"))
 				canFinish = true;
-			if (runIndex < runInfo.totalRuns - 1)
+			if (!finalRunFinished)
 			{
 				ImGui::SameLine();
 				if (ImGui::Button("Break"))
@@ -773,7 +796,7 @@ namespace jv::bt
 		}
 		else if (runType == static_cast<int>(RunType::stepwise) && stepCompleted)
 		{
-			if (ImGui::Button("Continue"))
+			if (ImGui::Button("Next"))
 				stepCompleted = false;
 			ImGui::SameLine();
 			if (ImGui::Button("Break"))
@@ -784,22 +807,6 @@ namespace jv::bt
 				canFinish = true;
 				canEnd = true;
 			}
-			ImGui::SameLine();
-			ImGui::PushItemWidth(40);
-			if (ImGui::InputText("Zoom", zoomBuffer, 3, ImGuiInputTextFlags_CharsDecimal))
-			{
-				int32_t n = std::atoi(zoomBuffer);
-				n = Clamp(n, 2, MAX_ZOOM);
-				snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
-			}
-
-			if (ImGui::Button("Stepwise off"))
-				runType = static_cast<int>(RunType::normal);
-		}
-		else
-		{
-			if (ImGui::Button("Stepwise on"))
-				runType = static_cast<int>(RunType::stepwise);
 		}
 
 		ImGui::End();
@@ -808,94 +815,97 @@ namespace jv::bt
 			return;
 
 		MI_Symbols::DrawTopRightWindow("Stocks", true, true);
-		
-		float fLiquidity = runLog.liquidities[runDayIndex - 1];
-		std::string liquidity = "Liquidity: ";
-		uint32_t ILiq = round(fLiquidity);
-		liquidity += std::to_string(ILiq);
-		ImGui::Text(liquidity.c_str());
 
-		const uint32_t dayOffsetIndex = runInfo.from - runDayIndex + 1;
-		std::string portValue = "Port Value: ";
-		float v = 0;
-
-		for (uint32_t i = 0; i < timeSeries.length; i++)
+		if (runDayIndex != 0 && runDayIndex != -1)
 		{
-			auto& portStock = runLog.numsInPort[i];
-			const uint32_t stockCount = portStock[runDayIndex - 1];
+			float fLiquidity = runLog.liquidities[runDayIndex - 1];
+			std::string liquidity = "Liquidity: ";
+			uint32_t ILiq = round(fLiquidity);
+			liquidity += std::to_string(ILiq);
+			ImGui::Text(liquidity.c_str());
 
-			const auto& stock = portfolio.stocks[i];
-			const float val = stockCount * timeSeries[i].close[dayOffsetIndex];
-			const int32_t change = trades[i].change;
+			const uint32_t dayOffsetIndex = runInfo.from - runDayIndex + 1;
+			std::string portValue = "Port Value: ";
+			float v = 0;
 
-			v += val;
-
-			if (stock.count == 0 && change <= 0)
-				continue;
-
-			std::string t = stock.symbol;
-			t += ": ";
-			t += std::to_string(stockCount);
-			t += ", ";
-			t += std::to_string(int(round(val)));
-			t += " ";
-			
-			if (change != 0)
+			for (uint32_t i = 0; i < timeSeries.length; i++)
 			{
-				ImVec4 col = change > 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
-				ImGui::PushStyleColor(ImGuiCol_Text, col);
+				auto& portStock = runLog.numsInPort[i];
+				const uint32_t stockCount = portStock[runDayIndex - 1];
 
-				if (change > 0)
-					t += "+";
-				t += std::to_string(change);
+				const auto& stock = portfolio.stocks[i];
+				const float val = stockCount * timeSeries[i].close[dayOffsetIndex];
+				const int32_t change = trades[i].change;
+
+				v += val;
+
+				if (stock.count == 0 && change <= 0)
+					continue;
+
+				std::string t = stock.symbol;
+				t += ": ";
+				t += std::to_string(stockCount);
+				t += ", ";
+				t += std::to_string(int(round(val)));
+				t += " ";
+
+				if (change != 0)
+				{
+					ImVec4 col = change > 0 ? ImVec4{ 0, 1, 0, 1 } : ImVec4{ 1, 0, 0, 1 };
+					ImGui::PushStyleColor(ImGuiCol_Text, col);
+
+					if (change > 0)
+						t += "+";
+					t += std::to_string(change);
+				}
+
+				ImGui::Text(t.c_str());
+
+				if (change != 0)
+					ImGui::PopStyleColor();
 			}
+			uint32_t iV = round(v);
+			portValue += std::to_string(iV);
+			ImGui::Text(portValue.c_str());
 
-			ImGui::Text(t.c_str());
+			std::string totalValue = "Total Value: ";
+			v += fLiquidity;
+			uint32_t iT = round(v);
+			totalValue += std::to_string(iT);
+			ImGui::Text(totalValue.c_str());
 
-			if (change != 0)
-				ImGui::PopStyleColor();
-		}
-		uint32_t iV = round(v);
-		portValue += std::to_string(iV);
-		ImGui::Text(portValue.c_str());
-
-		std::string totalValue = "Total Value: ";
-		v += fLiquidity;
-		uint32_t iT = round(v);
-		totalValue += std::to_string(iT);
-		ImGui::Text(totalValue.c_str());
-
-		if (runIndex > 0)
-		{
+			if (runIndex > 0)
 			{
-				// Average portfolio performance.
-				auto avr = gPortPoints[runInfo.length - 1].close / gPortPoints[0].close * 100 - 100;
+				{
+					// Average portfolio performance.
+					auto avr = gPortPoints[runInfo.length - 1].close / gPortPoints[0].close * 100 - 100;
+					std::stringstream stream;
+					stream << std::fixed << std::setprecision(2) << avr;
+					std::string s = stream.str();
+					std::string avrStr = "AVR: " + s + "%%";
+					ImGui::Text(avrStr.c_str());
+				}
+
+				// Relative to market average.
+				auto relToMarkAvr = gRelPoints[runInfo.length - 1].close / gRelPoints[0].close * 100 - 100;
 				std::stringstream stream;
-				stream << std::fixed << std::setprecision(2) << avr;
+				stream << std::fixed << std::setprecision(2) << relToMarkAvr;
 				std::string s = stream.str();
-				std::string avrStr = "AVR: " + s + "%%";
-				ImGui::Text(avrStr.c_str());
+				std::string relToMarkAvrStr = "Rel AVR: " + s + "%%";
+				ImGui::Text(relToMarkAvrStr.c_str());
+
+				// Relative to market deviation.
+				float dev = 0;
+				for (uint32_t i = 0; i < runIndex; i++)
+					dev += pow(avrDeviations[i] - relToMarkAvr, 2);
+				dev /= runIndex;
+
+				std::stringstream streamDev;
+				streamDev << std::fixed << std::setprecision(2) << dev;
+				std::string sD = streamDev.str();
+				std::string avrRelDev = "Rel DEV: " + sD;
+				ImGui::Text(avrRelDev.c_str());
 			}
-			
-			// Relative to market average.
-			auto relToMarkAvr = gRelPoints[runInfo.length - 1].close / gRelPoints[0].close * 100 - 100;
-			std::stringstream stream;
-			stream << std::fixed << std::setprecision(2) << relToMarkAvr;
-			std::string s = stream.str();
-			std::string relToMarkAvrStr = "Rel AVR: " + s + "%%";
-			ImGui::Text(relToMarkAvrStr.c_str());
-
-			// Relative to market deviation.
-			float dev = 0;
-			for (uint32_t i = 0; i < runIndex; i++)
-				dev += pow(avrDeviations[i] - relToMarkAvr, 2);
-			dev /= runIndex;
-
-			std::stringstream streamDev;
-			streamDev << std::fixed << std::setprecision(2) << dev;
-			std::string sD = streamDev.str();
-			std::string avrRelDev = "Rel DEV: " + sD;
-			ImGui::Text(avrRelDev.c_str());
 		}
 
 		ImGui::End();
@@ -1003,6 +1013,8 @@ namespace jv::bt
 			b.points = t.points;
 			b.title = t.title;
 		}
+
+		return; // TEMP
 
 		// If gains are debugged.
 		if (highlightedGraphIndex == 0 && runIndex > 0)

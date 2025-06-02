@@ -18,9 +18,9 @@ namespace jv
 		uint32_t score;
 
 		// GE info.
-		uint32_t width = 30;
-		uint32_t length = 20;
-		float mutateChance = .2f;
+		uint32_t width = 400;
+		uint32_t length = 100;
+		float mutateChance = .01f;
 		float mutateAddition = 1;
 		float mutateMultiplier = .1f;
 

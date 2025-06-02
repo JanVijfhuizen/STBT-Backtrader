@@ -58,20 +58,21 @@ namespace jv
 
 			tempArena.DestroyScope(tempScope);
 
-			assert(info.surviverPct > 0 && info.surviverPct <= 1);
-			const uint32_t start = (float)info.length * info.surviverPct;
+			assert(info.breedablePct > 0 && info.breedablePct <= 1);
+			const uint32_t apexLen = (float)info.length * info.apexPct;
+			const uint32_t breedableLen = (float)info.length * info.breedablePct;
 			const uint32_t end = info.length - (float)info.length * info.arrivalsPct;
-			assert(end < info.length && end > start);
+			assert(end < info.length && end > breedableLen);
 
 			// Copy all successful instances.
-			for (uint32_t i = 0; i < start; i++)
-				generation[i] = info.copy(arena, cpyGen[i], info.userPtr);
+			//for (uint32_t i = 0; i < start; i++)
+				//generation[i] = info.copy(arena, cpyGen[i], info.userPtr);
 
 			// Breed successfull instances.
-			for (uint32_t i = start; i < end; i++)
+			for (uint32_t i = 0; i < end; i++)
 			{
-				uint32_t a = rand() % start;
-				uint32_t b = rand() % end;
+				uint32_t a = rand() % apexLen;
+				uint32_t b = rand() % breedableLen;
 				generation[i] = info.breed(arena, cpyGen[a], cpyGen[b], info.userPtr);
 			}
 			// Create new instances.

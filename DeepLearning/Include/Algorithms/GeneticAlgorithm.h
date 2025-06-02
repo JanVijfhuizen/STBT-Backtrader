@@ -11,7 +11,8 @@ namespace jv
 		void (*mutate)(Arena& arena, void* instance, void* userPtr);
 		void* (*breed)(Arena& arena, void* a, void* b, void* userPtr);
 		
-		float surviverPct = .4f;
+		float apexPct = .1f;
+		float breedablePct = .4f;
 		float arrivalsPct = .1f;
 		void* userPtr = nullptr;
 	};

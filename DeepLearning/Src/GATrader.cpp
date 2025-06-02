@@ -64,8 +64,10 @@ namespace jv
 		// Adding dominance variable.
 		const uint32_t w = ga->width * 2;
 		auto arr = arena.New<float>(w);
-		for (uint32_t i = 0; i < w; i++)
+		for (uint32_t i = 0; i < ga->width; i++)
 			arr[i] = RandF(-1, 1);
+		for (uint32_t i = 0; i < ga->width; i++)
+			arr[ga->width + i] = RandF(0, 1);
 		return arr;
 	}
 
@@ -86,7 +88,7 @@ namespace jv
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
 		auto arr = reinterpret_cast<float*>(instance);
 
-		for (uint32_t i = 0; i < ga->width * 2; i++)
+		for (uint32_t i = 0; i < ga->width; i++)
 		{
 			if (RandF(0, 1) > ga->mutateChance)
 				continue;
@@ -128,7 +130,7 @@ namespace jv
 			const bool choice = RandF(0, aDom + bDom) < aDom;
 
 			// Apply gene based on random dominance factor.
-			f = RandF(0, 1) < choice ? aArr[i] : bArr[i];
+			f = choice ? aArr[i] : bArr[i];
 			c[ga->width + i] = choice ? aDom : bDom;
 		}
 		GAMutate(arena, c, userPtr);

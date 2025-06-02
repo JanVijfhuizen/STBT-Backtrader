@@ -61,8 +61,10 @@ namespace jv
 	void* GACreate(Arena& arena, void* userPtr)
 	{
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
-		auto arr = arena.New<float>(ga->width);
-		for (uint32_t i = 0; i < ga->width; i++)
+		// Adding dominance variable.
+		const uint32_t w = ga->width * 2;
+		auto arr = arena.New<float>(w);
+		for (uint32_t i = 0; i < w; i++)
 			arr[i] = RandF(-1, 1);
 		return arr;
 	}
@@ -70,10 +72,10 @@ namespace jv
 	void* GACopy(Arena& arena, void* instance, void* userPtr)
 	{
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
-		auto arr = arena.New<float>(ga->width);
+		auto arr = arena.New<float>(ga->width * 2);
 		auto oArr = reinterpret_cast<float*>(instance);
 
-		for (uint32_t i = 0; i < ga->width; i++)
+		for (uint32_t i = 0; i < ga->width * 2; i++)
 			arr[i] = oArr[i];
 
 		return arr;
@@ -84,7 +86,7 @@ namespace jv
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
 		auto arr = reinterpret_cast<float*>(instance);
 
-		for (uint32_t i = 0; i < ga->width; i++)
+		for (uint32_t i = 0; i < ga->width * 2; i++)
 		{
 			if (RandF(0, 1) > ga->mutateChance)
 				continue;
@@ -116,12 +118,18 @@ namespace jv
 
 		auto aArr = reinterpret_cast<float*>(a);
 		auto bArr = reinterpret_cast<float*>(b);
-		auto c = arena.New<float>(ga->width);
+		auto c = arena.New<float>(ga->width * 2);
 
-		for (uint32_t i = 0; i < ga->length; i++)
+		for (uint32_t i = 0; i < ga->width; i++)
 		{
 			auto& f = c[i];
-			f = RandF(0, 1) < ga->alphaDominance ? aArr[i] : bArr[i];
+			const float aDom = aArr[ga->width + i];
+			const float bDom = bArr[ga->width + i];
+			const bool choice = RandF(0, aDom + bDom) < aDom;
+
+			// Apply gene based on random dominance factor.
+			f = RandF(0, 1) < choice ? aArr[i] : bArr[i];
+			c[ga->width + i] = choice ? aDom : bDom;
 		}
 		GAMutate(arena, c, userPtr);
 		return c;

@@ -15,6 +15,7 @@ namespace jv
 
 		uint64_t tempScope;
 		float* ma30;
+		uint32_t score;
 
 		// GE info.
 		uint32_t width = 30;
@@ -22,6 +23,8 @@ namespace jv
 		float mutateChance = .2f;
 		float mutateAddition = 1;
 		float mutateMultiplier = .1f;
+		// Chance of which the child inherits a trait from the dominant parent.
+		float alphaDominance = .95f;
 
 		[[nodiscard]] static GATrader Create(Arena& arena, Arena& tempArena);
 		[[nodiscard]] jv::bt::STBTBot GetBot();

@@ -1163,6 +1163,10 @@ namespace jv::bt
 			arrPrev[i].low = 0;
 		}
 
+		std::string title = "progress [C: ";
+		title += std::to_string(max);
+		title += "]";
+
 		jv::gr::DrawLineGraphInfo drawInfo{};
 		drawInfo.aspectRatio = ratio;
 		drawInfo.position = GetGrPos2();
@@ -1170,7 +1174,7 @@ namespace jv::bt
 		drawInfo.points = arr.ptr;
 		drawInfo.length = arr.length;
 		drawInfo.color = glm::vec4(1, 0, 0, 1);
-		drawInfo.title = "progress";
+		drawInfo.title = title.c_str();
 		drawInfo.maxLinesDrawn = approximateLines ? drawInfo.maxLinesDrawn : -1;
 		stbt.renderer.DrawLineGraph(drawInfo);
 

@@ -14,6 +14,7 @@ namespace jv
 		gt.end = info.end;
 		gt.ma30 = TraderUtils::CreateMA(*gt.tempArena, info.start, info.end,
 			Min<uint32_t>(info.buffer, 30), info.scope->GetTimeSeries(0).close);
+		gt.score = 0;
 
 		return true;
 	}
@@ -28,10 +29,14 @@ namespace jv
 		const int32_t change = v > 0 ? 1e9 : -1e9;
 		info.trades[0].change = change;
 
-		auto series = info.scope->GetTimeSeries(0);
-		bool res = change > 0;
-		bool exp = series.close[info.current] < series.close[info.current - 1];
-		info.fpfnTester->AddResult(res, exp);
+		if (info.current > 1)
+		{
+			auto series = info.scope->GetTimeSeries(0);
+			bool res = change > 0;
+			bool exp = series.open[info.current - 1] < series.open[info.current - 2];
+			info.fpfnTester->AddResult(res, exp);
+			gt.score += res == exp;
+		}
 
 		gt.end = info.current;
 		return true;
@@ -40,11 +45,12 @@ namespace jv
 	void GATraderCleanup(const bt::STBTBotInfo& info)
 	{
 		auto& gt = *reinterpret_cast<GATrader*>(info.userPtr);
-		const float diff = info.scope->GetPortValue(gt.end) - gt.startV;
+		//const float diff = info.scope->GetPortValue(gt.end) - gt.startV;
 
 		if (info.training)
 		{
-			gt.ga.Rate(*gt.arena, *gt.tempArena, diff, *info.output);
+			//gt.ga.Rate(*gt.arena, *gt.tempArena, diff, *info.output);
+			gt.ga.Rate(*gt.arena, *gt.tempArena, gt.score, *info.output);
 			if (gt.ga.trainId == 0)
 				info.progress->Add() = gt.ga.genRating;
 		}
@@ -115,7 +121,7 @@ namespace jv
 		for (uint32_t i = 0; i < ga->length; i++)
 		{
 			auto& f = c[i];
-			f = rand() % 2 == 0 ? aArr[i] : bArr[i];
+			f = RandF(0, 1) < ga->alphaDominance ? aArr[i] : bArr[i];
 		}
 		GAMutate(arena, c, userPtr);
 		return c;

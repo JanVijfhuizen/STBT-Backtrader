@@ -32,6 +32,7 @@ namespace jv::bt
 		bellCurve,
 		progress,
 		FPFN,
+		Custom,
 		length
 	};
 
@@ -44,7 +45,8 @@ namespace jv::bt
 			"Beta Scatter",
 			"Bell Curve",
 			"Progress",
-			"FPFN"
+			"FPFN",
+			"Custom"
 		};
 
 		ImGui::Combo("Show", &bt.showIndex, windowNames, l);
@@ -441,6 +443,9 @@ namespace jv::bt
 				break;
 			case ShowIndex::FPFN:
 				RenderFPFN(stbt, render);
+				break;
+			case ShowIndex::Custom:
+				RenderCustom(stbt, render);
 				break;
 			default:
 				break;
@@ -1236,6 +1241,17 @@ namespace jv::bt
 			info.zoom = zoom;
 			info.overrideCeiling = ceiling;
 			stbt.renderer.DrawDistributionGraph(info);
+		}
+	}
+
+	void MI_Backtrader::RenderCustom(STBT& stbt, bool render)
+	{
+		auto& bot = stbt.bots[algoIndex];
+		if (bot.customRender)
+		{
+			auto info = GetBotInfo(stbt);
+			auto proxy = stbt.renderer.GetProxy();
+			bot.customRender(info, proxy, GetGrPos2());
 		}
 	}
 

@@ -98,5 +98,6 @@ namespace jv::bt
 		void RenderBellCurve(STBT& stbt, const RunInfo& runInfo, bool render);
 		void RenderProgress(STBT& stbt, bool render);
 		void RenderFPFN(STBT& stbt, bool render);
+		void RenderCustom(STBT& stbt, bool render);
 	};
 }

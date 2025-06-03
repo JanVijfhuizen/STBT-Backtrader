@@ -82,6 +82,7 @@ namespace jv::bt
 		const char** bufferNames;
 		uint32_t* bufferSizes;
 		uint32_t buffersLength = 0;
+		void(*customRender)(const STBTBotInfo& info, gr::RenderProxy proxy, glm::vec2 center) = nullptr;
 	};
 
 	struct STBTCreateInfo final

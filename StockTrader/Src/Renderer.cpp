@@ -441,4 +441,38 @@ namespace jv::gr
 
 		return interacted;
 	}
+	RenderProxy Renderer::GetProxy()
+	{
+		RenderProxy proxy{};
+		proxy.renderer = this;
+		return proxy;
+	}
+	void RenderProxy::DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color)
+	{
+		renderer->DrawPlane(position, scale, color);
+	}
+	void RenderProxy::DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color)
+	{
+		renderer->DrawLine(start, end, color);
+	}
+	void RenderProxy::DrawPoint(glm::vec2 position, glm::vec4 color, float size)
+	{
+		renderer->DrawPoint(position, color, size);
+	}
+	bool RenderProxy::DrawScatterGraph(DrawScatterGraphInfo info)
+	{
+		return renderer->DrawScatterGraph(info);
+	}
+	bool RenderProxy::DrawDistributionGraph(DrawDistributionGraphInfo info)
+	{
+		return renderer->DrawDistributionGraph(info);
+	}
+	bool RenderProxy::DrawLineGraph(DrawLineGraphInfo info)
+	{
+		return renderer->DrawLineGraph(info);
+	}
+	float RenderProxy::GetAspectRatio()
+	{
+		return renderer->GetAspectRatio();
+	}
 }

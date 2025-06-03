@@ -58,6 +58,20 @@ namespace jv
 		gt.tempArena->DestroyScope(gt.tempScope);
 	}
 
+	void GATraderRender(const bt::STBTBotInfo& info, gr::RenderProxy renderer, glm::vec2 center)
+	{
+		uint32_t arr[]{ 2, 3 };
+
+		gr::DrawDistributionGraphInfo drawInfo{};
+		drawInfo.aspectRatio = renderer.GetAspectRatio();
+		drawInfo.position = center;
+		drawInfo.values = arr;
+		drawInfo.length = 2;
+		drawInfo.title = "Custom";
+		drawInfo.scale = glm::vec2(1.3);
+		renderer.DrawDistributionGraph(drawInfo);
+	}
+
 	void* GACreate(Arena& arena, void* userPtr)
 	{
 		auto ga = reinterpret_cast<GATrader*>(userPtr);
@@ -162,6 +176,7 @@ namespace jv
 		bot.init = GATraderInit;
 		bot.update = GATraderUpdate;
 		bot.cleanup = GATraderCleanup;
+		bot.customRender = GATraderRender;
 		bot.userPtr = this;
 		return bot;
 	}

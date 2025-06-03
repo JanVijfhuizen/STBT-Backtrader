@@ -1104,7 +1104,7 @@ namespace jv::bt
 
 		for (uint32_t i = 0; i < 2; i++)
 		{
-			auto distribution = CreateArray<uint32_t>(stbt.frameArena, CHUNKS);
+			auto distribution = CreateArray<float>(stbt.frameArena, CHUNKS);
 			auto arr = arrs[i];
 
 			const float m = static_cast<float>(CHUNKS - 1) / 2;
@@ -1194,18 +1194,18 @@ namespace jv::bt
 		if (!render)
 			return;
 
-		uint32_t res[]
+		float res[]
 		{
 			fpfnTester.negatives,
 			fpfnTester.positives
 		};
-		uint32_t falseRes[]
+		float falseRes[]
 		{
 			fpfnTester.falseNegatives,
 			fpfnTester.falsePositives 
 		};
 
-		uint32_t* arrs[]
+		float* arrs[]
 		{
 			res,
 			falseRes

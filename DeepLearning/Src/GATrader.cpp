@@ -60,15 +60,24 @@ namespace jv
 
 	void GATraderRender(const bt::STBTBotInfo& info, gr::RenderProxy renderer, glm::vec2 center)
 	{
-		uint32_t arr[]{ 2, 3 };
+		auto ga = reinterpret_cast<GATrader*>(info.userPtr);
+		float* algo = reinterpret_cast<float*>(ga->ga.result);
 
 		gr::DrawDistributionGraphInfo drawInfo{};
 		drawInfo.aspectRatio = renderer.GetAspectRatio();
-		drawInfo.position = center;
-		drawInfo.values = arr;
-		drawInfo.length = 2;
-		drawInfo.title = "Custom";
-		drawInfo.scale = glm::vec2(1.3);
+		drawInfo.position = center + glm::vec2(.25, -.35);
+		drawInfo.values = algo;
+		drawInfo.length = ga->width;
+		drawInfo.title = "Genes";
+		drawInfo.scale = glm::vec2(.6);
+		drawInfo.zoom = 3;
+		renderer.DrawDistributionGraph(drawInfo);
+
+		drawInfo.color = glm::vec4(0, 1, 0, 1);
+		drawInfo.values = &algo[ga->width];
+		drawInfo.noBackground = true;
+		drawInfo.position -= glm::vec2(.5, 0);
+		drawInfo.title = "Dominance";
 		renderer.DrawDistributionGraph(drawInfo);
 	}
 

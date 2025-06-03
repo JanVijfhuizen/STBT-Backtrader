@@ -267,7 +267,7 @@ namespace jv::gr
 		const float off = stepSize * (info.length - 1) / 2;
 		const float org = -off + info.position.x;
 
-		uint32_t ceiling = 0;
+		float ceiling = 0;
 		for (uint32_t i = 0; i < info.length; i++)
 			ceiling = Max(ceiling, info.values[i]);
 		if (info.overrideCeiling != -1)

@@ -47,7 +47,7 @@ namespace jv::gr
 		glm::vec2 position;
 		glm::vec4 color = glm::vec4(1, 0, 0, 1);
 		uint32_t length;
-		uint32_t* values;
+		float* values;
 
 		const char* title = nullptr;
 		glm::vec2 scale{ 1 };

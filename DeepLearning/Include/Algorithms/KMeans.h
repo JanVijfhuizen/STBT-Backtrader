@@ -25,6 +25,7 @@ namespace jv
 
 	template <typename T>
 	[[nodiscard]] Array<uint32_t> ApplyKMeans(KMeansInfo<T> info);
+	[[nodiscard]] Array<Array<uint32_t>> ConvKMeansRes(Arena& arena, Arena& tempArena, Array<uint32_t>& res, uint32_t pointCount);
 
 	template<typename T>
 	Array<uint32_t> ApplyKMeans(KMeansInfo<T> info)

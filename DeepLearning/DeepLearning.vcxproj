@@ -31,6 +31,7 @@
     <ClInclude Include="Include\Algorithms\KMeans.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\KMeans.cpp" />
     <ClCompile Include="Src\ModBounds.cpp" />
     <ClCompile Include="Src\ModMA.cpp" />
     <ClCompile Include="Src\MainTrader.cpp" />

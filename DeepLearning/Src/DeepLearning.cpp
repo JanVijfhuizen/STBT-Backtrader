@@ -5,6 +5,7 @@
 #include <Traders/GATrader.h>
 #include <Traders/TradTrader.h>
 #include <Traders/MainTrader.h>
+#include <Algorithms/KMeans.h>
 
 void* MAlloc(const uint32_t size)
 {
@@ -46,13 +47,12 @@ int main()
 		arena = jv::Arena::Create(arenaCreateInfo);
 		tempArena = jv::Arena::Create(arenaCreateInfo);
 	}
-
-	// TEMP
 	/*
+	// TEMP
 	{
-		for (uint32_t i = 0; i < 100; i++)
+		for (uint32_t i = 0; i < 1; i++)
 		{
-			auto arr = CreateArray<glm::vec3>(arena, 1000);
+			auto arr = CreateArray<glm::vec3>(arena, 10);
 			for (auto& a : arr)
 				a = { jv::RandF(-1, 1), jv::RandF(-1, 1), jv::RandF(-1, 1) };
 
@@ -64,7 +64,7 @@ int main()
 			kmInfo.cycles = 50;
 			kmInfo.instances = arr.ptr;
 			kmInfo.instanceCount = arr.length;
-			kmInfo.pointCount = 20;
+			kmInfo.pointCount = 2;
 			kmInfo.add = kmAdd;
 			kmInfo.dist = kmDist;
 			kmInfo.div = kmDiv;
@@ -75,13 +75,23 @@ int main()
 			{
 				//std::cout << a << std::endl;
 			}
-			std::cout << c << std::endl;
+			//std::cout << c << "!!!" << std::endl;
+
+			for (auto& a : arr)
+				std::cout << a.x << "." << a.y << "." << a.z << std::endl;
+
+			auto conv = jv::ConvKMeansRes(arena, tempArena, res, 2);
+			for (auto& a : conv)
+			{
+				for(auto& b : a)
+					std::cout << b << std::endl;
+				std::cout << "/" << std::endl;
+			}
 		}
 		
 	}
 	// END TEMP
 	*/
-
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);
 	auto gaTrader = jv::GATrader::Create(arena, tempArena);
 	auto mainTrader = jv::MainTrader::Create(arena, tempArena);

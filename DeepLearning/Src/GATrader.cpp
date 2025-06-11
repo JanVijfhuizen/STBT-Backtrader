@@ -15,7 +15,8 @@ namespace jv
 		gt.ma30 = TraderUtils::CreateMA(*gt.tempArena, info.start, info.end,
 			Min<uint32_t>(info.buffer, 30), info.scope->GetTimeSeries(0).close);
 		gt.score = 0;
-
+		gt.correctness = gt.tempArena->New<float>(info.start - info.end);
+		gt.running = true;
 		return true;
 	}
 
@@ -36,6 +37,7 @@ namespace jv
 			bool exp = series.open[info.current - 1] < series.open[info.current - 2];
 			info.fpfnTester->AddResult(res, exp);
 			gt.score += res == exp;
+			gt.correctness[info.start - info.current] = res == exp ? 1 : -1;
 		}
 
 		gt.end = info.current;
@@ -56,6 +58,7 @@ namespace jv
 		}
 			
 		gt.tempArena->DestroyScope(gt.tempScope);
+		gt.running = false;
 	}
 
 	void GATraderRender(const bt::STBTBotInfo& info, gr::RenderProxy renderer, glm::vec2 center)
@@ -75,10 +78,20 @@ namespace jv
 
 		drawInfo.color = glm::vec4(0, 1, 0, 1);
 		drawInfo.values = &algo[ga->width];
-		drawInfo.noBackground = true;
 		drawInfo.position -= glm::vec2(.5, 0);
 		drawInfo.title = "Dominance";
 		renderer.DrawDistributionGraph(drawInfo);
+
+		if (ga->running)
+		{
+			drawInfo.color = glm::vec4(0, 0, 1, 1);
+			drawInfo.values = ga->correctness;
+			drawInfo.position = center + glm::vec2(0, .7);
+			drawInfo.title = "Correctness";
+			drawInfo.zoom *= 2.4;
+			drawInfo.overrideCeiling = 4;
+			renderer.DrawDistributionGraph(drawInfo);
+		}
 	}
 
 	void* GACreate(Arena& arena, void* userPtr)
@@ -173,6 +186,7 @@ namespace jv
 		trader.arena = &arena;
 		trader.tempArena = &tempArena;
 		trader.ga = GeneticAlgorithm::Create(arena, info);
+		trader.running = false;
 		return trader;
 	}
 

@@ -16,9 +16,11 @@ namespace jv
 		uint64_t tempScope;
 		float* ma30;
 		uint32_t score;
+		float* correctness;
+		bool running;
 
 		// GE info.
-		uint32_t width = 28;
+		uint32_t width = 400;
 		uint32_t length = 100;
 		float mutateChance = .01f;
 		float mutateAddition = 1;

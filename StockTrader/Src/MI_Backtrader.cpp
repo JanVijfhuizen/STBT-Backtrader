@@ -1246,6 +1246,9 @@ namespace jv::bt
 
 	void MI_Backtrader::RenderCustom(STBT& stbt, bool render)
 	{
+		if (!render)
+			return;
+
 		auto& bot = stbt.bots[algoIndex];
 		if (bot.customRender)
 		{

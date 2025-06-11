@@ -28,6 +28,7 @@
     <ClInclude Include="Include\Traders\TMM.h" />
     <ClInclude Include="Include\Traders\Modules\ModMA.h" />
     <ClInclude Include="Include\Traders\Modules\ModBounds.h" />
+    <ClInclude Include="Include\Algorithms\KMeans.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\ModBounds.cpp" />

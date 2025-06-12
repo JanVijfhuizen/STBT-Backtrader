@@ -17,26 +17,6 @@ void MFree(void* ptr)
 	return free(ptr);
 }
 
-float kmDist(glm::vec3& a, glm::vec3& b)
-{
-	return distance(a, b);
-}
-
-void kmAdd(glm::vec3& a, glm::vec3& b)
-{
-	a += b;
-}
-
-void kmDiv(glm::vec3& a, uint32_t n)
-{
-	a /= n;
-}
-
-void kmClear(glm::vec3& a)
-{
-	a = {};
-}
-
 int main()
 {
 	jv::Arena arena, tempArena;
@@ -47,28 +27,25 @@ int main()
 		arena = jv::Arena::Create(arenaCreateInfo);
 		tempArena = jv::Arena::Create(arenaCreateInfo);
 	}
-	/*
+	
 	// TEMP
 	{
 		for (uint32_t i = 0; i < 1; i++)
 		{
-			auto arr = CreateArray<glm::vec3>(arena, 10);
+			auto arr = CreateArray<float>(arena, 30000);
 			for (auto& a : arr)
-				a = { jv::RandF(-1, 1), jv::RandF(-1, 1), jv::RandF(-1, 1) };
+				a = jv::RandF(-1, 1);
 
 			uint32_t c = 0;
 
-			jv::KMeansInfo<glm::vec3> kmInfo{};
+			jv::KMeansInfo kmInfo{};
 			kmInfo.arena = &arena;
 			kmInfo.tempArena = &tempArena;
 			kmInfo.cycles = 50;
 			kmInfo.instances = arr.ptr;
-			kmInfo.instanceCount = arr.length;
-			kmInfo.pointCount = 2;
-			kmInfo.add = kmAdd;
-			kmInfo.dist = kmDist;
-			kmInfo.div = kmDiv;
-			kmInfo.clear = kmClear;
+			kmInfo.count = 600;
+			kmInfo.width = 50;
+			kmInfo.pointCount = 6;
 			kmInfo.outCycleCount = &c;
 			auto res = ApplyKMeans(kmInfo);
 			for (auto& a : res)
@@ -77,9 +54,10 @@ int main()
 			}
 			//std::cout << c << "!!!" << std::endl;
 
-			for (auto& a : arr)
-				std::cout << a.x << "." << a.y << "." << a.z << std::endl;
-
+			//for (auto& a : arr)
+				//std::cout << a << std::endl;
+			//std::cout << "!!" << std::endl;
+			/*
 			auto conv = jv::ConvKMeansRes(arena, tempArena, res, 2);
 			for (auto& a : conv)
 			{
@@ -87,11 +65,13 @@ int main()
 					std::cout << b << std::endl;
 				std::cout << "/" << std::endl;
 			}
+			*/
+			std::cout << c << std::endl;
 		}
 		
 	}
 	// END TEMP
-	*/
+	
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);
 	auto gaTrader = jv::GATrader::Create(arena, tempArena);
 	auto mainTrader = jv::MainTrader::Create(arena, tempArena);

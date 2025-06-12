@@ -26,4 +26,112 @@ namespace jv
 		tempArena.DestroyScope(tempScope);
 		return arr;
 	}
+
+	float KMDist(float* a, float* b, const uint32_t width)
+	{
+		float ret = 0;
+		for (uint32_t i = 0; i < width; i++)
+			ret += abs(a[i] - b[i]);
+		return ret;
+	}
+
+	void KMAdd(float* a, float* b, const uint32_t width)
+	{
+		for (uint32_t i = 0; i < width; i++)
+			a[i] += b[i];
+	}
+
+	void KMDiv(float* a, uint32_t n, const uint32_t width)
+	{
+		for (uint32_t i = 0; i < width; i++)
+			a[i] /= n;
+	}
+
+	void KMClear(float* a, const uint32_t width)
+	{
+		for (uint32_t i = 0; i < width; i++)
+			a[i] = 0;
+	}
+
+	void KMSet(float* a, float* b, const uint32_t width)
+	{
+		for (uint32_t i = 0; i < width; i++)
+			a[i] = b[i];
+	}
+
+	Array<uint32_t> ApplyKMeans(KMeansInfo info)
+	{
+		const uint32_t width = info.width;
+
+		auto& arena = *info.arena;
+		auto& tempArena = *info.tempArena;
+
+		auto arr = CreateArray<uint32_t>(arena, info.count);
+
+		auto tempScope = tempArena.CreateScope();
+		auto points = CreateArray<float>(tempArena, info.pointCount * width);
+		for (uint32_t i = 0; i < info.pointCount; i++)
+		{
+			const uint32_t rInd = (rand() % info.count) * width;
+			KMSet(&points[i * width], &info.instances[rInd], width);
+		}		
+
+		uint32_t i = 0;
+		for (; i < info.cycles; i++)
+		{
+			bool changed = false;
+
+			// Assign instances to closest points.
+			for (uint32_t j = 0; j < info.count; j++)
+			{
+				float minDis = FLT_MAX;
+				uint32_t p = 0;
+
+				for (uint32_t k = 0; k < info.pointCount; k++)
+				{
+					float dst = KMDist(&info.instances[j * width], &points[k * width], width);
+					if (dst < minDis)
+					{
+						minDis = dst;
+						p = k;
+					}
+				}
+
+				// Assign point to instance.
+				changed = changed ? true : arr[j] != p;
+				arr[j] = p;
+			}
+
+			if (!changed)
+				break;
+
+			// Set points to the average of their positions.
+			if (i < info.cycles - 1)
+			{
+				// Reset the points.
+				for (uint32_t j = 0; j < info.pointCount; j++)
+					KMClear(&points[j * width], width);
+
+				auto tScope = tempArena.CreateScope();
+				auto counts = CreateArray<uint32_t>(tempArena, info.pointCount);
+
+				// Get average of point instances.
+				for (uint32_t j = 0; j < info.count; j++)
+				{
+					const uint32_t ind = arr[j];
+					++counts[ind];
+					KMAdd(&points[ind * width], &info.instances[j * width], width);
+				}
+				for (uint32_t k = 0; k < info.pointCount; k++)
+					KMDiv(&points[k * width], counts[k], width);
+
+				tempArena.DestroyScope(tScope);
+			}
+		}
+
+		tempArena.DestroyScope(tempScope);
+		if (info.outCycleCount)
+			*info.outCycleCount = i;
+		return arr;
+	}
 }

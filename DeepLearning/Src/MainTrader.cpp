@@ -236,10 +236,6 @@ namespace jv
 		GeneticAlgorithmCreateInfo info{};
 		info.length = 80;
 		info.userPtr = this;
-		info.breed = MTBreed;
-		info.create = MTCreate;
-		info.mutate = MTMutate;
-		info.copy = MTCopy;
 		ga = GeneticAlgorithm::Create(*arena, info);
 
 		currentInstanceRun = 0;

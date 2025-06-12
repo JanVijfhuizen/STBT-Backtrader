@@ -94,95 +94,17 @@ namespace jv
 		}
 	}
 
-	void* GACreate(Arena& arena, void* userPtr)
-	{
-		auto ga = reinterpret_cast<GATrader*>(userPtr);
-		// Adding dominance variable.
-		const uint32_t w = ga->width * 2;
-		auto arr = arena.New<float>(w);
-		for (uint32_t i = 0; i < ga->width; i++)
-			arr[i] = RandF(-1, 1);
-		for (uint32_t i = 0; i < ga->width; i++)
-			arr[ga->width + i] = RandF(0, 1);
-		return arr;
-	}
-
-	void* GACopy(Arena& arena, void* instance, void* userPtr)
-	{
-		auto ga = reinterpret_cast<GATrader*>(userPtr);
-		auto arr = arena.New<float>(ga->width * 2);
-		auto oArr = reinterpret_cast<float*>(instance);
-
-		for (uint32_t i = 0; i < ga->width * 2; i++)
-			arr[i] = oArr[i];
-
-		return arr;
-	}
-
-	void GAMutate(Arena& arena, void* instance, void* userPtr)
-	{
-		auto ga = reinterpret_cast<GATrader*>(userPtr);
-		auto arr = reinterpret_cast<float*>(instance);
-
-		for (uint32_t i = 0; i < ga->width; i++)
-		{
-			if (RandF(0, 1) > ga->mutateChance)
-				continue;
-
-			float& f = arr[i];
-
-			const uint32_t type = rand() % 3;
-			switch (type)
-			{
-				// Add/Sub
-			case 0:
-				f += RandF(-ga->mutateAddition, ga->mutateAddition);
-				break;
-				// Mul/Div
-			case 1:
-				f *= 1.f + RandF(-ga->mutateMultiplier, ga->mutateMultiplier);
-				break;
-				// New
-			case 2:
-				f = RandF(-1, 1);
-				break;
-			}
-		}
-	}
-
-	void* GABreed(Arena& arena, void* a, void* b, void* userPtr)
-	{
-		auto ga = reinterpret_cast<GATrader*>(userPtr);
-
-		auto aArr = reinterpret_cast<float*>(a);
-		auto bArr = reinterpret_cast<float*>(b);
-		auto c = arena.New<float>(ga->width * 2);
-
-		for (uint32_t i = 0; i < ga->width; i++)
-		{
-			auto& f = c[i];
-			const float aDom = aArr[ga->width + i];
-			const float bDom = bArr[ga->width + i];
-			const bool choice = RandF(0, aDom + bDom) < aDom;
-
-			// Apply gene based on random dominance factor.
-			f = choice ? aArr[i] : bArr[i];
-			c[ga->width + i] = choice ? aDom : bDom;
-		}
-		GAMutate(arena, c, userPtr);
-		return c;
-	}
-
 	GATrader GATrader::Create(Arena& arena, Arena& tempArena)
 	{
 		GATrader trader{};
 		GeneticAlgorithmCreateInfo info{};
 		info.length = trader.length;
 		info.userPtr = &trader;
-		info.breed = GABreed;
-		info.create = GACreate;
-		info.mutate = GAMutate;
-		info.copy = GACopy;
+		info.width = trader.width;
+		info.length = trader.length;
+		info.mutateChance = trader.mutateChance;
+		info.mutateAddition = trader.mutateAddition;
+		info.mutateMultiplier = trader.mutateMultiplier;
 		trader.arena = &arena;
 		trader.tempArena = &tempArena;
 		trader.ga = GeneticAlgorithm::Create(arena, info);

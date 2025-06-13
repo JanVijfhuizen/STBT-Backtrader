@@ -147,7 +147,27 @@ namespace jv
 				kmInfo.pointCount = info.kmPointCount;
 				kmInfo.outCycleCount = &c;
 				auto res = ApplyKMeans(kmInfo);
-				auto conv = jv::ConvKMeansRes(arena, tempArena, res, kmInfo.pointCount);
+				const auto conv = jv::ConvKMeansRes(arena, tempArena, res, kmInfo.pointCount);
+
+				// Now order the breedables based on roundabout
+				uint32_t offset = 0;
+				for (uint32_t i = 0; i < info.apexPct; i++)
+				{
+					uint32_t groupId;
+					do
+					{
+						groupId = offset++ % kmInfo.pointCount;
+					} while (conv[groupId].length == 0);
+
+					const uint32_t ind = groupId - groupId / kmInfo.pointCount;
+					
+					const auto temp = cpyGen[i];
+					auto& apexInst = cpyGen[conv[groupId][ind]];
+
+					// Swap places.
+					cpyGen[i] = apexInst;
+					apexInst = temp;
+				}
 			}
 
 			tempArena.DestroyScope(tempScope);

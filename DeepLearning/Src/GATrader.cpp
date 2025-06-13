@@ -123,6 +123,9 @@ namespace jv
 		bot.cleanup = GATraderCleanup;
 		bot.customRender = GATraderRender;
 		bot.userPtr = this;
+		bot.boolsNames = &useSpeciationText;
+		bot.boolsLength = 1;
+		bot.bools = &useSpeciation;
 		return bot;
 	}
 }

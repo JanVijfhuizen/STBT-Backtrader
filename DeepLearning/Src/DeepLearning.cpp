@@ -33,7 +33,6 @@ int main()
 	auto mainTrader = jv::MainTrader::Create(arena, tempArena);
 	mainTrader.InitGA();
 
-	const char* bName = "Training";
 	jv::bt::STBTBot bots[3];
 	bots[0] = gaTrader.GetBot();
 	bots[1] = tradTrader.GetBot();

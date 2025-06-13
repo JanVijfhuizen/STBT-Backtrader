@@ -19,6 +19,9 @@ namespace jv
 		float* correctness;
 		bool running;
 
+		const char* useSpeciationText = "Use Speciation";
+		bool useSpeciation = false;
+
 		// GE info.
 		uint32_t width = 400;
 		uint32_t length = 100;

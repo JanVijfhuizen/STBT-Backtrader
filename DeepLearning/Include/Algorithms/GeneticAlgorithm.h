@@ -14,7 +14,7 @@ namespace jv
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;
 		void* userPtr = nullptr;
-		uint32_t speciesCount = 1;
+		uint32_t kmPointCount = 5;
 	};
 
 	struct GeneticAlgorithm final

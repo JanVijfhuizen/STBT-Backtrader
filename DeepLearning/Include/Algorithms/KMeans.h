@@ -9,7 +9,7 @@ namespace jv
 		Arena* arena;
 		Arena* tempArena;
 
-		float* instances;
+		float** instances;
 		uint32_t count;
 		uint32_t width;
 		uint32_t pointCount;

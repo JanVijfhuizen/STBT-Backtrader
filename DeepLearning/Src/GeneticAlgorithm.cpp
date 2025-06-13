@@ -133,25 +133,21 @@ namespace jv
 			}
 
 			// Sort again, but now with speciation in mind.
-			assert(info.speciesCount < info.length);
-			if (info.speciesCount > 1)
+			assert(info.kmPointCount < info.length);
+			if (info.kmPointCount > 1)
 			{
-				/*
-				jv::KMeansInfo<glm::vec3> kmInfo{};
+				uint32_t c;
+				jv::KMeansInfo kmInfo{};
 				kmInfo.arena = &arena;
 				kmInfo.tempArena = &tempArena;
 				kmInfo.cycles = 50;
-				kmInfo.instances = arr.ptr;
-				kmInfo.instanceCount = arr.length;
-				kmInfo.pointCount = 2;
-				kmInfo.add = kmAdd;
-				kmInfo.dist = kmDist;
-				kmInfo.div = kmDiv;
-				kmInfo.clear = kmClear;
+				kmInfo.instances = cpyGen;
+				kmInfo.count = info.length;
+				kmInfo.width = info.width;
+				kmInfo.pointCount = info.kmPointCount;
 				kmInfo.outCycleCount = &c;
 				auto res = ApplyKMeans(kmInfo);
-				auto conv = jv::ConvKMeansRes(arena, tempArena, res, 2);
-				*/
+				auto conv = jv::ConvKMeansRes(arena, tempArena, res, kmInfo.pointCount);
 			}
 
 			tempArena.DestroyScope(tempScope);

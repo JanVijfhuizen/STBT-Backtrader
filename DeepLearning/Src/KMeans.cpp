@@ -69,11 +69,12 @@ namespace jv
 		auto arr = CreateArray<uint32_t>(arena, info.count);
 
 		auto tempScope = tempArena.CreateScope();
-		auto points = CreateArray<float>(tempArena, info.pointCount * width);
+		auto points = CreateArray<float*>(tempArena, info.pointCount);
 		for (uint32_t i = 0; i < info.pointCount; i++)
 		{
-			const uint32_t rInd = (rand() % info.count) * width;
-			KMSet(&points[i * width], &info.instances[rInd], width);
+			points[i] = tempArena.New<float>(width);
+			const uint32_t rInd = (rand() % info.count);
+			KMSet(points[i], info.instances[rInd], width);
 		}		
 
 		uint32_t i = 0;
@@ -89,7 +90,7 @@ namespace jv
 
 				for (uint32_t k = 0; k < info.pointCount; k++)
 				{
-					float dst = KMDist(&info.instances[j * width], &points[k * width], width);
+					float dst = KMDist(info.instances[j], points[k], width);
 					if (dst < minDis)
 					{
 						minDis = dst;
@@ -110,7 +111,7 @@ namespace jv
 			{
 				// Reset the points.
 				for (uint32_t j = 0; j < info.pointCount; j++)
-					KMClear(&points[j * width], width);
+					KMClear(points[j], width);
 
 				auto tScope = tempArena.CreateScope();
 				auto counts = CreateArray<uint32_t>(tempArena, info.pointCount);
@@ -120,10 +121,10 @@ namespace jv
 				{
 					const uint32_t ind = arr[j];
 					++counts[ind];
-					KMAdd(&points[ind * width], &info.instances[j * width], width);
+					KMAdd(points[ind], info.instances[j], width);
 				}
 				for (uint32_t k = 0; k < info.pointCount; k++)
-					KMDiv(&points[k * width], counts[k], width);
+					KMDiv(points[k], counts[k], width);
 
 				tempArena.DestroyScope(tScope);
 			}

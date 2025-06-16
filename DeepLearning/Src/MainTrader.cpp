@@ -34,75 +34,6 @@ namespace jv
 		return "Bots/" + std::string(file) + ".bot";
 	}
 
-	void* MTCreate(Arena& arena, void* userPtr)
-	{
-		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		auto arr = arena.New<float>(mt->width);
-		for (uint32_t i = 0; i < mt->width; i++)
-			arr[i] = RandF(-1, 1);
-		return arr;
-	}
-
-	void* MTCopy(Arena& arena, void* instance, void* userPtr)
-	{
-		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		auto arr = arena.New<float>(mt->width);
-		auto oArr = reinterpret_cast<float*>(instance);
-
-		for (uint32_t i = 0; i < mt->width; i++)
-			arr[i] = oArr[i];
-
-		return arr;
-	}
-
-	void MTMutate(Arena& arena, void* instance, void* userPtr)
-	{
-		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-		auto arr = reinterpret_cast<float*>(instance);
-
-		for (uint32_t i = 0; i < mt->width; i++)
-		{
-			if (RandF(0, 1) > mt->mutateChance)
-				continue;
-
-			float& f = arr[i];
-
-			const uint32_t type = rand() % 3;
-			switch (type)
-			{
-				// Add/Sub
-			case 0:
-				f += RandF(-mt->mutateAddition, mt->mutateAddition);
-				break;
-				// Mul/Div
-			case 1:
-				f *= 1.f + RandF(-mt->mutateMultiplier, mt->mutateMultiplier);
-				break;
-				// New
-			case 2:
-				f = RandF(-1, 1);
-				break;
-			}
-		}
-	}
-
-	void* MTBreed(Arena& arena, void* a, void* b, void* userPtr)
-	{
-		auto mt = reinterpret_cast<MainTrader*>(userPtr);
-
-		auto aArr = reinterpret_cast<float*>(a);
-		auto bArr = reinterpret_cast<float*>(b);
-		auto c = arena.New<float>(mt->width);
-
-		for (uint32_t i = 0; i < mt->length; i++)
-		{
-			auto& f = c[i];
-			f = rand() % 2 == 0 ? aArr[i] : bArr[i];
-		}
-		MTMutate(arena, c, userPtr);
-		return c;
-	}
-
 	bool MainTraderInit(const bt::STBTBotInfo& info)
 	{
 		auto mt = reinterpret_cast<MainTrader*>(info.userPtr);
@@ -176,7 +107,10 @@ namespace jv
 			{
 				mt->ga.debug = true;
 				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating, *info.output);
+				if (mt->ga.trainId == 0)
+					info.progress->Add() = mt->ga.genRating;
 				mt->rating = 0;
+				mt->currentInstanceRun = 0;
 			}
 		}
 
@@ -234,8 +168,9 @@ namespace jv
 	void MainTrader::InitGA()
 	{
 		GeneticAlgorithmCreateInfo info{};
-		info.length = 80;
+		info.width = 30;
 		info.userPtr = this;
+		info.kmPointCount = 6;
 		ga = GeneticAlgorithm::Create(*arena, info);
 
 		currentInstanceRun = 0;

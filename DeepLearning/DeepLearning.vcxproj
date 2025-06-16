@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Traders\CorrolationTrader.h" />
     <ClInclude Include="Include\Traders\GATrader.h" />
     <ClInclude Include="Include\Algorithms\GeneticAlgorithm.h" />
     <ClInclude Include="Include\pch.h" />
@@ -31,6 +32,7 @@
     <ClInclude Include="Include\Algorithms\KMeans.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\CorrolationTrader.cpp" />
     <ClCompile Include="Src\KMeans.cpp" />
     <ClCompile Include="Src\ModBounds.cpp" />
     <ClCompile Include="Src\ModMA.cpp" />

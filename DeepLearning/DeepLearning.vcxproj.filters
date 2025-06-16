@@ -45,6 +45,9 @@
     <ClInclude Include="Include\Algorithms\KMeans.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Traders\CorrolationTrader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\pch.cpp">
@@ -78,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\KMeans.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\CorrolationTrader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

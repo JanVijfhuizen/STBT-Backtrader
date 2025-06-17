@@ -30,8 +30,10 @@
     <ClInclude Include="Include\Traders\Modules\ModMA.h" />
     <ClInclude Include="Include\Traders\Modules\ModBounds.h" />
     <ClInclude Include="Include\Algorithms\KMeans.h" />
+    <ClInclude Include="Include\Algorithms\NNet.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\NNet.cpp" />
     <ClCompile Include="Src\CorrolationTrader.cpp" />
     <ClCompile Include="Src\KMeans.cpp" />
     <ClCompile Include="Src\ModBounds.cpp" />

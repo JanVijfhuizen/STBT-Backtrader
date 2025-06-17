@@ -48,6 +48,9 @@
     <ClInclude Include="Include\Traders\CorrolationTrader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Algorithms\NNet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\pch.cpp">
@@ -84,6 +87,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\CorrolationTrader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\NNet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

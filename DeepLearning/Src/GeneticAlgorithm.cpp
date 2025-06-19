@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "Algorithms/GeneticAlgorithm.h"
-#include <JLib/LinearSort.h>
 #include <Algorithms/KMeans.h>
 
 namespace jv
@@ -85,7 +84,7 @@ namespace jv
 		return a > b;
 	}
 
-	void* GeneticAlgorithm::GetTrainee()
+	float* GeneticAlgorithm::GetTrainee()
 	{
 		return generation[trainId];
 	}
@@ -159,7 +158,7 @@ namespace jv
 						groupId = offset++ % kmInfo.pointCount;
 					} while (conv[groupId].length == 0);
 
-					const uint32_t ind = groupId - groupId / kmInfo.pointCount;
+					const uint32_t ind = offset / kmInfo.pointCount;
 					
 					const auto temp = cpyGen[i];
 					auto& apexInst = cpyGen[conv[groupId][ind]];
@@ -187,7 +186,7 @@ namespace jv
 			}
 			// Create new instances.
 			for (uint32_t i = end; i < info.length; i++)
-				GACreate(arena, info.width);
+				generation[i] = GACreate(arena, info.width);
 		}
 	}
 

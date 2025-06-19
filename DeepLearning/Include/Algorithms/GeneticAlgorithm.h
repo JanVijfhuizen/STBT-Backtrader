@@ -35,7 +35,7 @@ namespace jv
 
 		bool debug;
 
-		[[nodiscard]] void* GetTrainee();
+		[[nodiscard]] float* GetTrainee();
 		void Rate(Arena& arena, Arena& tempArena, float rating, Queue<bt::OutputMsg>& output);
 
 		[[nodiscard]] static GeneticAlgorithm Create(Arena& arena, GeneticAlgorithmCreateInfo& info);

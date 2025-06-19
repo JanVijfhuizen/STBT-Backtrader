@@ -8,6 +8,8 @@
 #include <Traders/CorrolationTrader.h>
 #include <Algorithms/KMeans.h>
 
+#include <Algorithms/NNet.h>
+
 void* MAlloc(const uint32_t size)
 {
 	return malloc(size);
@@ -28,6 +30,17 @@ int main()
 		arena = jv::Arena::Create(arenaCreateInfo);
 		tempArena = jv::Arena::Create(arenaCreateInfo);
 	}
+
+
+	// TEMP
+
+	jv::nnet::GroupCreateInfo createInfo{};
+	createInfo.inputCount = 25;
+	createInfo.outputCount = 1;
+	createInfo.length = 200;
+	auto group = jv::nnet::Group::Create(arena, createInfo);
+
+	// END TEMP
 	
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);
 	auto gaTrader = jv::GATrader::Create(arena, tempArena);

@@ -17,13 +17,12 @@ namespace jv
 		{
 			GAResult result;
 
-			auto instance = training ? mt.ga.GetTrainee() : mt.ga.result;
-			float* output = reinterpret_cast<float*>(instance);
+			float* instance = training ? mt.ga.GetTrainee() : mt.ga.result;
 
-			result.mas1Len = Clamp<int32_t>(round(output[0] * 30), 1, 30);
-			result.mas2Len = Clamp<int32_t>(round(output[1] * 100), 1, 100);
-			result.buyThresh = output[2];
-			result.sellThresh = output[3];
+			result.mas1Len = Clamp<int32_t>(round(instance[0] * 30), 1, 30);
+			result.mas2Len = Clamp<int32_t>(round(instance[1] * 100), 1, 100);
+			result.buyThresh = instance[2];
+			result.sellThresh = instance[3];
 
 			return result;
 		}

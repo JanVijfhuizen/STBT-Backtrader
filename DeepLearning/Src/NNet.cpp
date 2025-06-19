@@ -66,12 +66,14 @@ namespace jv::nnet
 				neuron.value = 0;
 				neuron.decay = RandF(-1, 1);
 				neuron.threshold = RandF(0, 1);
+				neuron.dominance = RandF(0, 1);
 			}
 			for (auto& weight : instance.weights)
 			{
 				weight.value = 0;
 				weight.propagations = 0;
 				weight.maxPropagations = rand() % info.maxPropagations;
+				weight.dominance = RandF(0, 1);
 			}
 		}
 
@@ -103,13 +105,75 @@ namespace jv::nnet
 	Instance Copy(Arena& arena, Group& group, Instance& instance)
 	{
 		Instance cpy{};
-		CreateInstance(arena, group, cpy);
+		cpy.neurons = CreateArray<Neuron>(arena, instance.neurons.length);
+		for (uint32_t i = 0; i < instance.neurons.length; i++)
+			cpy.neurons[i] = instance.neurons[i];
+		cpy.weights = CreateArray<Weight>(arena, instance.weights.length);
+		for (uint32_t i = 0; i < instance.weights.length; i++)
+			cpy.weights[i] = instance.weights[i];
 		return instance;
+	}
+
+	float MutateF(float& f, const float min, const float max, const GroupCreateInfo& info)
+	{
+		const uint32_t type = rand() % 3;
+		switch (type)
+		{
+			// Add/Sub
+		case 0:
+			f += RandF(-info.mutateAddition, info.mutateAddition);
+			break;
+			// Mul/Div
+		case 1:
+			f *= 1.f + RandF(-info.mutateMultiplier, info.mutateMultiplier);
+			break;
+			// New
+		case 2:
+			f = RandF(-1, 1);
+			break;
+		}
+		f = Clamp(f, min, max);
 	}
 
 	void Mutate(Arena& arena, Group& group, Instance& instance)
 	{
-		
+		const auto& info = group.info;
+
+		for (uint32_t i = 0; i < instance.neurons.length; i++)
+		{
+			if (RandF(0, 1) > info.mutateChance)
+				continue;
+
+			auto& neuron = instance.neurons[i];
+
+			if(rand() % 2 == 0)
+				MutateF(neuron.decay, -1, 1, info);
+			else
+				MutateF(neuron.threshold, 0, 1, info);
+		}
+
+		for (uint32_t i = 0; i < instance.weights.length; i++)
+		{
+			if (RandF(0, 1) > info.mutateChance)
+				continue;
+
+			auto& weight = instance.weights[i];
+
+			if (rand() % 2 == 0)
+				MutateF(weight.value, -1, 1, info);
+			else
+				weight.maxPropagations = rand() % info.maxPropagations;
+		}
+
+		if (RandF(0, 1) < info.mutateNewWeightChance)
+		{
+			// Instead have the mutation chance calculated when they breed, so I dont waste any more space
+		}
+
+		if (RandF(0, 1) < info.mutateNewNodeChance)
+		{
+
+		}
 	}
 
 	Instance Breed(Arena& arena, Group& group, Instance& a, Instance& b)
@@ -169,7 +233,7 @@ namespace jv::nnet
 			assert(end < info.length && end > breedableLen);
 
 			// Breed successfull instances.
-			for (uint32_t i = 0; i < end; i++)
+			for (uint32_t i = apexLen; i < end; i++)
 			{
 				uint32_t a = rand() % apexLen;
 				uint32_t b = rand() % breedableLen;

@@ -15,13 +15,21 @@ namespace jv::nnet
 	{
 		uint32_t inputCount;
 		uint32_t outputCount;
-		uint32_t length;
-		uint32_t maxPropagations = 5;
+
+		uint32_t width = 400;
+		uint32_t length = 100;
+		float mutateChance = .01f;
+		float mutateAddition = 1;
+		float mutateMultiplier = .1f;
+		float mutateNewWeightChance = .01f;
+		float mutateNewNodeChance = .01f;
 
 		float apexPct = .1f;
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;
 		uint32_t kmPointCount = 5;
+
+		uint32_t maxPropagations = 5;
 	};
 
 	struct Neuron final
@@ -32,6 +40,7 @@ namespace jv::nnet
 		float decay;
 		bool signal;
 		uint32_t id;
+		float dominance;
 	};
 
 	struct Weight final
@@ -42,6 +51,7 @@ namespace jv::nnet
 		uint32_t propagations;
 		uint32_t maxPropagations;
 		uint32_t id;
+		float dominance;
 	};
 
 	struct Instance final

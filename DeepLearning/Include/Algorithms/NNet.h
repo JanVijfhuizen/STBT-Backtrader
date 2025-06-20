@@ -16,7 +16,6 @@ namespace jv::nnet
 		uint32_t inputCount;
 		uint32_t outputCount;
 
-		uint32_t width = 400;
 		uint32_t length = 100;
 		float mutateChance = .01f;
 		float mutateAddition = 1;
@@ -52,6 +51,7 @@ namespace jv::nnet
 		uint32_t maxPropagations;
 		uint32_t id;
 		float dominance;
+		bool enabled = true;
 	};
 
 	struct Instance final
@@ -60,6 +60,7 @@ namespace jv::nnet
 		Array<Weight> weights{};
 
 		void Propagate(const Array<float>& input, const Array<bool>& output);
+		void Flush();
 
 		[[nodiscard]] static Instance Create(Arena& arena, const InstanceCreateInfo& info, struct Group& group);
 	};

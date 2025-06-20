@@ -35,10 +35,51 @@ int main()
 	// TEMP
 
 	jv::nnet::GroupCreateInfo createInfo{};
-	createInfo.inputCount = 25;
+	createInfo.inputCount = 3;
 	createInfo.outputCount = 1;
 	createInfo.length = 200;
+	createInfo.maxPropagations = 1;
 	auto group = jv::nnet::Group::Create(arena, createInfo);
+
+	float fs[]
+	{
+		0.1f,
+		.2f,
+		-.4f
+	};
+	jv::Array<float> arr{};
+	arr.ptr = fs;
+	arr.length = sizeof(fs) / sizeof(float);
+
+	bool b = 0;
+	jv::Array<bool> out{};
+	out.ptr = &b;
+	out.length = 1;
+
+	auto& instance = group.GetTrainee();
+	instance.Propagate(arr, out);
+
+	uint32_t i = 0;
+
+	// WIP memory allocation issue.
+	while (true)
+	{
+		float f = 0;
+		float score = 0;
+		for (uint32_t i = 0; i < 100; i++)
+		{
+			f += 0.1f;
+			score += (b == sin(f) > 0);
+		}
+
+		jv::Queue<jv::bt::OutputMsg> msgs;
+		group.Rate(arena, tempArena, score, msgs);
+
+		if (group.trainId == 0)
+			std::cout << group.genRating << std::endl;
+
+		++i;
+	}
 
 	// END TEMP
 	

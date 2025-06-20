@@ -169,8 +169,6 @@ namespace jv
 				}
 			}
 
-			tempArena.DestroyScope(tempScope);
-
 			assert(info.breedablePct > 0 && info.breedablePct <= 1);
 			const uint32_t apexLen = (float)info.length * info.apexPct;
 			const uint32_t breedableLen = (float)info.length * info.breedablePct;
@@ -187,6 +185,8 @@ namespace jv
 			// Create new instances.
 			for (uint32_t i = end; i < info.length; i++)
 				generation[i] = GACreate(arena, info.width);
+
+			tempArena.DestroyScope(tempScope);
 		}
 	}
 

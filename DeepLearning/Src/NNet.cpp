@@ -61,7 +61,7 @@ namespace jv::nnet
 				{
 					auto& weight = instance.weights[i * info.outputCount + j];
 					weight.from = i;
-					weight.to = j;
+					weight.to = info.inputCount + j;
 				}
 		}
 			
@@ -84,10 +84,11 @@ namespace jv::nnet
 			}
 		}
 
+		uint32_t i = 0;
 		for (auto& neuron : instance.neurons)
-			neuron.id = group.gId++;
+			neuron.id = i++;
 		for (auto& weight : instance.weights)
-			weight.id = group.gId++;
+			weight.id = i++;
 
 		return instance;
 	}
@@ -121,7 +122,7 @@ namespace jv::nnet
 		cpy.weights = CreateArray<Weight>(arena, instance.weights.length);
 		for (uint32_t i = 0; i < instance.weights.length; i++)
 			cpy.weights[i] = instance.weights[i];
-		return instance;
+		return cpy;
 	}
 
 	void MutateF(float& f, const float min, const float max, const GroupCreateInfo& info)
@@ -304,20 +305,22 @@ namespace jv::nnet
 		while (iB < b.weights.length)
 			weights.Add() = b.weights[iB++];
 
-		const bool addWeight = RandF(0, 1) < group.info.mutateNewWeightChance;
-		const bool addNeuron = RandF(0, 1) < group.info.mutateNewNodeChance;
+		const bool addWeight = false;//RandF(0, 1) < group.info.mutateNewWeightChance;
+		const bool addNeuron = false;// RandF(0, 1) < group.info.mutateNewNodeChance;
 
 		// Create instance (with larger size if it's going to mutate new topology)
 		Instance instance{};
 		instance.neurons = CreateArray<Neuron>(arena, neurons.count + addNeuron);
 		for (uint32_t i = 0; i < neurons.count; i++)
 			instance.neurons[i] = neurons[i];
+
 		instance.weights = CreateArray<Weight>(arena, weights.count + 2 * addNeuron + addWeight);
 		for (uint32_t i = 0; i < weights.count; i++)
 			instance.weights[i] = weights[i];
-		Mutate(arena, group, instance, addNeuron, addWeight);
 
+		Mutate(arena, group, instance, addNeuron, addWeight);
 		tempArena.DestroyScope(tempScope);
+
 		return instance;
 	}
 
@@ -328,6 +331,10 @@ namespace jv::nnet
 
 	void Group::Rate(Arena& arena, Arena& tempArena, const float rating, Queue<bt::OutputMsg>& output)
 	{
+		// TODO 
+		// KMEANS SPECIATION
+		// BREEDING WITHIN SPECIES ONLY
+
 		// Finish generation and start new one if applicable.
 		genRatings[trainId++] = rating;
 		if (trainId >= info.length)
@@ -375,6 +382,7 @@ namespace jv::nnet
 				uint32_t b = rand() % breedableLen;
 				generation[i] = Breed(arena, tempArena, *this, cpyGen[a], cpyGen[b]);
 			}
+
 			// Create new instances.
 			for (uint32_t i = end; i < info.length; i++)
 				CreateInstance(arena, *this, generation[i]);
@@ -388,16 +396,18 @@ namespace jv::nnet
 		Group group{};
 		group.info = info;
 		group.scope = arena.CreateScope();
+
 		group.genRatings = arena.New<float>(info.length);
+		group.generation = CreateArray<Instance>(arena, info.length);
 
 		group.resScope = arena.CreateScope();
 		CreateInstance(arena, group, group.result);
 
 		group.genScope = arena.CreateScope();
-		group.generation = CreateArray<Instance>(arena, info.length);
 		for (auto& instance : group.generation)
 			CreateInstance(arena, group, instance);
 
+		group.gId = info.inputCount * info.outputCount + info.inputCount + info.outputCount;
 		return group;
 	}
 	void Group::Destroy(Group& group, Arena& arena)

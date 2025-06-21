@@ -15,6 +15,7 @@ namespace jv
 		float arrivalsPct = .1f;
 		void* userPtr = nullptr;
 		uint32_t kmPointCount = 5;
+		bool inbreedingOnly = false;
 	};
 
 	struct GeneticAlgorithm final

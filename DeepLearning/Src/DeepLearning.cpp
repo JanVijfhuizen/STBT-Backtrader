@@ -41,34 +41,35 @@ int main()
 	createInfo.maxPropagations = 1;
 	auto group = jv::nnet::Group::Create(arena, createInfo);
 
-	float fs[]
-	{
-		0.1f,
-		.2f,
-		-.4f
-	};
-	jv::Array<float> arr{};
-	arr.ptr = fs;
-	arr.length = sizeof(fs) / sizeof(float);
-
-	bool b = 0;
-	jv::Array<bool> out{};
-	out.ptr = &b;
-	out.length = 1;
-
-	auto& instance = group.GetTrainee();
-	instance.Propagate(arr, out);
-
-	uint32_t i = 0;
+	uint32_t ni = 0;
 
 	// WIP memory allocation issue.
 	while (true)
 	{
+		float fs[]
+		{
+			.2f,
+			.8f,
+			-.45f
+		};
+
+		jv::Array<float> arr{};
+		arr.ptr = fs;
+		arr.length = sizeof(fs) / sizeof(float);
+
+		bool b = 0;
+		jv::Array<bool> out{};
+		out.ptr = &b;
+		out.length = 1;
+
+		auto& instance = group.GetTrainee();
+
 		float f = 0;
 		float score = 0;
 		for (uint32_t i = 0; i < 100; i++)
 		{
 			f += 0.1f;
+			instance.Propagate(arr, out);
 			score += (b == sin(f) > 0);
 		}
 
@@ -78,7 +79,7 @@ int main()
 		if (group.trainId == 0)
 			std::cout << group.genRating << std::endl;
 
-		++i;
+		++ni;
 	}
 
 	// END TEMP

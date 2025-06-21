@@ -179,7 +179,14 @@ namespace jv
 			for (uint32_t i = 0; i < end; i++)
 			{
 				uint32_t a = rand() % apexLen;
-				uint32_t b = rand() % breedableLen;
+				uint32_t b;
+				if (info.inbreedingOnly)
+				{
+					// Only breed with instances from the same species.
+					b = a + (rand() % ((breedableLen - a) / info.kmPointCount) + 1) * info.kmPointCount;
+				}
+				else
+					b = rand() % breedableLen;
 				generation[i] = GABreed(arena, cpyGen[a], cpyGen[b], *this);
 			}
 			// Create new instances.

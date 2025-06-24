@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Algorithms/NNet.h"
 #include "Jlib/ArrayUtils.h"
+#include <Jlib/QueueUtils.h>
 
 namespace jv::nnet
 {
@@ -27,12 +28,8 @@ namespace jv::nnet
 			if (!weight.enabled)
 				continue;
 			auto& a = neurons[weight.from];
-			if (a.signal)
-				weight.propagations = weight.maxPropagations;
-			if (weight.propagations > 0)
+			if (!a.signal)
 				continue;
-
-			--weight.propagations;
 			auto& b = neurons[weight.to];
 			b.value += weight.value;
 		}
@@ -77,9 +74,7 @@ namespace jv::nnet
 			}
 			for (auto& weight : instance.weights)
 			{
-				weight.value = 0;
-				weight.propagations = 0;
-				weight.maxPropagations = rand() % info.maxPropagations;
+				weight.value = RandF(-1, 1);
 				weight.dominance = RandF(0, 1);
 			}
 		}
@@ -108,7 +103,6 @@ namespace jv::nnet
 		instanceCreateInfo.connected = true;
 		instanceCreateInfo.inputCount = info.inputCount;
 		instanceCreateInfo.outputCount = info.outputCount;
-		instanceCreateInfo.maxPropagations = info.maxPropagations;
 		instanceCreateInfo.randomize = true;
 		instance = Instance::Create(arena, instanceCreateInfo, group);
 	}
@@ -159,7 +153,7 @@ namespace jv::nnet
 			auto& neuron = instance.neurons[i];
 
 			if(rand() % 2 == 0)
-				MutateF(neuron.decay, -1, 1, info);
+				MutateF(neuron.decay, -info.decayCap, info.decayCap, info);
 			else
 				MutateF(neuron.threshold, 0, 1, info);
 		}
@@ -170,11 +164,7 @@ namespace jv::nnet
 				continue;
 
 			auto& weight = instance.weights[i];
-
-			if (rand() % 2 == 0)
-				MutateF(weight.value, -1, 1, info);
-			else
-				weight.maxPropagations = rand() % info.maxPropagations;
+			MutateF(weight.value, -1, 1, info);
 		}
 
 		if (addWeight)
@@ -183,7 +173,6 @@ namespace jv::nnet
 			auto& weight = instance.weights[instance.weights.length - offset];
 			weight.dominance = RandF(0, 1);
 			weight.id = group.gId++;
-			weight.propagations = RandF(0, info.maxPropagations);
 			weight.from = rand() % instance.neurons.length;
 			do
 			{
@@ -197,20 +186,17 @@ namespace jv::nnet
 			neuron.id = group.gId++;
 			neuron.threshold = RandF(0, 1);
 			neuron.dominance = RandF(0, 1);
-			neuron.decay = RandF(-1, 1);
+			neuron.decay = RandF(-info.decayCap, info.decayCap);
 
-			uint32_t from = rand() % instance.neurons.length;
-			uint32_t to;
-			do
-			{
-				to = rand() % instance.neurons.length;
-			} while (to == from);
+			uint32_t repWeightIdx = rand() % (instance.weights.length - 2);
+			auto& repWeight = instance.weights[repWeightIdx];
+			repWeight.enabled = false;
 
 			uint32_t conns[]
 			{
-				from, 
+				repWeight.from, 
 				instance.neurons.length - 1,
-				to
+				repWeight.to
 			};
 
 			for (uint32_t i = 0; i < 2; i++)
@@ -218,9 +204,9 @@ namespace jv::nnet
 				auto& w = instance.weights[instance.weights.length - i - 1];
 				w.dominance = RandF(0, 1);
 				w.id = group.gId++;
-				w.propagations = RandF(0, info.maxPropagations);
 				w.from = conns[i];
 				w.to = conns[i + 1];
+				w.value = RandF(-1, 1);
 			}
 		}
 	}
@@ -305,8 +291,8 @@ namespace jv::nnet
 		while (iB < b.weights.length)
 			weights.Add() = b.weights[iB++];
 
-		const bool addWeight = false;//RandF(0, 1) < group.info.mutateNewWeightChance;
-		const bool addNeuron = false;// RandF(0, 1) < group.info.mutateNewNodeChance;
+		const bool addNeuron = RandF(0, 1) < group.info.mutateNewNodeChance;
+		const bool addWeight = RandF(0, 1) < group.info.mutateNewWeightChance;
 
 		// Create instance (with larger size if it's going to mutate new topology)
 		Instance instance{};
@@ -334,6 +320,13 @@ namespace jv::nnet
 		// TODO 
 		// KMEANS SPECIATION
 		// BREEDING WITHIN SPECIES ONLY
+		// Punish large solutions
+		// Check if weight connection already exists before mutating? If disabled just enable it again
+
+		// probably being so bad bc from 1-2 + 3 it now goes 1-3(pause)-2
+
+		// NEW NEURONS ARE ALMOST NEVER FAVORABLE.
+		// THIS EXTREME BIAS SHOULD NOT EXIST, SO IM DOING SOMEHTING WRONG WITH CREATING THEM
 
 		// Finish generation and start new one if applicable.
 		genRatings[trainId++] = rating;
@@ -360,6 +353,14 @@ namespace jv::nnet
 			// Copy new best instance to result if applicable.
 			auto bestRating = genRatings[indices[0]];
 			genRating = bestRating;
+
+			for (uint32_t i = 0; i < 40; i++)
+			{
+				std::cout << genRatings[indices[i]] << std::endl;
+				std::cout << cpyGen[i].neurons.length << " // " << cpyGen[i].weights.length << std::endl;
+				//assert(cpyGen[i].neurons.length < 5);
+			}
+			std::cout << "NEW" << std::endl;
 
 			if (bestRating > this->rating)
 			{

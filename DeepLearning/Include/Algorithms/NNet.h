@@ -8,7 +8,6 @@ namespace jv::nnet
 		uint32_t outputCount;
 		bool connected;
 		bool randomize;
-		uint32_t maxPropagations;
 	};
 
 	struct GroupCreateInfo final
@@ -22,13 +21,12 @@ namespace jv::nnet
 		float mutateMultiplier = .1f;
 		float mutateNewWeightChance = .01f;
 		float mutateNewNodeChance = .01f;
+		float decayCap = .01f;
 
 		float apexPct = .1f;
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;
 		uint32_t kmPointCount = 5;
-
-		uint32_t maxPropagations = 5;
 	};
 
 	struct Neuron final
@@ -46,9 +44,6 @@ namespace jv::nnet
 	{
 		uint32_t from, to;
 		float value;
-		// When a neuron fires, it can allow for the weight to fire multiple times afterwards.
-		uint32_t propagations;
-		uint32_t maxPropagations;
 		uint32_t id;
 		float dominance;
 		bool enabled = true;

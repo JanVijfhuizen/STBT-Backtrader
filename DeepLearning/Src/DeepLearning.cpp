@@ -38,12 +38,10 @@ int main()
 	createInfo.inputCount = 3;
 	createInfo.outputCount = 1;
 	createInfo.length = 200;
-	createInfo.maxPropagations = 1;
 	auto group = jv::nnet::Group::Create(arena, createInfo);
 
 	uint32_t ni = 0;
 
-	// WIP memory allocation issue.
 	while (true)
 	{
 		float fs[]
@@ -57,24 +55,28 @@ int main()
 		arr.ptr = fs;
 		arr.length = sizeof(fs) / sizeof(float);
 
-		bool b = 0;
+		bool c = 0;
 		jv::Array<bool> out{};
-		out.ptr = &b;
+		out.ptr = &c;
 		out.length = 1;
 
 		auto& instance = group.GetTrainee();
 
+		jv::FPFNTester tester{};
+
 		float f = 0;
-		float score = 0;
-		for (uint32_t i = 0; i < 100; i++)
+		for (uint32_t i = 0; i < 500; i++)
 		{
-			f += 0.1f;
+			f += 0.01f;
 			instance.Propagate(arr, out);
-			score += (b == sin(f) > 0);
+
+			const bool a = sin(f) > 0;
+			const bool b = sin(f * .7f) > 0;
+			tester.AddResult(c, a && b);
 		}
 
 		jv::Queue<jv::bt::OutputMsg> msgs;
-		group.Rate(arena, tempArena, score, msgs);
+		group.Rate(arena, tempArena, tester.GetRating(), msgs);
 
 		if (group.trainId == 0)
 			std::cout << group.genRating << std::endl;

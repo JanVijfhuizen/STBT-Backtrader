@@ -5,11 +5,15 @@
 
 namespace jv::nnet
 {
-	void Instance::Propagate(const Array<float>& input, const Array<bool>& output)
+	void Instance::Propagate(Arena& temparena, const Array<float>& input, const Array<bool>& output)
 	{
 		// Propagate input.
 		for (uint32_t i = 0; i < input.length; i++)
 			weights[i].value += input[i];
+
+		// new propagation system
+
+		// end new propagation system
 
 		// Signal all neurons that are over the threshold.
 		for (auto& neuron : neurons)
@@ -46,7 +50,38 @@ namespace jv::nnet
 		for (auto& neuron : neurons)
 			neuron.value = 0;
 	}
-	Instance Instance::Create(Arena& arena, const InstanceCreateInfo& info, Group& group)
+
+	void SetupConnections(Arena& arena, Arena& tempArena, Instance& instance, const bool isTemp)
+	{
+		auto tempScope = tempArena.CreateScope();
+
+		const uint32_t l = instance.neurons.length;
+		auto nums = tempArena.New<uint32_t>(l);
+		for (auto& w : instance.weights)
+			++nums[w.from];
+
+		instance.connections = CreateArray<Connections>(arena, l);
+		for (uint32_t i = 0; i < l; i++)
+		{
+			auto& connections = instance.connections[i];
+			connections.weightIds = CreateArray<uint32_t>(arena, nums[i]);
+		}
+		for (uint32_t i = 0; i < l; i++)
+			nums[i] = 0;
+
+		for (uint32_t i = 0; i < instance.weights.length; i++)
+		{
+			auto& weight = instance.weights[i];
+			auto& conn = instance.connections[weight.from];
+			auto& n = nums[weight.from];
+			conn.weightIds[n++] = i;
+		}
+
+		if(!isTemp)
+			tempArena.DestroyScope(tempScope);
+	}
+
+	Instance Instance::Create(Arena& arena, Arena& tempArena, const InstanceCreateInfo& info, Group& group)
 	{
 		Instance instance{};
 		instance.neurons = CreateArray<Neuron>(arena, info.inputCount + info.outputCount);
@@ -61,6 +96,8 @@ namespace jv::nnet
 					weight.to = info.inputCount + j;
 				}
 		}
+
+		SetupConnections(arena, tempArena, instance, false);
 			
 		if (info.randomize)
 		{
@@ -96,7 +133,7 @@ namespace jv::nnet
 		return instance;
 	}
 
-	void CreateInstance(Arena& arena, Group& group, Instance& instance)
+	void CreateInstance(Arena& arena, Arena& tempArena, Group& group, Instance& instance)
 	{
 		const auto& info = group.info;
 		InstanceCreateInfo instanceCreateInfo{};
@@ -104,10 +141,10 @@ namespace jv::nnet
 		instanceCreateInfo.inputCount = info.inputCount;
 		instanceCreateInfo.outputCount = info.outputCount;
 		instanceCreateInfo.randomize = true;
-		instance = Instance::Create(arena, instanceCreateInfo, group);
+		instance = Instance::Create(arena, tempArena, instanceCreateInfo, group);
 	}
 
-	Instance Copy(Arena& arena, Group& group, Instance& instance)
+	Instance Copy(Arena& arena, Arena& tempArena, Group& group, Instance& instance, const bool isTemp)
 	{
 		Instance cpy{};
 		cpy.neurons = CreateArray<Neuron>(arena, instance.neurons.length);
@@ -116,6 +153,7 @@ namespace jv::nnet
 		cpy.weights = CreateArray<Weight>(arena, instance.weights.length);
 		for (uint32_t i = 0; i < instance.weights.length; i++)
 			cpy.weights[i] = instance.weights[i];
+		SetupConnections(arena, tempArena, cpy, isTemp);
 		return cpy;
 	}
 
@@ -340,7 +378,7 @@ namespace jv::nnet
 			// Copy all instances to temp arena.
 			Instance* cpyGen = tempArena.New<Instance>(info.length);
 			for (uint32_t i = 0; i < info.length; i++)
-				cpyGen[i] = Copy(tempArena, *this, generation[i]);
+				cpyGen[i] = Copy(tempArena, tempArena, *this, generation[i], true);
 
 			// Reset to start.
 			arena.DestroyScope(genScope);
@@ -366,7 +404,7 @@ namespace jv::nnet
 			{
 				arena.DestroyScope(resScope);
 				this->rating = bestRating;
-				result = Copy(arena, *this, cpyGen[0]);
+				result = Copy(arena, tempArena, *this, cpyGen[0], false);
 				genScope = arena.CreateScope();
 			}
 
@@ -386,13 +424,13 @@ namespace jv::nnet
 
 			// Create new instances.
 			for (uint32_t i = end; i < info.length; i++)
-				CreateInstance(arena, *this, generation[i]);
+				CreateInstance(arena, tempArena, *this, generation[i]);
 
 			tempArena.DestroyScope(tempScope);
 		}
 	}
 
-	Group Group::Create(Arena& arena, const GroupCreateInfo& info)
+	Group Group::Create(Arena& arena, Arena& tempArena, const GroupCreateInfo& info)
 	{
 		Group group{};
 		group.info = info;
@@ -402,11 +440,11 @@ namespace jv::nnet
 		group.generation = CreateArray<Instance>(arena, info.length);
 
 		group.resScope = arena.CreateScope();
-		CreateInstance(arena, group, group.result);
+		CreateInstance(arena, tempArena, group, group.result);
 
 		group.genScope = arena.CreateScope();
 		for (auto& instance : group.generation)
-			CreateInstance(arena, group, instance);
+			CreateInstance(arena, tempArena, group, instance);
 
 		group.gId = info.inputCount * info.outputCount + info.inputCount + info.outputCount;
 		return group;

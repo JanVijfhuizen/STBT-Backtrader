@@ -38,7 +38,7 @@ int main()
 	createInfo.inputCount = 3;
 	createInfo.outputCount = 1;
 	createInfo.length = 200;
-	auto group = jv::nnet::Group::Create(arena, createInfo);
+	auto group = jv::nnet::Group::Create(arena, tempArena, createInfo);
 
 	uint32_t ni = 0;
 
@@ -72,7 +72,8 @@ int main()
 
 			const bool a = sin(f) > 0;
 			const bool b = sin(f * .7f) > 0;
-			tester.AddResult(c, a && b);
+			const bool c = i % 4 == 0;
+			tester.AddResult(c, a && b && c);
 		}
 
 		jv::Queue<jv::bt::OutputMsg> msgs;

@@ -29,6 +29,11 @@ namespace jv::nnet
 		uint32_t kmPointCount = 5;
 	};
 
+	struct Connections final
+	{
+		Array<uint32_t> weightIds;
+	};
+
 	struct Neuron final
 	{
 		float value;
@@ -53,11 +58,13 @@ namespace jv::nnet
 	{
 		Array<Neuron> neurons;
 		Array<Weight> weights{};
+		Array<Connections> connections{};
 
-		void Propagate(const Array<float>& input, const Array<bool>& output);
+		void Propagate(Arena& temparena, const Array<float>& input, const Array<bool>& output);
 		void Flush();
 
-		[[nodiscard]] static Instance Create(Arena& arena, const InstanceCreateInfo& info, struct Group& group);
+		[[nodiscard]] static Instance Create(Arena& arena, Arena& tempArena, 
+			const InstanceCreateInfo& info, struct Group& group);
 	};
 
 	struct Group final
@@ -82,7 +89,7 @@ namespace jv::nnet
 		[[nodiscard]] Instance& GetTrainee();
 		void Rate(Arena& arena, Arena& tempArena, float rating, Queue<bt::OutputMsg>& output);
 
-		[[nodiscard]] static Group Create(Arena& arena, const GroupCreateInfo& info);
+		[[nodiscard]] static Group Create(Arena& arena, Arena& tempArena, const GroupCreateInfo& info);
 		static void Destroy(Group& group, Arena& arena);
 	};
 }

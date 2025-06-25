@@ -40,7 +40,7 @@ namespace jv::nnet
 		float threshold;
 		// Can be negative for reverse decay.
 		float decay;
-		bool signal;
+		bool signalled;
 		uint32_t id;
 		float dominance;
 	};
@@ -60,7 +60,7 @@ namespace jv::nnet
 		Array<Weight> weights{};
 		Array<Connections> connections{};
 
-		void Propagate(Arena& temparena, const Array<float>& input, const Array<bool>& output);
+		void Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output);
 		void Flush();
 
 		[[nodiscard]] static Instance Create(Arena& arena, Arena& tempArena, 

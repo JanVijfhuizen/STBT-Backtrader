@@ -5,44 +5,65 @@
 
 namespace jv::nnet
 {
-	void Instance::Propagate(Arena& temparena, const Array<float>& input, const Array<bool>& output)
+	void Instance::Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output)
 	{
 		// Propagate input.
 		for (uint32_t i = 0; i < input.length; i++)
 			weights[i].value += input[i];
 
-		// new propagation system
+		const auto tempScope = tempArena.CreateScope();
+		auto queue = CreateQueue<uint32_t>(tempArena, neurons.length - 1);
+		for (uint32_t i = 0; i < 3; i++)
+			queue.Add() = i;
 
-		// end new propagation system
+		for (auto& neuron : neurons)
+			neuron.signalled = false;
 
-		// Signal all neurons that are over the threshold.
+		while (queue.count > 0)
+		{
+			const uint32_t current = queue.Pop();
+			auto& neuron = neurons[current];
+
+			// Each neuron can only signal once per propagation.
+			// This avoids infinite loops.
+			if (neuron.signalled)
+				continue;
+
+			if (neuron.value < neuron.threshold)
+				continue;
+			neuron.signalled = true;
+
+			// Propagate through weights.
+			auto& conns = connections[current];
+			for (auto& conn : conns.weightIds)
+			{
+				auto& weight = weights[conn];
+				auto& toNeuron = neurons[weight.to];
+				if (!weight.enabled)
+					continue;
+
+				queue.Add() = weight.to;
+				toNeuron.value += weight.value;
+			}
+		}
+
+		// Update neuron values with decay.
 		for (auto& neuron : neurons)
 		{
-			neuron.signal = neuron.value > neuron.threshold;
-			neuron.value = Min(neuron.value, neuron.threshold);
 			neuron.value -= neuron.decay;
+			neuron.value = Min(neuron.value, neuron.threshold);
 			neuron.value = Max(neuron.value, 0.f);
 			// Reset to 0 if the neuron has been signalled.
-			neuron.value = neuron.signal ? 0 : neuron.value;
+			neuron.value = neuron.signalled ? 0 : neuron.value;
 		}
 
-		// Propagate signalled neurons through weights.
-		for (auto& weight : weights)
-		{
-			if (!weight.enabled)
-				continue;
-			auto& a = neurons[weight.from];
-			if (!a.signal)
-				continue;
-			auto& b = neurons[weight.to];
-			b.value += weight.value;
-		}
+		tempArena.DestroyScope(tempScope);
 
 		// Return output.
 		for (uint32_t i = 0; i < output.length; i++)
 		{
 			const uint32_t ind = neurons.length - output.length + i;
-			output[i] = neurons[ind].signal;
+			output[i] = neurons[ind].signalled;
 		}
 	}
 	void Instance::Flush()
@@ -103,7 +124,6 @@ namespace jv::nnet
 		{
 			for (auto& neuron : instance.neurons)
 			{
-				neuron.signal = false;
 				neuron.value = 0;
 				neuron.decay = RandF(-1, 1);
 				neuron.threshold = RandF(0, 1);
@@ -343,6 +363,7 @@ namespace jv::nnet
 			instance.weights[i] = weights[i];
 
 		Mutate(arena, group, instance, addNeuron, addWeight);
+		SetupConnections(arena, tempArena, instance, false);
 		tempArena.DestroyScope(tempScope);
 
 		return instance;
@@ -391,14 +412,6 @@ namespace jv::nnet
 			// Copy new best instance to result if applicable.
 			auto bestRating = genRatings[indices[0]];
 			genRating = bestRating;
-
-			for (uint32_t i = 0; i < 40; i++)
-			{
-				std::cout << genRatings[indices[i]] << std::endl;
-				std::cout << cpyGen[i].neurons.length << " // " << cpyGen[i].weights.length << std::endl;
-				//assert(cpyGen[i].neurons.length < 5);
-			}
-			std::cout << "NEW" << std::endl;
 
 			if (bestRating > this->rating)
 			{

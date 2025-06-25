@@ -42,6 +42,8 @@ int main()
 
 	uint32_t ni = 0;
 
+	uint32_t highest = 0;
+
 	while (true)
 	{
 		float fs[]
@@ -55,9 +57,9 @@ int main()
 		arr.ptr = fs;
 		arr.length = sizeof(fs) / sizeof(float);
 
-		bool c = 0;
+		bool output = 0;
 		jv::Array<bool> out{};
-		out.ptr = &c;
+		out.ptr = &output;
 		out.length = 1;
 
 		auto& instance = group.GetTrainee();
@@ -65,22 +67,33 @@ int main()
 		jv::FPFNTester tester{};
 
 		float f = 0;
+		uint32_t correctness = 0;
+
 		for (uint32_t i = 0; i < 500; i++)
 		{
 			f += 0.01f;
-			instance.Propagate(arr, out);
+			instance.Propagate(tempArena, arr, out);
 
 			const bool a = sin(f) > 0;
 			const bool b = sin(f * .7f) > 0;
 			const bool c = i % 4 == 0;
-			tester.AddResult(c, a && b && c);
+
+			const bool expected = a && c;
+
+			correctness += output == expected;
+			tester.AddResult(output, expected);
 		}
+
+		highest = jv::Max(highest, correctness);
 
 		jv::Queue<jv::bt::OutputMsg> msgs;
 		group.Rate(arena, tempArena, tester.GetRating(), msgs);
 
 		if (group.trainId == 0)
-			std::cout << group.genRating << std::endl;
+		{
+			std::cout << group.genRating << " // " << highest << std::endl;
+		}
+			
 
 		++ni;
 	}

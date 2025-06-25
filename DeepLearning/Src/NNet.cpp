@@ -147,9 +147,7 @@ namespace jv::nnet
 
 	Instance& Group::GetTrainee()
 	{
-		// First flush trainee.
 		auto& instance = generation[trainId];
-		instance.Flush();
 		return instance;
 	}
 
@@ -349,8 +347,10 @@ namespace jv::nnet
 		while (iB < b.weights.length)
 			weights.Add() = b.weights[iB++];
 
-		const bool addNeuron = RandF(0, 1) < group.info.mutateNewNodeChance;
-		const bool addWeight = RandF(0, 1) < group.info.mutateNewWeightChance;
+		bool addNeuron = RandF(0, 1) < group.info.mutateNewNodeChance;
+		bool addWeight = RandF(0, 1) < group.info.mutateNewWeightChance;
+		addNeuron = neurons.count >= group.info.maxNeurons ? false : addNeuron;
+		addWeight = weights.count >= group.info.maxWeights ? false : addWeight;
 
 		// Create instance (with larger size if it's going to mutate new topology)
 		Instance instance{};

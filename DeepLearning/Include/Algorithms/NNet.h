@@ -23,6 +23,9 @@ namespace jv::nnet
 		float mutateNewNodeChance = .01f;
 		float decayCap = .01f;
 
+		uint32_t maxNeurons = 20;
+		uint32_t maxWeights = 50;
+
 		float apexPct = .1f;
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;

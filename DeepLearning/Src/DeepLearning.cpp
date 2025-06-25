@@ -33,7 +33,7 @@ int main()
 
 
 	// TEMP
-
+	/*
 	jv::nnet::GroupCreateInfo createInfo{};
 	createInfo.inputCount = 3;
 	createInfo.outputCount = 1;
@@ -99,6 +99,7 @@ int main()
 	}
 
 	// END TEMP
+	*/
 	
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);
 	auto gaTrader = jv::GATrader::Create(arena, tempArena);

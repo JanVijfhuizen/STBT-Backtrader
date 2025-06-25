@@ -1,5 +1,6 @@
 #pragma once
 #include <Algorithms/GeneticAlgorithm.h>
+#include <Algorithms/NNet.h>
 
 namespace jv
 {
@@ -8,6 +9,7 @@ namespace jv
 		jv::Arena* arena;
 		jv::Arena* tempArena;
 		jv::GeneticAlgorithm ga;
+		jv::nnet::Group group;
 
 		// Train instance info.
 		float startV;
@@ -19,8 +21,33 @@ namespace jv
 		float* correctness;
 		bool running;
 
-		const char* useSpeciationText = "Use Speciation";
-		bool useSpeciation = false;
+		union
+		{
+			struct
+			{
+				const char* useSpeciationText;
+				const char* useGroupText;
+			};
+			const char* boolTexts[2]
+			{
+				"Speciation",
+				"Group algo"
+			};
+		};
+
+		union
+		{
+			struct
+			{
+				bool useSpeciation;
+				bool useGroup;
+			};
+			bool bools[2]
+			{
+				true,
+				false
+			};
+		};
 
 		// GE info.
 		uint32_t width = 400;
@@ -32,9 +59,4 @@ namespace jv
 		[[nodiscard]] static GATrader Create(Arena& arena, Arena& tempArena);
 		[[nodiscard]] jv::bt::STBTBot GetBot();
 	};
-
-	void* GACreate(jv::Arena& arena, void* userPtr);
-	void* GACopy(jv::Arena& arena, void* instance, void* userPtr);
-	void GAMutate(jv::Arena& arena, void* instance, void* userPtr);
-	void* GABreed(jv::Arena& arena, void* a, void* b, void* userPtr);
 }

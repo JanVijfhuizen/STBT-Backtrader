@@ -17,27 +17,43 @@ namespace jv
 		gt.score = 0;
 		gt.correctness = gt.tempArena->New<float>(info.start - info.end);
 		gt.running = true;
+
+		if (info.training)
+			gt.group.GetTrainee().Flush();
+		else
+			gt.group.result.Flush();
+
 		return true;
 	}
 
 	bool GATraderUpdate(const bt::STBTBotUpdateInfo& info)
 	{
 		auto& gt = *reinterpret_cast<GATrader*>(info.userPtr);
-		float* algo = reinterpret_cast<float*>(info.training ? gt.ga.GetTrainee() : gt.ga.result); //  gt.ga.generation[0] works
 
-		float v;
-		v = algo[info.current];
-		const int32_t change = v > 0 ? 1e9 : -1e9;
-		info.trades[0].change = change;
-
-		if (info.current > 1)
+		if (gt.useGroup)
 		{
-			auto series = info.scope->GetTimeSeries(0);
-			bool res = change > 0;
-			bool exp = series.open[info.current - 1] < series.open[info.current - 2];
-			info.fpfnTester->AddResult(res, exp);
-			gt.score += res == exp;
-			gt.correctness[info.start - info.current] = res == exp ? 1 : -1;
+			auto& algo = info.training ? gt.group.GetTrainee() : gt.group.result;
+
+
+		}
+		else
+		{
+			float* algo = info.training ? gt.ga.GetTrainee() : gt.ga.result;
+
+			float v;
+			v = algo[info.current];
+			const int32_t change = v > 0 ? 1e9 : -1e9;
+			info.trades[0].change = change;
+
+			if (info.current > 1)
+			{
+				auto series = info.scope->GetTimeSeries(0);
+				bool res = change > 0;
+				bool exp = series.open[info.current - 1] < series.open[info.current - 2];
+				info.fpfnTester->AddResult(res, exp);
+				gt.score += res == exp;
+				gt.correctness[info.start - info.current] = res == exp ? 1 : -1;
+			}
 		}
 
 		gt.end = info.current;
@@ -51,10 +67,17 @@ namespace jv
 
 		if (info.training)
 		{
-			//gt.ga.Rate(*gt.arena, *gt.tempArena, diff, *info.output);
-			gt.ga.Rate(*gt.arena, *gt.tempArena, gt.score, *info.output);
-			if (gt.ga.trainId == 0)
-				info.progress->Add() = gt.ga.genRating;
+			if (gt.useGroup)
+			{
+
+			}
+			else
+			{
+				gt.ga.Rate(*gt.arena, *gt.tempArena, gt.score, *info.output);
+				if (gt.ga.trainId == 0)
+					info.progress->Add() = gt.ga.genRating;
+			}
+			
 		}
 			
 		gt.tempArena->DestroyScope(gt.tempScope);
@@ -109,6 +132,12 @@ namespace jv
 		trader.tempArena = &tempArena;
 		trader.ga = GeneticAlgorithm::Create(arena, info);
 		trader.running = false;
+
+		jv::nnet::GroupCreateInfo createInfo{};
+		createInfo.inputCount = 20;
+		createInfo.outputCount = 1;
+		createInfo.length = 200;
+		trader.group = jv::nnet::Group::Create(arena, tempArena, createInfo);
 		return trader;
 	}
 
@@ -123,9 +152,9 @@ namespace jv
 		bot.cleanup = GATraderCleanup;
 		bot.customRender = GATraderRender;
 		bot.userPtr = this;
-		bot.boolsNames = &useSpeciationText;
-		bot.boolsLength = 1;
-		bot.bools = &useSpeciation;
+		bot.boolsNames = boolTexts;
+		bot.boolsLength = sizeof(bools) / sizeof(bool);
+		bot.bools = bools;
 		return bot;
 	}
 }

@@ -1222,12 +1222,28 @@ namespace jv::bt
 		ceiling = Max(ceiling, fpfnTester.positives);
 		ceiling = Max(ceiling, fpfnTester.negatives);
 
+		// WIP MEMORY LEAK
+		/*
+		std::string title = "FPFN: ";
+
+		for (uint32_t i = 0; i < 2; i++)
+		{
+			for (uint32_t j = 0; j < 2; j++)
+			{
+				title += std::to_string(static_cast<uint32_t>(arrs[i][j]));
+				if (i < 1 && j < 1)
+					title += "/";
+			}
+		}
+
+		auto str = stbt.frameArena.New<char>(title.length());
+		memcpy(str, title.c_str(), title.length());
+		*/
 		for (uint32_t i = 0; i < 2; i++)
 		{
 			glm::vec2 grPos = GetGrPos2();
 
 			std::string title = "False Positives and False Negatives";
-
 			gr::DrawDistributionGraphInfo info{};
 			info.aspectRatio = stbt.renderer.GetAspectRatio();
 			info.position = grPos;

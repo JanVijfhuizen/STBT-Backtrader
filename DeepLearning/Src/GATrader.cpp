@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Traders/GATrader.h"
 #include <TraderUtils.h>
+#include <Jlib/ArrayUtils.h>
 
 namespace jv 
 {
@@ -15,13 +16,17 @@ namespace jv
 		gt.ma30 = TraderUtils::CreateMA(*gt.tempArena, info.start, info.end,
 			Min<uint32_t>(info.buffer, 30), info.scope->GetTimeSeries(0).close);
 		gt.score = 0;
-		gt.correctness = gt.tempArena->New<float>(info.start - info.end);
+		const uint32_t l = (info.start - info.end) * (gt.useGroup ? info.scope->GetTimeSeriesCount() : 1);
+		gt.correctness = gt.tempArena->New<float>(l);
 		gt.running = true;
 
-		if (info.training)
-			gt.group.GetTrainee().Flush();
-		else
-			gt.group.result.Flush();
+		if (gt.useGroup)
+		{
+			if (info.training)
+				gt.group.GetTrainee().Flush();
+			else
+				gt.group.result.Flush();
+		}
 
 		return true;
 	}
@@ -33,8 +38,34 @@ namespace jv
 		if (gt.useGroup)
 		{
 			auto& algo = info.training ? gt.group.GetTrainee() : gt.group.result;
+			const uint32_t l = info.scope->GetTimeSeriesCount();
 
+			const auto tempScope = gt.tempArena->CreateScope();
+			auto input = CreateArray<float>(*gt.tempArena, l);
+			auto output = CreateArray<bool>(*gt.tempArena, l);
 
+			if (info.current > 1)
+			{
+				for (uint32_t i = 0; i < l; i++)
+				{
+					auto series = info.scope->GetTimeSeries(i);
+					input[i] = series.open[info.current - 2] / 1e3f;
+				}
+			
+				algo.Propagate(*gt.tempArena, input, output);
+
+				for (uint32_t i = 0; i < l; i++)
+				{
+					const bool res = output[i];
+					auto series = info.scope->GetTimeSeries(i);
+					bool exp = series.open[info.current - 1] < series.open[info.current - 2];
+					info.fpfnTester->AddResult(res, exp);
+					gt.score += res == exp;
+					gt.correctness[(info.start - info.current) * l + i] = res == exp ? 1 : -1;
+				}
+			}
+
+			gt.tempArena->DestroyScope(tempScope);
 		}
 		else
 		{
@@ -69,15 +100,16 @@ namespace jv
 		{
 			if (gt.useGroup)
 			{
-
+				gt.group.Rate(*gt.arena, *gt.tempArena, gt.score, *info.output);
+				if (gt.group.trainId == 0)
+					info.progress->Add() = gt.group.genRating;
 			}
 			else
 			{
 				gt.ga.Rate(*gt.arena, *gt.tempArena, gt.score, *info.output);
 				if (gt.ga.trainId == 0)
 					info.progress->Add() = gt.ga.genRating;
-			}
-			
+			}	
 		}
 			
 		gt.tempArena->DestroyScope(gt.tempScope);

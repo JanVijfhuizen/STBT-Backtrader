@@ -812,6 +812,13 @@ namespace jv::bt
 			stepCompleted = false;
 			canFinish = true;
 			canEnd = true;
+
+			auto& bot = stbt.bots[algoIndex];
+			if (bot.cleanup)
+			{
+				auto botInfo = GetBotInfo(stbt);
+				bot.cleanup(botInfo);
+			}
 		}
 
 		ImGui::SameLine();
@@ -1217,28 +1224,33 @@ namespace jv::bt
 			glm::vec4(1, 0, 0, 1)
 		};
 
+		const char* texts[]
+		{
+			"True Negatives: ",
+			"True Positives: ",
+			"False Negatives: ",
+			"False Positives: "
+		};
+
 		uint32_t ceiling = fpfnTester.falseNegatives;
 		ceiling = Max(ceiling, fpfnTester.falsePositives);
 		ceiling = Max(ceiling, fpfnTester.positives);
 		ceiling = Max(ceiling, fpfnTester.negatives);
 
-		// WIP MEMORY LEAK
-		/*
-		std::string title = "FPFN: ";
-
+		MI_Symbols::DrawTopRightWindow("Stocks", true, true);
+		
 		for (uint32_t i = 0; i < 2; i++)
 		{
 			for (uint32_t j = 0; j < 2; j++)
 			{
-				title += std::to_string(static_cast<uint32_t>(arrs[i][j]));
-				if (i < 1 && j < 1)
-					title += "/";
+				std::string text = texts[i * 2 + j];
+				text += std::to_string(static_cast<uint32_t>(arrs[i][j]));
+				ImGui::Text(text.c_str());
 			}
 		}
 
-		auto str = stbt.frameArena.New<char>(title.length());
-		memcpy(str, title.c_str(), title.length());
-		*/
+		ImGui::End();
+		
 		for (uint32_t i = 0; i < 2; i++)
 		{
 			glm::vec2 grPos = GetGrPos2();

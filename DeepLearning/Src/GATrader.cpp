@@ -54,14 +54,17 @@ namespace jv
 			
 				algo.Propagate(*gt.tempArena, input, output);
 
-				for (uint32_t i = 0; i < l; i++)
+				if (info.current > gt.nnetWarmupPeriod)
 				{
-					const bool res = output[i];
-					auto series = info.scope->GetTimeSeries(i);
-					bool exp = series.open[info.current - 1] < series.open[info.current - 2];
-					info.fpfnTester->AddResult(res, exp);
-					gt.score += res == exp;
-					gt.correctness[(info.start - info.current) * l + i] = res == exp ? 1 : -1;
+					for (uint32_t i = 0; i < l; i++)
+					{
+						const bool res = output[i];
+						auto series = info.scope->GetTimeSeries(i);
+						bool exp = series.open[info.current - 1] < series.open[info.current - 2];
+						info.fpfnTester->AddResult(res, exp);
+						gt.score += res == exp;
+						gt.correctness[(info.start - info.current) * l + i] = res == exp ? 1 : -1;
+					}
 				}
 			}
 

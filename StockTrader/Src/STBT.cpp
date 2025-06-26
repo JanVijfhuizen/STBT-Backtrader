@@ -27,7 +27,7 @@ namespace jv::bt
 		const ImVec4 col3 = { .3, .35, .3, 1 };
 		const ImVec4 col4 = { .45, .5, .45, 1 };
 		const ImVec4 col5 = { 1, 1, 1, 1 };
-
+		
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, col2);
 		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, col3);
 		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, col4);
@@ -42,7 +42,7 @@ namespace jv::bt
 
 		ImGui::PushStyleColor(ImGuiCol_CheckMark, col5);
 		ImGui::PushStyleColor(ImGuiCol_TitleBgActive, col);
-
+		
 		// Update (sub)menu(s).
 		bool quit = menu.Update(arena, *this);
 		if (!quit)

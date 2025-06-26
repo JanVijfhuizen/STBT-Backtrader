@@ -31,7 +31,7 @@ namespace jv
 			const char* boolTexts[2]
 			{
 				"Speciation",
-				"Group algo"
+				"Group NNET"
 			};
 		};
 
@@ -45,7 +45,7 @@ namespace jv
 			bool bools[2]
 			{
 				true,
-				false
+				true
 			};
 		};
 
@@ -55,6 +55,7 @@ namespace jv
 		float mutateChance = .01f;
 		float mutateAddition = 1;
 		float mutateMultiplier = .1f;
+		uint32_t nnetWarmupPeriod = 50;
 
 		[[nodiscard]] static GATrader Create(Arena& arena, Arena& tempArena);
 		[[nodiscard]] jv::bt::STBTBot GetBot();

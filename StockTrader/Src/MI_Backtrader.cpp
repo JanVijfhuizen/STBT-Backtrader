@@ -672,6 +672,76 @@ namespace jv::bt
 		if (ImGui::Button("Reset FPFN"))
 			fpfnTester.Reset();
 
+		const auto SAVE_PATH = "BT.set";
+
+		if (ImGui::Button("Use Default Settings"))
+		{
+			std::ifstream fin(SAVE_PATH);
+			if (fin.is_open())
+			{
+				std::string line;
+				std::getline(fin, line);
+				snprintf(runCountBuffer, sizeof(runCountBuffer), "%i", std::stoi(line));
+				std::getline(fin, line);
+				snprintf(buffBuffer, sizeof(buffBuffer), "%i", std::stoi(line));
+				std::getline(fin, line);
+				snprintf(feeBuffer, sizeof(feeBuffer), "%f", std::stof(line));
+				std::getline(fin, line);
+				snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", std::stoi(line));
+				std::getline(fin, line);
+				runType = std::stoi(line);
+				std::getline(fin, line);
+				showIndex = std::stoi(line);
+				std::getline(fin, line);
+				pauseOnFinish = std::stoi(line);
+				std::getline(fin, line);
+				pauseOnFinishAll = std::stoi(line);
+				std::getline(fin, line);
+				randomizeDate = std::stoi(line);
+				std::getline(fin, line);
+				snprintf(lengthBuffer, sizeof(lengthBuffer), "%i", std::stoi(line));
+				std::getline(fin, line);
+				approximateLines = std::stoi(line);
+				std::getline(fin, line);
+				log = std::stoi(line);
+				std::getline(fin, line);
+				training = std::stoi(line);
+				std::getline(fin, line);
+				stbt.range = std::stoi(line);
+
+				stbt.output.Add() = OutputMsg::Create("Settings loaded succesfully!");
+			}
+			else
+				stbt.output.Add() = OutputMsg::Create("ERROR: Couldn't open save file!");
+		}
+
+		if (ImGui::Button("Save As Default Settings"))
+		{
+			std::ofstream fout(SAVE_PATH);
+			if (fout.is_open())
+			{
+				fout << std::atoi(runCountBuffer) << std::endl;
+				fout << std::atoi(buffBuffer) << std::endl;
+				fout << std::atof(feeBuffer) << std::endl;
+				fout << std::atoi(zoomBuffer) << std::endl;
+				fout << runType << std::endl;
+				fout << showIndex << std::endl;
+				fout << pauseOnFinish << std::endl;
+				fout << pauseOnFinishAll << std::endl;
+				fout << randomizeDate << std::endl;
+				fout << std::atoi(lengthBuffer) << std::endl;
+				fout << approximateLines << std::endl;
+				fout << log << std::endl;
+				fout << training << std::endl;
+				fout << stbt.range << std::endl;
+				fout.close();
+
+				stbt.output.Add() = OutputMsg::Create("Settings saved succesfully!");
+			}
+			else
+				stbt.output.Add() = OutputMsg::Create("ERROR: Couldn't open save file!");
+		}
+
 		if (ImGui::Button("Run Simulation"))
 		{
 			bool valid = true;
@@ -1203,8 +1273,8 @@ namespace jv::bt
 
 		float res[]
 		{
-			fpfnTester.negatives,
-			fpfnTester.positives
+			fpfnTester.negatives - fpfnTester.falsePositives,
+			fpfnTester.positives - fpfnTester.falseNegatives
 		};
 		float falseRes[]
 		{

@@ -16,11 +16,11 @@ namespace jv::nnet
 		uint32_t outputCount;
 
 		uint32_t length = 100;
-		float mutateChance = .01f;
+		float mutateChance = .02f;
 		float mutateAddition = 1;
 		float mutateMultiplier = .1f;
-		float mutateNewWeightChance = .01f;
-		float mutateNewNodeChance = .01f;
+		float mutateNewWeightChance = .05f;
+		float mutateNewNodeChance = .05f;
 		float decayCap = .01f;
 
 		uint32_t maxNeurons = 20;
@@ -29,7 +29,6 @@ namespace jv::nnet
 		float apexPct = .1f;
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;
-		uint32_t kmPointCount = 5;
 	};
 
 	struct Connections final

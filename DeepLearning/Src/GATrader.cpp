@@ -54,7 +54,7 @@ namespace jv
 			
 				algo.Propagate(*gt.tempArena, input, output);
 
-				if (info.current > gt.nnetWarmupPeriod)
+				if ((info.start - info.current) > gt.nnetWarmupPeriod)
 				{
 					for (uint32_t i = 0; i < l; i++)
 					{

@@ -294,7 +294,7 @@ namespace jv::nnet
 
 			// Pick between the two based on dominance factor.
 			const bool domDir = RandF(0, nA.dominance + nB.dominance) < nA.dominance;
-			neurons.Add() = domDir ? nA : nB;
+			neurons.Add() = group.info.useDominance ? domDir ? nA : nB : (rand() % 2 == 0 ? nA : nB);
 		}
 
 		// Add remaining neurons.

@@ -49,7 +49,7 @@ namespace jv
 				for (uint32_t i = 0; i < l; i++)
 				{
 					auto series = info.scope->GetTimeSeries(i);
-					input[i] = series.open[info.current - 2] / 1e3f;
+					input[i] = -1.f + series.open[info.current - 1] / series.open[info.current - 2];
 				}
 			
 				algo.Propagate(*gt.tempArena, input, output);
@@ -61,7 +61,7 @@ namespace jv
 						const bool resBuy = output[i * 2];
 						const bool resSell = output[i * 2 + 1];
 						auto series = info.scope->GetTimeSeries(i);
-						bool exp = series.open[info.current - 1] > series.open[info.current - 2];
+						bool exp = series.open[info.current] > series.open[info.current - 1];
 
 						const bool valid = resBuy != resSell;
 						if (valid)
@@ -182,6 +182,7 @@ namespace jv
 		createInfo.maxNeurons = 100;
 		createInfo.maxWeights = 500;
 		createInfo.length = 200;
+		createInfo.useDominance = trader.useDominance;
 		trader.group = jv::nnet::Group::Create(arena, tempArena, createInfo);
 		return trader;
 	}

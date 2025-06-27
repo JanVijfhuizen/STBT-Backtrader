@@ -29,6 +29,8 @@ namespace jv::nnet
 		float apexPct = .1f;
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;
+
+		bool useDominance = true;
 	};
 
 	struct Connections final

@@ -56,6 +56,7 @@ namespace jv
 		float mutateAddition = 1;
 		float mutateMultiplier = .1f;
 		uint32_t nnetWarmupPeriod = 50;
+		bool useDominance = true;
 
 		[[nodiscard]] static GATrader Create(Arena& arena, Arena& tempArena);
 		[[nodiscard]] jv::bt::STBTBot GetBot();

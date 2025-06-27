@@ -22,6 +22,8 @@ void MFree(void* ptr)
 
 int main()
 {
+	srand(time(NULL));
+
 	jv::Arena arena, tempArena;
 	{
 		jv::ArenaCreateInfo arenaCreateInfo{};

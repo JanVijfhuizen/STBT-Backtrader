@@ -42,7 +42,7 @@ namespace jv
 
 			const auto tempScope = gt.tempArena->CreateScope();
 			auto input = CreateArray<float>(*gt.tempArena, l);
-			auto output = CreateArray<bool>(*gt.tempArena, l);
+			auto output = CreateArray<bool>(*gt.tempArena, l * 2);
 
 			if (info.current > 1)
 			{
@@ -58,12 +58,20 @@ namespace jv
 				{
 					for (uint32_t i = 0; i < l; i++)
 					{
-						const bool res = output[i];
+						const bool resBuy = output[i * 2];
+						const bool resSell = output[i * 2 + 1];
 						auto series = info.scope->GetTimeSeries(i);
-						bool exp = series.open[info.current - 1] < series.open[info.current - 2];
-						info.fpfnTester->AddResult(res, exp);
-						gt.score += res == exp;
-						gt.correctness[(info.start - info.current) * l + i] = res == exp ? 1 : -1;
+						bool exp = series.open[info.current - 1] > series.open[info.current - 2];
+
+						const bool valid = resBuy != resSell;
+						if (valid)
+						{
+							info.fpfnTester->AddResult(resBuy, exp);
+							// Always reward a try, even if it's wrong.
+							gt.score += .2f;
+							// Reward a correct try even harder.
+							gt.score += (resBuy == exp) * .8f;
+						}
 					}
 				}
 			}
@@ -170,7 +178,9 @@ namespace jv
 
 		jv::nnet::GroupCreateInfo createInfo{};
 		createInfo.inputCount = 20;
-		createInfo.outputCount = 1;
+		createInfo.outputCount = 20 * 2;
+		createInfo.maxNeurons = 100;
+		createInfo.maxWeights = 500;
 		createInfo.length = 200;
 		trader.group = jv::nnet::Group::Create(arena, tempArena, createInfo);
 		return trader;

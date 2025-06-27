@@ -17,7 +17,7 @@ namespace jv
 
 		uint64_t tempScope;
 		float* ma30;
-		uint32_t score;
+		float score;
 		float* correctness;
 		bool running;
 

@@ -33,6 +33,9 @@ namespace jv::nnet
 				continue;
 			neuron.signalled = true;
 
+			const uint32_t signalCount = neuron.value / neuron.threshold;
+			neuron.value -= neuron.threshold * signalCount;
+
 			// Propagate through weights.
 			auto& conns = connections[current];
 			for (auto& conn : conns.weightIds)
@@ -43,7 +46,7 @@ namespace jv::nnet
 					continue;
 
 				queue.Add() = weight.to;
-				toNeuron.value += weight.value;
+				toNeuron.value += weight.value * signalCount;
 			}
 		}
 
@@ -51,10 +54,7 @@ namespace jv::nnet
 		for (auto& neuron : neurons)
 		{
 			neuron.value -= neuron.decay;
-			neuron.value = Min(neuron.value, neuron.threshold);
 			neuron.value = Max(neuron.value, 0.f);
-			// Reset to 0 if the neuron has been signalled.
-			neuron.value = neuron.signalled ? 0 : neuron.value;
 		}
 
 		tempArena.DestroyScope(tempScope);

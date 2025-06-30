@@ -13,7 +13,7 @@ namespace jv::nnet
 
 		const auto tempScope = tempArena.CreateScope();
 		auto queue = CreateQueue<uint32_t>(tempArena, neurons.length - 1);
-		for (uint32_t i = 0; i < 3; i++)
+		for (uint32_t i = 0; i < input.length; i++)
 			queue.Add() = i;
 
 		for (auto& neuron : neurons)
@@ -385,7 +385,7 @@ namespace jv::nnet
 		// probably being so bad bc from 1-2 + 3 it now goes 1-3(pause)-2
 
 		// NEW NEURONS ARE ALMOST NEVER FAVORABLE.
-		// THIS EXTREME BIAS SHOULD NOT EXIST, SO IM DOING SOMEHTING WRONG WITH CREATING THEM
+		// THIS EXTREME BIAS SHOULD NOT EXIST, SO IM DOING SOMETHING WRONG WITH CREATING THEM
 
 		// Finish generation and start new one if applicable.
 		genRatings[trainId++] = rating;

@@ -137,6 +137,11 @@ namespace jv::ai
 
 		Mutate(nnet, info, neurons, weights, info.initialAlpha);
 
+		instance.neurons = CreateArray<uint32_t>(arena, neurons.count);
+		instance.weights = CreateArray<uint32_t>(arena, weights.count);
+		memcpy(instance.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.count);
+		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
+
 		tempArena.DestroyScope(tempScope);
 		return instance;
 	}
@@ -174,5 +179,49 @@ namespace jv::ai
 	void DynNNet::Destroy(Arena& arena, const DynNNet& nnet)
 	{
 		arena.DestroyScope(nnet.scope);
+	}
+	void DynCInstance::Propagate(Arena& tempArena, const Array<float>& input, const Array<float>& output)
+	{
+		const auto tempScope = tempArena.CreateScope();
+
+		// Decide on what kind of propagation will actually happen.
+
+		tempArena.DestroyScope(tempScope);
+	}
+	DynCInstance DynCInstance::Create(Arena& arena, Arena& tempArena,
+		const DynNNet& nnet, const DynInstance& instance)
+	{
+		DynCInstance constructed{};
+		const auto tempScope = tempArena.CreateScope();
+
+		const uint32_t l = instance.neurons.length;
+		auto nums = tempArena.New<uint32_t>(l);
+		for (auto& w : instance.weights)
+		{
+			auto& weight = nnet.weights[w];
+			++nums[weight.from];
+		}
+
+		constructed.neurons = CreateArray<CNeuron>(arena, l);
+		for (uint32_t i = 0; i < l; i++)
+		{
+			auto& neuron = constructed.neurons[i];
+			neuron.weights = CreateArray<CWeight>(arena, nums[i]);
+		}
+		for (uint32_t i = 0; i < l; i++)
+			nums[i] = 0;
+
+		for (uint32_t i = 0; i < instance.weights.length; i++)
+		{
+			const uint32_t w = instance.weights[i];
+			auto& weight = nnet.weights[w];
+
+			auto& neuron = constructed.neurons[weight.from];
+			auto& n = nums[weight.from];
+			neuron.weights[n++].to = i;
+		}
+
+		tempArena.DestroyScope(tempScope);
+		return constructed;
 	}
 }

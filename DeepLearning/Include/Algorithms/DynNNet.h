@@ -25,8 +25,29 @@ namespace jv::ai
 
 	struct DynInstance final
 	{
-		Vector<uint32_t> enabledNeurons;
-		Vector<uint32_t> enabledWeights;
+		Array<uint32_t> neurons;
+		Array<uint32_t> weights;
+	};
+
+	struct CWeight final
+	{
+		float value;
+		uint32_t to;
+	};
+
+	struct CNeuron final
+	{
+		float value;
+		Array<CWeight> weights;
+	};
+
+	struct DynCInstance final
+	{
+		Array<CNeuron> neurons;
+
+		void Propagate(Arena& tempArena, const Array<float>& input, const Array<float>& output);
+		[[nodiscard]] static DynCInstance Create(Arena& arena, Arena& tempArena, 
+			const struct DynNNet& nnet, const DynInstance& instance);
 	};
 
 	struct DynNNet final

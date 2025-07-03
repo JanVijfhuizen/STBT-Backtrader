@@ -9,7 +9,7 @@ namespace jv::nnet
 	{
 		// Propagate input.
 		for (uint32_t i = 0; i < input.length; i++)
-			weights[i].value += input[i];
+			neurons[i].value += input[i];
 
 		const auto tempScope = tempArena.CreateScope();
 		auto queue = CreateQueue<uint32_t>(tempArena, neurons.length - 1);

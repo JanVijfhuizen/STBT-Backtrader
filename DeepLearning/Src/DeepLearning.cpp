@@ -39,7 +39,8 @@ int main()
 		jv::ai::DynNNetCreateInfo info{};
 		info.inputCount = 4;
 		info.outputCount = 3;
-		jv::ai::DynNNet::Create(arena, tempArena, info);
+		auto nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
+		auto constructed = jv::ai::DynCInstance::Create(arena, tempArena, nnet, nnet.generation[0]);
 	}
 	
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);

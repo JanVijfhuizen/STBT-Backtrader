@@ -30,7 +30,7 @@ namespace jv::ai
 	struct HyperNNet final
 	{
 		float* thresholds;
-		float* decays;
+		float* biases;
 		float* weights;
 		float* values;
 
@@ -40,6 +40,6 @@ namespace jv::ai
 		void Flush(const HyperNNetInfo& info);
 		static void Copy(const HyperNNetCreateInfo& info, HyperNNet& src, HyperNNet& dst);
 		void Mutate(const HyperNNetCreateInfo& info);
-		void Propagate(Arena& tempArena, const HyperNNetInfo& info, float* input, uint32_t* output);
+		void Propagate(Arena& tempArena, const HyperNNetInfo& info, float* input, bool* output);
 	};
 }

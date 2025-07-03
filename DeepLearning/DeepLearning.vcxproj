@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Algorithms\DynNNet.h" />
     <ClInclude Include="Include\Algorithms\HyperNNet.h" />
     <ClInclude Include="Include\Traders\CorrolationTrader.h" />
     <ClInclude Include="Include\Traders\GATrader.h" />
@@ -34,6 +35,7 @@
     <ClInclude Include="Include\Algorithms\NNet.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\DynNNet.cpp" />
     <ClCompile Include="Src\HyperNNet.cpp" />
     <ClCompile Include="Src\NNet.cpp" />
     <ClCompile Include="Src\CorrolationTrader.cpp" />

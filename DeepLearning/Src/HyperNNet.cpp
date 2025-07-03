@@ -11,7 +11,7 @@ namespace jv::ai
 		ret.hiddenCount = info.hiddenCount;
 		ret.outputCount = info.outputCount;
 		ret.inputWeightCount = info.inputCount * info.hiddenCount;
-		ret.hiddenWeightCount = info.hiddenCount * (info.hiddenCount - 1);
+		ret.hiddenWeightCount = info.hiddenCount * info.hiddenCount;
 		ret.outputWeightCount = info.outputCount * info.hiddenCount;
 		ret.weightCount = ret.inputWeightCount + ret.hiddenWeightCount + ret.outputWeightCount;
 		ret.hiddenPropagations = info.hiddenPropagations;
@@ -24,7 +24,7 @@ namespace jv::ai
 
 		HyperNNet nnet{};
 		nnet.thresholds = arena.New<float>(blueprint.neuronCount);
-		nnet.decays = arena.New<float>(blueprint.neuronCount);
+		nnet.biases = arena.New<float>(blueprint.neuronCount);
 		nnet.values = arena.New<float>(blueprint.neuronCount);
 		nnet.weights = arena.New<float>(blueprint.weightCount);
 		return nnet;
@@ -34,7 +34,7 @@ namespace jv::ai
 		for (uint32_t i = 0; i < info.neuronCount; i++)
 		{
 			thresholds[i] = RandF(0, 1);
-			decays[i] = RandF(-1, 1);
+			biases[i] = RandF(-1, 1);
 		}
 		for (uint32_t i = 0; i < info.weightCount; i++)
 			weights[i] = RandF(0, 1);
@@ -48,7 +48,7 @@ namespace jv::ai
 	{
 		const auto blueprint = HyperNNetInfo::Create(info);
 		memcpy(dst.thresholds, src.thresholds, sizeof(float) * blueprint.neuronCount);
-		memcpy(dst.decays, src.decays, sizeof(float) * blueprint.neuronCount);
+		memcpy(dst.biases, src.biases, sizeof(float) * blueprint.neuronCount);
 		memcpy(dst.weights, src.weights, sizeof(float) * blueprint.weightCount);
 	}
 	void HyperNNet::Mutate(const HyperNNetCreateInfo& info)
@@ -58,12 +58,12 @@ namespace jv::ai
 		for (uint32_t i = 0; i < blueprint.neuronCount; i++)
 		{
 			thresholds[i] = RandF(0, 1) < info.mutateChance ? RandF(0, 1) : thresholds[i];
-			decays[i] = RandF(0, 1) < info.mutateChance ? RandF(0, 1) : decays[i];
+			biases[i] = RandF(0, 1) < info.mutateChance ? RandF(0, 1) : biases[i];
 		}
 		for (uint32_t i = 0; i < blueprint.weightCount; i++)
 			weights[i] = RandF(0, 1) < info.mutateChance ? RandF(0, 1) : weights[i];
 	}
-	void HyperNNet::Propagate(Arena& tempArena, const HyperNNetInfo& info, float* input, uint32_t* output)
+	void HyperNNet::Propagate(Arena& tempArena, const HyperNNetInfo& info, float* input, bool* output)
 	{
 		// Propagate inputs to hidden layer.
 		for (uint32_t i = 0; i < info.inputCount; i++)
@@ -79,10 +79,8 @@ namespace jv::ai
 			// Find propagated values.
 			for (uint32_t i = 0; i < info.hiddenCount; i++)
 			{
-				const uint32_t spikeCount = values[i] / thresholds[i];
-				const float propagatedValue = thresholds[i] * spikeCount;
-				propValues[i] = propagatedValue;
-				values[i] -= propagatedValue;
+				const bool thresholded = sin(values[i]) > thresholds[i];
+				propValues[i] = thresholded;
 			}
 
 			// Forward propagated values.
@@ -93,12 +91,9 @@ namespace jv::ai
 					values[j] += propValues[i] * weights[weightId];
 				}
 
-			// Decay neurons.
+			// Adjust biases.
 			for (uint32_t i = 0; i < info.neuronCount; i++)
-			{
-				values[i] -= decays[i];
-				values[i] = Max(values[i], 0.f);
-			}
+				values[i] += biases[i];
 
 			// Attempt to activate output neurons.
 			for (uint32_t i = 0; i < info.hiddenCount; i++)
@@ -109,14 +104,13 @@ namespace jv::ai
 				}
 
 			// Update output.
-			for (uint32_t i = 0; i < info.outputCount; i++)
-			{
-				const uint32_t outputId = info.hiddenCount + i;
-				const uint32_t spikeCount = values[outputId] / thresholds[outputId];
-				const float propagatedValue = thresholds[outputId] * spikeCount;
-				values[outputId] -= propagatedValue;
-				output[i] += spikeCount;
-			}
+			if(h == info.hiddenPropagations - 1)
+				for (uint32_t i = 0; i < info.outputCount; i++)
+				{
+					const uint32_t outputId = info.hiddenCount + i;
+					const bool thresholded = sin(values[i]) > thresholds[i];
+					output[i] = thresholded;
+				}
 
 			tempArena.DestroyScope(tempScope);
 		}

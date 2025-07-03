@@ -18,6 +18,24 @@ namespace jv::ai
 		bool connectStartingNeurons = true;
 	};
 
+	struct CWeight final
+	{
+		float mul;
+		uint32_t index;
+	};
+
+	struct Neuron final
+	{
+		float value;
+		float threshold;
+		float decay;
+		bool signalled;
+
+		Array<CWeight> cWeights{};
+
+		[[nodiscard]] bool Enabled() const;
+	};
+
 	struct Weight final
 	{
 		uint32_t from, to;
@@ -29,39 +47,25 @@ namespace jv::ai
 		Array<uint32_t> weights;
 	};
 
-	struct CWeight final
-	{
-		float value;
-		uint32_t to;
-	};
-
-	struct CNeuron final
-	{
-		float value;
-		Array<CWeight> weights;
-	};
-
-	struct DynCInstance final
-	{
-		Array<CNeuron> neurons;
-
-		void Propagate(Arena& tempArena, const Array<float>& input, const Array<float>& output);
-		[[nodiscard]] static DynCInstance Create(Arena& arena, Arena& tempArena, 
-			const struct DynNNet& nnet, const DynInstance& instance);
-	};
-
 	struct DynNNet final
 	{
 		uint64_t scope;
 		uint64_t generationScope;
+		uint64_t constructScope;
+		bool isConstructed;
 
-		uint32_t neuronCount;
+		Vector<Neuron> neurons;
 		Vector<Weight> weights;
 
 		Map<uint64_t> neuronMap;
 		Map<uint64_t> weightMap;
 
 		Array<DynInstance> generation;
+
+		void Construct(Arena& arena, Arena& tempArena, const DynInstance& instance);
+		void Deconstruct(Arena& arena, const DynInstance& instance);
+
+		void Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output);
 
 		[[nodiscard]] static DynNNet Create(Arena& arena, Arena& tempArena, const DynNNetCreateInfo& info);
 		static void Destroy(Arena& arena, const DynNNet& nnet);

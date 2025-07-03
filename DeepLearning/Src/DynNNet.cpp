@@ -24,33 +24,93 @@ namespace jv::ai
 		}
 	};
 
-	void Mutate(Arena& tempArena, DynNNet& nnet, const DynNNetCreateInfo& info, 
+	void Mutate(DynNNet& nnet, const DynNNetCreateInfo& info, 
 		Vector<uint32_t>& neurons, Vector<uint32_t>& weights, const uint32_t times)
 	{
-		const auto tempScope = tempArena.CreateScope();
-
 		for (uint32_t i = 0; i < times; i++)
 		{
 			if (RandF(0, 1) > info.weightToNeuronMutateChance)
 			{
 				// Mutate into a neuron (+ corresponding weights).
-				const uint32_t from = rand() % (neurons.count - info.outputCount);
-				const uint32_t to = info.inputCount + (rand() % (neurons.count - info.inputCount));
+				const uint32_t refWeightIndex = rand() % weights.count;
+				const uint32_t weightIndex = weights[refWeightIndex];
+				const auto& weight = nnet.weights[weightIndex];
 
-				// If the mutation is already known to the nnet, use that one.
-				const Key key(from, to);
-				if (nnet.neuronMap.Contains(key.value))
+				const Key key(weight.from, weight.to);
+				const uint64_t* index = nnet.neuronMap.Contains(key.value);
+
+				bool valid = true;
+
+				if (index)
 				{
+					// Check if this instance already has this neuron.			
+					for(auto& neuron : neurons)
+						if (neuron == *index)
+						{
+							valid = false;
+							break;
+						}
 
+					// ONLY if the neuron does not already exist in this instance, will it be added.
+					if (valid)
+					{
+						// If the mutation is already known to the nnet, use that one.
+						neurons.Add() = *index;
+
+						// We can assume the connections will also be there.
+						const Key inpKey(weight.from, *index);
+						const Key outpKey(*index, weight.to);
+						weights.Add() = *nnet.weightMap.Contains(inpKey.value);
+						weights.Add() = *nnet.weightMap.Contains(outpKey.value);
+					}
 				}
+				else
+				{
+					// This is a completely new mutation, so add it to the registry.
+					const uint32_t index = nnet.neuronCount;
+					neurons.Add() = nnet.neuronCount++;
+					nnet.neuronMap.Insert(index, key.value);
+
+					const Key inpKey(weight.from, index);
+					const Key outpKey(index, weight.to);
+
+					uint32_t weightIndex = nnet.weights.count;
+					auto& fromWeight = nnet.weights.Add();
+					fromWeight.from = weight.from;
+					fromWeight.to = index;
+					nnet.weightMap.Insert(weightIndex, inpKey.value);
+					weights.Add() = weightIndex;
+					
+					weightIndex++;
+					auto& toWeight = nnet.weights.Add();
+					toWeight.from = index;
+					toWeight.to = weight.to;
+					nnet.weightMap.Insert(weightIndex, outpKey.value);
+					weights.Add() = weightIndex;
+				}
+
+				// Remove old weight.
+				weights.RemoveAtOrdered(refWeightIndex);
 			}
 			else
 			{
 				// Mutate into a weight.
+				const uint32_t from = rand() % (neurons.count - info.outputCount);
+				const uint32_t to = info.inputCount + (rand() % (neurons.count - info.inputCount));
+
+				const Key key(from, to);
+				if (!nnet.neuronMap.Contains(key.value))
+				{
+					const uint32_t weightIndex = nnet.weights.count;
+					const Key key(from, to);
+					auto& newWeight = nnet.weights.Add();
+					newWeight.from = from;
+					newWeight.to = to;
+					nnet.weightMap.Insert(weightIndex, key.value);
+					weights.Add() = weightIndex;
+				}
 			}
 		}
-
-		tempArena.DestroyScope(tempScope);
 	}
 
 	DynInstance CreateArrivalInstance(Arena& arena, Arena& tempArena, DynNNet& nnet, const DynNNetCreateInfo& info)
@@ -75,7 +135,7 @@ namespace jv::ai
 				weights[i] = i;
 		}
 
-		Mutate(tempArena, nnet, info, neurons, weights, info.initialAlpha);
+		Mutate(nnet, info, neurons, weights, info.initialAlpha);
 
 		tempArena.DestroyScope(tempScope);
 		return instance;

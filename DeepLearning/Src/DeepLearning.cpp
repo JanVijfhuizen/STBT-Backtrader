@@ -10,6 +10,7 @@
 
 #include <Algorithms/NNet.h>
 #include <Algorithms/HyperNNet.h>
+#include <Algorithms/DynNNet.h>
 
 void* MAlloc(const uint32_t size)
 {
@@ -32,6 +33,13 @@ int main()
 		arenaCreateInfo.free = MFree;
 		arena = jv::Arena::Create(arenaCreateInfo);
 		tempArena = jv::Arena::Create(arenaCreateInfo);
+	}
+
+	{
+		jv::ai::DynNNetCreateInfo info{};
+		info.inputCount = 4;
+		info.outputCount = 3;
+		jv::ai::DynNNet::Create(arena, tempArena, info);
 	}
 	
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);

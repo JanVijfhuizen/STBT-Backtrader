@@ -39,7 +39,11 @@ namespace jv::ai
 	{
 		for (uint32_t i = 0; i < times; i++)
 		{
-			if (RandF(0, 1) > nnet.weightToNeuronMutateChance)
+			const bool canGenerateNeuron = nnet.neurons.count < nnet.neurons.length && 
+				nnet.weights.count < nnet.weights.length - 1;
+			const bool canGenerateWeight = nnet.weights.count < nnet.weights.length;
+
+			if (canGenerateNeuron && RandF(0, 1) > nnet.weightToNeuronMutateChance)
 			{
 				// Mutate into a neuron (+ corresponding weights).
 				const uint32_t refWeightIndex = rand() % weights.count;
@@ -103,7 +107,7 @@ namespace jv::ai
 				// Remove old weight.
 				weights.RemoveAtOrdered(refWeightIndex);
 			}
-			else
+			else if(canGenerateWeight)
 			{
 				// Mutate into a weight.
 				const auto& info = nnet.info;
@@ -296,9 +300,8 @@ namespace jv::ai
 
 			auto tempScope = tempArena.CreateScope();
 
-			const uint32_t length = generation.length;
-
 			// Copy all instances to temp arena.
+			const uint32_t length = generation.length;
 			DynInstance* cpyGen = tempArena.New<DynInstance>(length);
 			for (uint32_t i = 0; i < length; i++)
 				generation[i].Copy(tempArena, cpyGen[i]);
@@ -334,12 +337,6 @@ namespace jv::ai
 				uint32_t a = rand() % apexLen;
 				uint32_t b = rand() % breedableLen;
 				generation[i] = Breed(arena, tempArena, *this, cpyGen[a], cpyGen[b]);
-
-				std::cout << "CORRUPTION!" << std::endl;
-				for (uint32_t j = 0; j < generation[0].neurons.length; j++)
-				{
-					std::cout << generation[0].neurons[j] << std::endl;
-				}
 			}
 
 			// Create new instances.
@@ -452,6 +449,7 @@ namespace jv::ai
 		nnet.neuronMap = CreateMap<uint64_t>(arena, info.neuronCapacity);
 		nnet.weightMap = CreateMap<uint64_t>(arena, info.weightCapacity);
 		nnet.ratings = arena.New<float>(info.generationSize);
+		nnet.generation = CreateArray<DynInstance>(arena, info.generationSize);
 
 		const uint32_t predefNeuronCount = info.inputCount + info.outputCount;
 		nnet.neurons.count = predefNeuronCount;
@@ -467,7 +465,6 @@ namespace jv::ai
 
 		nnet.resultScope = arena.CreateScope();
 		nnet.generationScope = arena.CreateScope();
-		nnet.generation = CreateArray<DynInstance>(arena, info.generationSize);
 		for (uint32_t i = 0; i < info.generationSize; i++)
 		{
 			auto& instance = nnet.generation[i];

@@ -190,6 +190,13 @@ namespace jv::ai
 			neuron.cWeights = {};
 		arena.DestroyScope(constructScope);
 	}
+
+	// Source: https://stackoverflow.com/questions/10732027/fast-sigmoid-algorithm
+	float FastSigmoid(const float x)
+	{
+		return x / (1.f + abs(x));
+	}
+
 	void DynNNet::Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output)
 	{
 		const auto tempScope = tempArena.CreateScope();
@@ -215,12 +222,37 @@ namespace jv::ai
 			if (neuron.signalled)
 				continue;
 
-			if (neuron.value < neuron.threshold)
+			bool fire = true;
+			switch (neuron.type)
+			{
+			case Neuron::Type::spike:
+				if (neuron.value < neuron.spike.threshold)
+					fire = false;
+				break;
+			default:
+				break;
+			}
+			if (!fire)
 				continue;
+
 			neuron.signalled = true;
 
-			const uint32_t signalCount = neuron.value / neuron.threshold;
-			neuron.value -= neuron.threshold * signalCount;
+			float propagatedValue = 0;
+			uint32_t signalCount;
+			switch (neuron.type)
+			{
+			case Neuron::Type::spike:
+				signalCount = neuron.value / neuron.spike.threshold;
+				propagatedValue = neuron.spike.threshold * signalCount;
+				neuron.value -= propagatedValue;
+				break;
+			case Neuron::Type::sigmoid:
+				propagatedValue = FastSigmoid(neuron.value);
+				neuron.value = 0;
+				break;
+			default:
+				break;
+			}
 
 			// Propagate through weights.
 			for (auto& cWeight : neuron.cWeights)
@@ -229,14 +261,22 @@ namespace jv::ai
 				auto& toNeuron = neurons[weight.to];
 
 				queue.Add() = weight.to;
-				toNeuron.value += cWeight.mul * signalCount;
+				toNeuron.value += cWeight.mul * propagatedValue;
 			}
 		}
 
 		// Update neuron values with decay.
 		for (auto& neuron : neurons)
 		{
-			neuron.value -= neuron.decay;
+			switch (neuron.type)
+			{
+			case Neuron::Type::spike:
+				neuron.value -= neuron.spike.decay;
+				break;
+			default:
+				break;
+			}
+
 			neuron.value = Max(neuron.value, 0.f);
 		}
 

@@ -26,9 +26,29 @@ namespace jv::ai
 
 	struct Neuron final
 	{
+		struct Sigmoid final
+		{
+
+		};
+		struct Spike final
+		{
+			float threshold;
+			float decay;
+		};
+		union
+		{
+			Sigmoid sigmoid;
+			Spike spike;
+		};
+
+		enum class Type
+		{
+			sigmoid,
+			spike
+		};
+		Type type;
+
 		float value;
-		float threshold;
-		float decay;
 		bool signalled;
 
 		Array<CWeight> cWeights{};

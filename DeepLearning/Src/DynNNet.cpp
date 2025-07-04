@@ -25,6 +25,16 @@ namespace jv::ai
 		}
 	};
 
+	bool Comparer(float& a, float& b)
+	{
+		return a > b;
+	}
+
+	bool ComparerI(uint32_t& a, uint32_t& b)
+	{
+		return a < b;
+	}
+
 	void Mutate(DynNNet& nnet, Vector<uint32_t>& neurons, Vector<uint32_t>& weights, const uint32_t times)
 	{
 		for (uint32_t i = 0; i < times; i++)
@@ -113,6 +123,8 @@ namespace jv::ai
 				}
 			}
 		}
+		LinearSort(neurons.ptr, neurons.count, ComparerI);
+		LinearSort(weights.ptr, weights.count, ComparerI);
 	}
 
 	DynInstance CreateArrivalInstance(Arena& arena, Arena& tempArena, DynNNet& nnet)
@@ -144,12 +156,6 @@ namespace jv::ai
 		instance.weights = CreateArray<uint32_t>(arena, weights.count);
 		memcpy(instance.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.count);
 		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
-
-		for (auto& i : instance.neurons)
-			std::cout << i << std::endl;
-		std::cout << "..." << std::endl;
-		for (auto& i : instance.weights)
-			std::cout << i << std::endl;
 
 		tempArena.DestroyScope(tempScope);
 		return instance;
@@ -204,15 +210,79 @@ namespace jv::ai
 		return generation[instanceId];
 	}
 
-	bool Comparer(float& a, float& b)
-	{
-		return a > b;
-	}
-
 	DynInstance Breed(Arena& arena, Arena& tempArena, DynNNet& nnet, const DynInstance& a, const DynInstance& b)
 	{
+		const auto tempScope = tempArena.CreateScope();
+
+		auto neurons = CreateVector<uint32_t>(tempArena, a.neurons.length + b.neurons.length + nnet.alpha);
+		uint32_t iA = 0, iB = 0;
+
+		while (iA < a.neurons.length && iB < b.neurons.length)
+		{
+			const uint32_t nA = a.neurons[iA];
+			const uint32_t nB = b.neurons[iB];
+
+			const bool equal = nA == nB;
+			const bool dir = nA < nB;
+
+			iA += equal ? 1 : dir ? 1 : 0;
+			iB += equal ? 1 : dir ? 0 : 1;
+
+			// Pick lowest and continue.
+			if (!equal)
+			{
+				neurons.Add() = dir ? nA : nB;
+				continue;
+			}
+
+			// Just pick the first one, since they're the same anyway.
+			neurons.Add() = nA;
+		}
+
+		// Add remaining neurons.
+		while (iA < a.neurons.length)
+			neurons.Add() = a.neurons[iA++];
+		while (iB < b.neurons.length)
+			neurons.Add() = b.neurons[iB++];
+
+		// Do the same thing for weights.
+		auto weights = CreateVector<uint32_t>(tempArena, a.weights.length + b.weights.length + nnet.alpha * 2);
+		iA = 0; iB = 0;
+
+		while (iA < a.weights.length && iB < b.weights.length)
+		{
+			const uint32_t wA = a.weights[iA];
+			const uint32_t wB = b.weights[iB];
+
+			const bool equal = wA == wB;
+			const bool dir = wA < wB;
+
+			iA += equal ? 1 : dir ? 1 : 0;
+			iB += equal ? 1 : dir ? 0 : 1;
+
+			if (!equal)
+			{
+				weights.Add() = dir ? wA : wB;
+				continue;
+			}
+
+			weights.Add() = wA;
+		}
+
+		while (iA < a.weights.length)
+			weights.Add() = a.weights[iA++];
+		while (iB < b.weights.length)
+			weights.Add() = b.weights[iB++];
+
+		Mutate(nnet, neurons, weights, nnet.alpha);
+
 		DynInstance instance{};
-		a.Copy(arena, instance);
+		instance.neurons = CreateArray<uint32_t>(arena, neurons.count);
+		instance.weights = CreateArray<uint32_t>(arena, weights.count);
+		memcpy(instance.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.count);
+		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
+
+		tempArena.DestroyScope(tempScope);
 		return instance;
 	}
 
@@ -264,7 +334,14 @@ namespace jv::ai
 				uint32_t a = rand() % apexLen;
 				uint32_t b = rand() % breedableLen;
 				generation[i] = Breed(arena, tempArena, *this, cpyGen[a], cpyGen[b]);
+
+				std::cout << "CORRUPTION!" << std::endl;
+				for (uint32_t j = 0; j < generation[0].neurons.length; j++)
+				{
+					std::cout << generation[0].neurons[j] << std::endl;
+				}
 			}
+
 			// Create new instances.
 			for (uint32_t i = end; i < length; i++)
 				generation[i] = CreateArrivalInstance(arena, tempArena, *this);
@@ -341,11 +418,11 @@ namespace jv::ai
 			}
 		}
 
-		// Update neuron values with decay.
 		for (auto& neuron : neurons)
 		{
 			switch (neuron.type)
 			{
+				// Update neuron values with decay.
 			case Neuron::Type::spike:
 				neuron.value -= neuron.spike.decay;
 				break;

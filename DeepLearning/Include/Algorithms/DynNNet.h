@@ -74,6 +74,7 @@ namespace jv::ai
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;
 		float weightToNeuronMutateChance = .5f;
+		uint32_t alpha = 1;
 
 		uint64_t scope;
 		uint64_t resultScope;

@@ -24,7 +24,7 @@ void MFree(void* ptr)
 
 int main()
 {
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	jv::Arena arena, tempArena;
 	{
@@ -39,6 +39,7 @@ int main()
 		jv::ai::DynNNetCreateInfo info{};
 		info.inputCount = 4;
 		info.outputCount = 3;
+		info.generationSize = 50;
 		auto nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
 
 		float iv[4]{};

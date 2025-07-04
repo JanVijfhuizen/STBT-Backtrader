@@ -40,9 +40,6 @@ int main()
 		info.inputCount = 4;
 		info.outputCount = 3;
 		auto nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
-		nnet.Construct(arena, tempArena, nnet.generation[0]);
-		nnet.Deconstruct(arena, nnet.generation[0]);
-		nnet.Construct(arena, tempArena, nnet.generation[0]);
 
 		float iv[4]{};
 		jv::Array<float> input{};
@@ -54,7 +51,14 @@ int main()
 		output.ptr = out;
 		output.length = 3;
 
-		nnet.Propagate(tempArena, input, output);
+		for (uint32_t i = 0; i < 1e5; i++)
+		{
+			auto current = nnet.GetCurrent();
+			nnet.Construct(arena, tempArena, current);
+			nnet.Propagate(tempArena, input, output);
+			nnet.Deconstruct(arena, current);
+			nnet.Rate(arena, tempArena, jv::RandF(0, 1));
+		}
 	}
 	
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);

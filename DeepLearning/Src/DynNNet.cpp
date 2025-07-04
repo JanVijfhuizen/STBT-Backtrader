@@ -25,12 +25,11 @@ namespace jv::ai
 		}
 	};
 
-	void Mutate(DynNNet& nnet, const DynNNetCreateInfo& info, 
-		Vector<uint32_t>& neurons, Vector<uint32_t>& weights, const uint32_t times)
+	void Mutate(DynNNet& nnet, Vector<uint32_t>& neurons, Vector<uint32_t>& weights, const uint32_t times)
 	{
 		for (uint32_t i = 0; i < times; i++)
 		{
-			if (RandF(0, 1) > info.weightToNeuronMutateChance)
+			if (RandF(0, 1) > nnet.weightToNeuronMutateChance)
 			{
 				// Mutate into a neuron (+ corresponding weights).
 				const uint32_t refWeightIndex = rand() % weights.count;
@@ -97,6 +96,7 @@ namespace jv::ai
 			else
 			{
 				// Mutate into a weight.
+				const auto& info = nnet.info;
 				const uint32_t from = rand() % (neurons.count - info.outputCount);
 				const uint32_t to = info.inputCount + (rand() % (neurons.count - info.inputCount));
 
@@ -115,11 +115,12 @@ namespace jv::ai
 		}
 	}
 
-	DynInstance CreateArrivalInstance(Arena& arena, Arena& tempArena, DynNNet& nnet, const DynNNetCreateInfo& info)
+	DynInstance CreateArrivalInstance(Arena& arena, Arena& tempArena, DynNNet& nnet)
 	{
 		DynInstance instance{};
 		const auto tempScope = tempArena.CreateScope();
 		
+		const auto& info = nnet.info;
 		const uint32_t weightInitialCount = info.connectStartingNeurons ? info.inputCount * info.outputCount : 0;
 		auto neurons = CreateVector<uint32_t>(tempArena, info.inputCount + info.outputCount + info.initialAlpha);
 		// Multiply by 2 because every neuron will also come with 2 new weights.
@@ -133,25 +134,28 @@ namespace jv::ai
 		{
 			const uint32_t predefWeightCount = info.inputCount * info.outputCount;
 			weights.count = predefWeightCount;
-			for (uint32_t i = 0; i < predefNeuronCount; i++)
+			for (uint32_t i = 0; i < predefWeightCount; i++)
 				weights[i] = i;
 		}
 
-		Mutate(nnet, info, neurons, weights, info.initialAlpha);
+		Mutate(nnet, neurons, weights, info.initialAlpha);
 
 		instance.neurons = CreateArray<uint32_t>(arena, neurons.count);
 		instance.weights = CreateArray<uint32_t>(arena, weights.count);
 		memcpy(instance.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.count);
 		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
 
+		for (auto& i : instance.neurons)
+			std::cout << i << std::endl;
+		std::cout << "..." << std::endl;
+		for (auto& i : instance.weights)
+			std::cout << i << std::endl;
+
 		tempArena.DestroyScope(tempScope);
 		return instance;
 	}
 	void DynNNet::Construct(Arena& arena, Arena& tempArena, const DynInstance& instance)
 	{
-		assert(!isConstructed);
-		isConstructed = true;
-
 		constructScope = arena.CreateScope();
 		const auto tempScope = tempArena.CreateScope();
 
@@ -184,8 +188,6 @@ namespace jv::ai
 	}
 	void DynNNet::Deconstruct(Arena& arena, const DynInstance& instance)
 	{
-		assert(isConstructed);
-		isConstructed = false;
 		for (auto& neuron : neurons)
 			neuron.cWeights = {};
 		arena.DestroyScope(constructScope);
@@ -195,6 +197,80 @@ namespace jv::ai
 	float FastSigmoid(const float x)
 	{
 		return x / (1.f + abs(x));
+	}
+
+	DynInstance& DynNNet::GetCurrent()
+	{
+		return generation[instanceId];
+	}
+
+	bool Comparer(float& a, float& b)
+	{
+		return a > b;
+	}
+
+	DynInstance Breed(Arena& arena, Arena& tempArena, DynNNet& nnet, const DynInstance& a, const DynInstance& b)
+	{
+		DynInstance instance{};
+		a.Copy(arena, instance);
+		return instance;
+	}
+
+	void DynNNet::Rate(Arena& arena, Arena& tempArena, const float rating)
+	{
+		ratings[instanceId++] = rating;
+		if (instanceId >= generation.length)
+		{
+			instanceId = 0;
+			++generationId;
+
+			auto tempScope = tempArena.CreateScope();
+
+			const uint32_t length = generation.length;
+
+			// Copy all instances to temp arena.
+			DynInstance* cpyGen = tempArena.New<DynInstance>(length);
+			for (uint32_t i = 0; i < length; i++)
+				generation[i].Copy(tempArena, cpyGen[i]);
+
+			arena.DestroyScope(generationScope);
+
+			auto indices = tempArena.New<uint32_t>(length);
+			jv::CreateSortableIndices(indices, length);
+			jv::ExtLinearSort(ratings, indices, length, Comparer);
+			jv::ApplyExtLinearSort(tempArena, cpyGen, indices, length);
+
+			// Copy new best instance to result if applicable.
+			auto bestRating = ratings[indices[0]];
+			generationRating = bestRating;
+
+			if (bestRating > this->rating)
+			{
+				arena.DestroyScope(resultScope);
+				this->rating = bestRating;
+				cpyGen[0].Copy(arena, result);
+				generationScope = arena.CreateScope();
+			}
+
+			assert(breedablePct > 0 && breedablePct <= 1);
+			const uint32_t apexLen = (float)length * apexPct;
+			const uint32_t breedableLen = (float)length * breedablePct;
+			const uint32_t end = length - (float)length * arrivalsPct;
+			assert(end < length && end > breedableLen);
+
+			// Breed successfull instances.
+			for (uint32_t i = 0; i < end; i++)
+			{
+				uint32_t a = rand() % apexLen;
+				uint32_t b = rand() % breedableLen;
+				generation[i] = Breed(arena, tempArena, *this, cpyGen[a], cpyGen[b]);
+			}
+			// Create new instances.
+			for (uint32_t i = end; i < length; i++)
+				generation[i] = CreateArrivalInstance(arena, tempArena, *this);
+
+			tempArena.DestroyScope(tempScope);
+		}
 	}
 
 	void DynNNet::Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output)
@@ -292,12 +368,13 @@ namespace jv::ai
 	DynNNet DynNNet::Create(Arena& arena, Arena& tempArena, const DynNNetCreateInfo& info)
 	{
 		DynNNet nnet{};
+		nnet.info = info;
 		nnet.scope = arena.CreateScope();
 		nnet.neurons = CreateVector<Neuron>(arena, info.neuronCapacity);
 		nnet.weights = CreateVector<Weight>(arena, info.weightCapacity);
 		nnet.neuronMap = CreateMap<uint64_t>(arena, info.neuronCapacity);
 		nnet.weightMap = CreateMap<uint64_t>(arena, info.weightCapacity);
-		nnet.isConstructed = false;
+		nnet.ratings = arena.New<float>(info.generationSize);
 
 		const uint32_t predefNeuronCount = info.inputCount + info.outputCount;
 		nnet.neurons.count = predefNeuronCount;
@@ -311,12 +388,13 @@ namespace jv::ai
 					weight.to = info.inputCount + j;
 				}	
 
+		nnet.resultScope = arena.CreateScope();
 		nnet.generationScope = arena.CreateScope();
 		nnet.generation = CreateArray<DynInstance>(arena, info.generationSize);
 		for (uint32_t i = 0; i < info.generationSize; i++)
 		{
 			auto& instance = nnet.generation[i];
-			instance = CreateArrivalInstance(arena, tempArena, nnet, info);
+			instance = CreateArrivalInstance(arena, tempArena, nnet);
 		}
 
 		return nnet;
@@ -328,5 +406,12 @@ namespace jv::ai
 	bool Neuron::Enabled() const
 	{
 		return cWeights.length > 0;
+	}
+	void DynInstance::Copy(Arena& arena, DynInstance& dst) const
+	{
+		dst.neurons = CreateArray<uint32_t>(arena, neurons.length);
+		dst.weights = CreateArray<uint32_t>(arena, weights.length);
+		memcpy(dst.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.length);
+		memcpy(dst.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.length);
 	}
 }

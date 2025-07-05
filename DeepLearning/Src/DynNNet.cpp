@@ -224,7 +224,8 @@ namespace jv::ai
 			const uint32_t ind = instance.weights.length + i * NEURON_VARIABLE_COUNT;
 			
 			const uint32_t typeCount = static_cast<uint32_t>(Neuron::Type::length);
-			const uint32_t currentType = static_cast<uint32_t>(round(values[ind] * typeCount));
+			const float f = values[ind];
+			const uint32_t currentType = floor((f + 1) / 2 * typeCount);
 			const Neuron::Type convType = static_cast<Neuron::Type>(currentType);
 			neuron.type = convType;
 
@@ -389,12 +390,26 @@ namespace jv::ai
 			const uint32_t end = length - (float)length * arrivalsPct;
 			assert(end < length && end > breedableLen);
 
+			/*
 			// Breed successfull instances.
 			for (uint32_t i = 0; i < end; i++)
 			{
 				uint32_t a = rand() % apexLen;
 				uint32_t b = rand() % breedableLen;
 				generation[i] = Breed(arena, tempArena, *this, cpyGen[a], cpyGen[b]);
+			}
+			(
+			*/
+
+			// Copy apex.
+			for (uint32_t i = 0; i < apexLen; i++)
+				cpyGen[0].Copy(arena, generation[i]);
+
+			// Copy and mutate from apex.
+			for (uint32_t i = apexLen; i < end; i++)
+			{
+				uint32_t a = rand() % breedableLen;
+				generation[i] = Breed(arena, tempArena, *this, cpyGen[a], cpyGen[a]);
 			}
 
 			// Create new instances.

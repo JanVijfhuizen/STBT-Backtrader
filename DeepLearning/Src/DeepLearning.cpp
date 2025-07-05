@@ -41,8 +41,9 @@ int main()
 		info.outputCount = 1;
 		info.generationSize = 50;
 		auto nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
+		nnet.alpha = 1;
 
-		float iv[4]{0.2, 0.3, .1, -.5f};
+		float iv[4]{ 0.2, 0.3, .1, -.5 };
 		jv::Array<float> input{};
 		input.ptr = iv;
 		input.length = 4;
@@ -60,7 +61,7 @@ int main()
 			nnet.Construct(arena, tempArena, current);
 			nnet.CreateParameters(arena);
 
-			uint32_t highestRating = 0;
+			float highestRating = 0;
 
 			for (uint32_t j = 0; j < 400; j++)
 			{
@@ -68,20 +69,24 @@ int main()
 				nnet.Flush(current);
 
 				jv::FPFNTester tester{};
-				uint32_t rating = 0;
+				float rating = 0;
 
-				for (uint32_t k = 0; k < 100; k++)
+				for (uint32_t k = 0; k < 25; k++)
 				{
 					nnet.Propagate(tempArena, input, output);
 					if (k < 0)
 						continue;
 
 					// Arbitrary input is supposed to find sine.
-					const bool wanted = sin(.2 * k) > 0;
-					rating += wanted == out[0];
-					rating += !wanted == out[1];
+					//const bool wanted = sin(.2 * k) > 0;
+					const bool wanted = k % 3 == 0;
+
+					rating += float(wanted == out[0]) / 3;
+					rating += float(!wanted == out[1]) / 3;
+					rating += float(out[0] != out[1]) / 3;
 					tester.AddResult(wanted, out[0]);
 					tester.AddResult(!wanted, out[1]);
+					tester.AddResult(!out[0], out[1]);
 				}
 
 				highestRating = jv::Max(rating, highestRating);
@@ -96,6 +101,7 @@ int main()
 			{
 				std::cout << "gen " << nnet.generationId << ": " << highestRating << " / " << nnet.rating << std::endl;
 				std::cout << "n: " << nnet.result.neurons.length << " w:" << nnet.result.weights.length << std::endl;
+				std::cout << nnet.neurons.count << " \ " << nnet.weights.count << std::endl;
 
 				for (uint32_t j = 0; j < 10; j++)
 				{

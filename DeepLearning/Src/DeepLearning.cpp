@@ -42,23 +42,41 @@ int main()
 		info.generationSize = 50;
 		auto nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
 
-		float iv[4]{};
+		float iv[4]{0.2, 0.3, .1, -.5f};
 		jv::Array<float> input{};
 		input.ptr = iv;
 		input.length = 4;
+
+		bool requiredOutput[]{ true, true, false };
 
 		bool out[3]{};
 		jv::Array<bool> output{};
 		output.ptr = out;
 		output.length = 3;
 
-		for (uint32_t i = 0; i < 1e5; i++)
+		for (uint32_t i = 0; i < 1e4; i++)
 		{
 			auto current = nnet.GetCurrent();
 			nnet.Construct(arena, tempArena, current);
-			nnet.Propagate(tempArena, input, output);
+			nnet.CreateParameters(arena);
+
+			for (uint32_t j = 0; j < 1e4; j++)
+			{
+				nnet.ConstructParameters(current, nnet.GetCurrentParameters());
+				nnet.Propagate(tempArena, input, output);
+
+				uint32_t rating = 0;
+				for (uint32_t k = 0; k < 3; k++)
+					rating += output[k] == requiredOutput[k];
+				nnet.RateParameters(arena, tempArena, rating);
+			}
+
+			nnet.DestroyParameters(arena);
 			nnet.Deconstruct(arena, current);
-			nnet.Rate(arena, tempArena, jv::RandF(0, 1));
+			nnet.Rate(arena, tempArena);
+
+			if (nnet.currentId == 0)
+				std::cout << "gen " << nnet.generationId << ": " << nnet.rating << std::endl;
 		}
 	}
 	

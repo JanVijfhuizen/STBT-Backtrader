@@ -34,10 +34,8 @@ namespace jv
 		uint32_t genId;
 		uint32_t trainId;
 
-		bool debug;
-
 		[[nodiscard]] float* GetTrainee();
-		void Rate(Arena& arena, Arena& tempArena, float rating, Queue<bt::OutputMsg>& output);
+		void Rate(Arena& arena, Arena& tempArena, float rating, Queue<bt::OutputMsg>* output = nullptr);
 
 		[[nodiscard]] static GeneticAlgorithm Create(Arena& arena, GeneticAlgorithmCreateInfo& info);
 		static void Destroy(Arena& arena, GeneticAlgorithm& ga);

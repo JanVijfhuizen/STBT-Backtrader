@@ -89,7 +89,7 @@ namespace jv
 		return generation[trainId];
 	}
 
-	void GeneticAlgorithm::Rate(Arena& arena, Arena& tempArena, const float rating, Queue<bt::OutputMsg>& output)
+	void GeneticAlgorithm::Rate(Arena& arena, Arena& tempArena, const float rating, Queue<bt::OutputMsg>* output)
 	{
 		// Finish generation and start new one if applicable.
 		genRatings[trainId++] = rating;
@@ -124,10 +124,10 @@ namespace jv
 				result = GACopy(arena, cpyGen[0], info.width);
 				genScope = arena.CreateScope();
 
-				if (debug)
+				if (output)
 				{
 					auto str = "GAR: " + std::to_string(bestRating);
-					output.Add() = bt::OutputMsg::Create(str.c_str());
+					output->Add() = bt::OutputMsg::Create(str.c_str());
 				}
 			}
 

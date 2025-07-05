@@ -1,5 +1,6 @@
 #pragma once
 #include <Jlib/Map.h>
+#include "GeneticAlgorithm.h"
 
 namespace jv::ai
 {
@@ -42,7 +43,8 @@ namespace jv::ai
 		enum class Type
 		{
 			sigmoid,
-			spike
+			spike,
+			length
 		};
 		Type type;
 
@@ -56,6 +58,7 @@ namespace jv::ai
 
 	struct Weight final
 	{
+		float value;
 		uint32_t from, to;
 	};
 
@@ -76,6 +79,10 @@ namespace jv::ai
 		float weightToNeuronMutateChance = .5f;
 		uint32_t alpha = 1;
 
+		float gaMutateChance = .01f;
+		float gaMutateAddition = 1;
+		float gaMutateMultiplier = .1f;
+
 		uint64_t scope;
 		uint64_t resultScope;
 		uint64_t generationScope;
@@ -93,13 +100,23 @@ namespace jv::ai
 		float generationRating = 0;
 		float rating = 0;
 		uint32_t generationId = 0;
-		uint32_t instanceId = 0;
+		uint32_t currentId = 0;
+
+		uint64_t parameterScope;
+		GeneticAlgorithm ga;
+
+		void CreateParameters(Arena& arena);
+		void DestroyParameters(Arena& arena);
+
+		[[nodiscard]] DynInstance& GetCurrent();
+		void Rate(Arena& arena, Arena& tempArena);
+		[[nodiscard]] float* GetCurrentParameters();
+		void RateParameters(Arena& arena, Arena& tempArena, float rating);
 
 		void Construct(Arena& arena, Arena& tempArena, const DynInstance& instance);
 		void Deconstruct(Arena& arena, const DynInstance& instance);
+		void ConstructParameters(DynInstance& instance, float* values);
 
-		[[nodiscard]] DynInstance& GetCurrent();
-		void Rate(Arena& arena, Arena& tempArena, float rating);
 		void Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output);
 
 		[[nodiscard]] static DynNNet Create(Arena& arena, Arena& tempArena, const DynNNetCreateInfo& info);

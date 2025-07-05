@@ -122,7 +122,7 @@ namespace jv
 			}
 			else
 			{
-				gt.ga.Rate(*gt.arena, *gt.tempArena, gt.score, *info.output);
+				gt.ga.Rate(*gt.arena, *gt.tempArena, gt.score, info.output);
 				if (gt.ga.trainId == 0)
 					info.progress->Add() = gt.ga.genRating;
 			}	
@@ -169,7 +169,6 @@ namespace jv
 	{
 		GATrader trader{};
 		GeneticAlgorithmCreateInfo info{};
-		info.length = trader.length;
 		info.userPtr = &trader;
 		info.width = trader.width;
 		info.length = trader.length;

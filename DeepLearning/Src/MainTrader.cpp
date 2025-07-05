@@ -104,8 +104,7 @@ namespace jv
 			mt->rating += diff;
 			if (++mt->currentInstanceRun >= mt->runsPerInstance)
 			{
-				mt->ga.debug = true;
-				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating, *info.output);
+				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating, info.output);
 				if (mt->ga.trainId == 0)
 					info.progress->Add() = mt->ga.genRating;
 				mt->rating = 0;

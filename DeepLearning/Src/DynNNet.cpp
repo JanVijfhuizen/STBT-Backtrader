@@ -203,6 +203,65 @@ namespace jv::ai
 		arena.DestroyScope(constructScope);
 	}
 
+	void DynNNet::ConstructParameters(DynInstance& instance, float* values)
+	{
+		// First do the weights (it's more straightforward)
+		for (uint32_t i = 0; i < instance.weights.length; i++)
+		{
+			const uint32_t w = instance.weights[i];
+			auto& weight = weights[w];
+			weight.value = values[i];
+		}
+
+		// Now do the neurons, which gets a bit more complicated due to types.
+		for (uint32_t i = 0; i < instance.neurons.length; i++)
+		{
+			const uint32_t n = instance.neurons[i];
+			auto& neuron = neurons[n];
+
+			const uint32_t ind = instance.weights.length + i * 4;
+			neuron.value = values[ind];
+			
+			const uint32_t typeCount = static_cast<uint32_t>(Neuron::Type::length);
+			const uint32_t currentType = static_cast<uint32_t>(round(values[ind + 1] * typeCount));
+			const Neuron::Type convType = static_cast<Neuron::Type>(currentType);
+			neuron.type = convType;
+
+			switch (convType)
+			{
+			case Neuron::Type::spike:
+				neuron.spike.decay = values[ind + 2];
+				neuron.spike.threshold = values[ind + 3];
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	void DynNNet::CreateParameters(Arena& arena)
+	{
+		parameterScope = arena.CreateScope();
+
+		const auto& current = GetCurrent();
+
+		GeneticAlgorithmCreateInfo info{};
+		info.length = generation.length;
+		info.userPtr = this;
+
+		// Neuron length 4th value is the type. First values are shared ones and the rest is type specific.
+		info.width = current.neurons.length * 4 + current.weights.length;
+		info.mutateChance = gaMutateChance;
+		info.mutateAddition = gaMutateAddition;
+		info.mutateMultiplier = gaMutateMultiplier;
+		ga = GeneticAlgorithm::Create(arena, info);
+	}
+
+	void DynNNet::DestroyParameters(Arena& arena)
+	{
+		arena.DestroyScope(parameterScope);
+	}
+
 	// Source: https://stackoverflow.com/questions/10732027/fast-sigmoid-algorithm
 	float FastSigmoid(const float x)
 	{
@@ -211,7 +270,7 @@ namespace jv::ai
 
 	DynInstance& DynNNet::GetCurrent()
 	{
-		return generation[instanceId];
+		return generation[currentId];
 	}
 
 	DynInstance Breed(Arena& arena, Arena& tempArena, DynNNet& nnet, const DynInstance& a, const DynInstance& b)
@@ -290,12 +349,12 @@ namespace jv::ai
 		return instance;
 	}
 
-	void DynNNet::Rate(Arena& arena, Arena& tempArena, const float rating)
+	void DynNNet::Rate(Arena& arena, Arena& tempArena)
 	{
-		ratings[instanceId++] = rating;
-		if (instanceId >= generation.length)
+		ratings[currentId++] = ga.rating;
+		if (currentId >= generation.length)
 		{
-			instanceId = 0;
+			currentId = 0;
 			++generationId;
 
 			auto tempScope = tempArena.CreateScope();
@@ -345,6 +404,16 @@ namespace jv::ai
 
 			tempArena.DestroyScope(tempScope);
 		}
+	}
+
+	float* DynNNet::GetCurrentParameters()
+	{
+		return ga.GetTrainee();
+	}
+
+	void DynNNet::RateParameters(Arena& arena, Arena& tempArena, float rating)
+	{
+		ga.Rate(arena, tempArena, rating, nullptr);
 	}
 
 	void DynNNet::Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output)

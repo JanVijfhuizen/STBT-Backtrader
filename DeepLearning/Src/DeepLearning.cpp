@@ -48,10 +48,8 @@ int main()
 		input.ptr = iv;
 		input.length = 4;
 
-		bool requiredOutput[]{ true, true, false };
-
-		bool out[2];
-		jv::Array<bool> output{};
+		float out[2];
+		jv::Array<float> output{};
 		output.ptr = out;
 		output.length = 2;
 
@@ -74,20 +72,26 @@ int main()
 				for (uint32_t k = 0; k < 25; k++)
 				{
 					input[0] = float(k % 3 == 0);
+					input[1] = sin(.2 * k);
 					nnet.Propagate(tempArena, input, output);
 					if (k < 0)
 						continue;
 
 					// Arbitrary input is supposed to find sine.
-					//const bool wanted = sin(.2 * k) > 0;
-					const bool wanted = k % 3 == 0;
+					const bool wanted = sin(.2 * k) > 0;
+					//const bool wanted = k % 3 == 0;
+					const float fWanted = float(wanted);
 
-					rating += float(wanted == out[0]) / 3;
-					rating += float(!wanted == out[1]) / 3;
-					rating += float(out[0] != out[1]) / 3;
-					tester.AddResult(wanted, out[0]);
-					tester.AddResult(!wanted, out[1]);
-					tester.AddResult(!out[0], out[1]);
+					bool o1 = bool(int(round(out[0])));
+					bool o2 = bool(int(round(out[1])));
+
+					rating += o1 != o2;
+					rating += wanted == o1;
+					rating += wanted != o2;
+
+					tester.AddResult(wanted, o1);
+					tester.AddResult(!wanted, o2);
+					tester.AddResult(!o1, o2);
 				}
 
 				highestRating = jv::Max(rating, highestRating);

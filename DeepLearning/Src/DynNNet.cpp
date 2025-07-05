@@ -113,7 +113,11 @@ namespace jv::ai
 			{
 				// Mutate into a weight.
 				const auto& info = nnet.info;
-				const uint32_t from = rand() % (neurons.count - info.outputCount);
+				uint32_t from = rand() % (neurons.count - info.outputCount);
+				// If this is in the output range, move it out of there.
+				if (from >= info.inputCount && from < (info.inputCount + info.outputCount))
+					from += info.outputCount;
+
 				const uint32_t to = info.inputCount + (rand() % (neurons.count - info.inputCount));
 
 				const Key key(from, to);
@@ -183,7 +187,7 @@ namespace jv::ai
 			if (nums[i] == 0)
 				continue;
 			auto& neuron = neurons[i];
-			neuron.cWeights = CreateArray<CWeight>(arena, nums[i]);
+			neuron.cWeights = CreateArray<uint32_t>(arena, nums[i]);
 		}
 
 		for (auto& i : nums)
@@ -193,7 +197,7 @@ namespace jv::ai
 			auto& weight = weights[i];
 			auto& n = nums[weight.from];
 			auto& cWeight = neurons[weight.from].cWeights[n++];
-			cWeight.index = i;
+			cWeight = i;
 		}
 
 		tempArena.DestroyScope(tempScope);
@@ -229,9 +233,6 @@ namespace jv::ai
 			const Neuron::Type convType = static_cast<Neuron::Type>(currentType);
 			neuron.type = convType;
 
-			// temp
-			neuron.type = Neuron::Type::sigmoid;
-
 			switch (convType)
 			{
 			case Neuron::Type::spike:
@@ -242,6 +243,10 @@ namespace jv::ai
 				break;
 			}
 		}
+
+		// Always set the output to a single type.
+		for (uint32_t i = 0; i < info.outputCount; i++)
+			neurons[info.inputCount + i].type = Neuron::Type::length;
 	}
 
 	void DynNNet::CreateParameters(Arena& arena)
@@ -440,7 +445,7 @@ namespace jv::ai
 			neurons[n].value = 0;
 	}
 
-	void DynNNet::Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output)
+	void DynNNet::Propagate(Arena& tempArena, const Array<float>& input, const Array<float>& output)
 	{
 		const auto tempScope = tempArena.CreateScope();
 
@@ -504,12 +509,19 @@ namespace jv::ai
 			// Propagate through weights.
 			for (auto& cWeight : neuron.cWeights)
 			{
-				auto& weight = weights[cWeight.index];
+				auto& weight = weights[cWeight];
 				auto& toNeuron = neurons[weight.to];
 
 				queue.Add() = weight.to;
-				toNeuron.value += cWeight.mul * propagatedValue;
+				toNeuron.value += weight.value * propagatedValue;
 			}
+		}
+
+		// Return output.
+		for (uint32_t i = 0; i < output.length; i++)
+		{
+			const uint32_t ind = input.length + i;
+			output[i] = neurons[ind].value;
 		}
 
 		for (auto& neuron : neurons)
@@ -520,18 +532,15 @@ namespace jv::ai
 			case Neuron::Type::spike:
 				neuron.value -= neuron.spike.decay;
 				break;
+				// Doubles as output.
+			case Neuron::Type::length:
+				neuron.value = 0;
+				break;
 			default:
 				break;
 			}
 
 			neuron.value = Max(neuron.value, 0.f);
-		}
-
-		// Return output.
-		for (uint32_t i = 0; i < output.length; i++)
-		{
-			const uint32_t ind = input.length + i;
-			output[i] = neurons[ind].signalled;
 		}
 
 		tempArena.DestroyScope(tempScope);
@@ -573,10 +582,6 @@ namespace jv::ai
 	void DynNNet::Destroy(Arena& arena, const DynNNet& nnet)
 	{
 		arena.DestroyScope(nnet.scope);
-	}
-	bool Neuron::Enabled() const
-	{
-		return cWeights.length > 0;
 	}
 	void DynInstance::Copy(Arena& arena, DynInstance& dst) const
 	{

@@ -17,12 +17,6 @@ namespace jv::ai
 		bool connectStartingNeurons = true;
 	};
 
-	struct CWeight final
-	{
-		float mul;
-		uint32_t index;
-	};
-
 	struct Neuron final
 	{
 		struct Sigmoid final
@@ -56,9 +50,7 @@ namespace jv::ai
 		float value;
 		bool signalled;
 
-		Array<CWeight> cWeights{};
-
-		[[nodiscard]] bool Enabled() const;
+		Array<uint32_t> cWeights{};
 	};
 
 	struct Weight final
@@ -125,7 +117,7 @@ namespace jv::ai
 		void ConstructParameters(DynInstance& instance, float* values);
 		
 		void Flush(DynInstance& instance);
-		void Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output);
+		void Propagate(Arena& tempArena, const Array<float>& input, const Array<float>& output);
 
 		[[nodiscard]] static DynNNet Create(Arena& arena, Arena& tempArena, const DynNNetCreateInfo& info);
 		static void Destroy(Arena& arena, const DynNNet& nnet);

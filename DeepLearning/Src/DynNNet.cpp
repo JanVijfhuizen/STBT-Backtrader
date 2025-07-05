@@ -341,7 +341,7 @@ namespace jv::ai
 		while (iB < b.weights.length)
 			weights.Add() = b.weights[iB++];
 
-		Mutate(nnet, neurons, weights, nnet.alpha);
+		Mutate(nnet, neurons, weights, rand() % (nnet.alpha + 1));
 
 		DynInstance instance{};
 		instance.neurons = CreateArray<uint32_t>(arena, neurons.count);

@@ -88,6 +88,7 @@ namespace jv::ai
 		float gaMutateChance = .01f;
 		float gaMutateAddition = 1;
 		float gaMutateMultiplier = .1f;
+		uint32_t gaKmPointCount = 3;
 
 		uint64_t scope;
 		uint64_t resultScope;

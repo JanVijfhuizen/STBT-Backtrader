@@ -156,7 +156,7 @@ namespace jv::ai
 				weights[i] = i;
 		}
 
-		Mutate(nnet, neurons, weights, info.initialAlpha);
+		Mutate(nnet, neurons, weights, rand() % (info.initialAlpha + 1));
 
 		instance.neurons = CreateArray<uint32_t>(arena, neurons.count);
 		instance.weights = CreateArray<uint32_t>(arena, weights.count);
@@ -229,6 +229,9 @@ namespace jv::ai
 			const Neuron::Type convType = static_cast<Neuron::Type>(currentType);
 			neuron.type = convType;
 
+			// temp
+			neuron.type = Neuron::Type::sigmoid;
+
 			switch (convType)
 			{
 			case Neuron::Type::spike:
@@ -254,6 +257,7 @@ namespace jv::ai
 		info.mutateChance = gaMutateChance;
 		info.mutateAddition = gaMutateAddition;
 		info.mutateMultiplier = gaMutateMultiplier;
+		info.kmPointCount = gaKmPointCount;
 		ga = GeneticAlgorithm::Create(arena, info);
 	}
 

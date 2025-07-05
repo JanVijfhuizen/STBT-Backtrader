@@ -38,10 +38,10 @@ int main()
 	{
 		jv::ai::DynNNetCreateInfo info{};
 		info.inputCount = 4;
-		info.outputCount = 1;
+		info.outputCount = 2;
 		info.generationSize = 50;
 		auto nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
-		nnet.alpha = 1;
+		nnet.alpha = 10;
 
 		float iv[4]{ 0.2, 0.3, .1, -.5 };
 		jv::Array<float> input{};
@@ -73,6 +73,7 @@ int main()
 
 				for (uint32_t k = 0; k < 25; k++)
 				{
+					input[0] = float(k % 3 == 0);
 					nnet.Propagate(tempArena, input, output);
 					if (k < 0)
 						continue;

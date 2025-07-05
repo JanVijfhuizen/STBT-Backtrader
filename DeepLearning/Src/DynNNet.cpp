@@ -6,6 +6,8 @@
 
 namespace jv::ai
 {
+	const uint32_t NEURON_VARIABLE_COUNT = 3;
+
 	struct Key final
 	{
 		union
@@ -219,19 +221,18 @@ namespace jv::ai
 			const uint32_t n = instance.neurons[i];
 			auto& neuron = neurons[n];
 
-			const uint32_t ind = instance.weights.length + i * 4;
-			neuron.value = values[ind];
+			const uint32_t ind = instance.weights.length + i * NEURON_VARIABLE_COUNT;
 			
 			const uint32_t typeCount = static_cast<uint32_t>(Neuron::Type::length);
-			const uint32_t currentType = static_cast<uint32_t>(round(values[ind + 1] * typeCount));
+			const uint32_t currentType = static_cast<uint32_t>(round(values[ind] * typeCount));
 			const Neuron::Type convType = static_cast<Neuron::Type>(currentType);
 			neuron.type = convType;
 
 			switch (convType)
 			{
 			case Neuron::Type::spike:
-				neuron.spike.decay = values[ind + 2];
-				neuron.spike.threshold = values[ind + 3];
+				neuron.spike.decay = values[ind + 1];
+				neuron.spike.threshold = values[ind + 2];
 				break;
 			default:
 				break;
@@ -246,11 +247,9 @@ namespace jv::ai
 		const auto& current = GetCurrent();
 
 		GeneticAlgorithmCreateInfo info{};
-		info.length = generation.length;
-		info.userPtr = this;
-
-		// Neuron length 4th value is the type. First values are shared ones and the rest is type specific.
-		info.width = current.neurons.length * 4 + current.weights.length;
+		info.length = gaLength;
+		// Neuron length first value is the type. First values are shared ones and the rest is type specific.
+		info.width = current.neurons.length * NEURON_VARIABLE_COUNT + current.weights.length;
 		info.mutateChance = gaMutateChance;
 		info.mutateAddition = gaMutateAddition;
 		info.mutateMultiplier = gaMutateMultiplier;
@@ -416,6 +415,12 @@ namespace jv::ai
 		ga.Rate(arena, tempArena, rating, nullptr);
 	}
 
+	void DynNNet::Flush(DynInstance& instance)
+	{
+		for (auto& n : instance.neurons)
+			neurons[n].value = 0;
+	}
+
 	void DynNNet::Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output)
 	{
 		const auto tempScope = tempArena.CreateScope();
@@ -467,6 +472,10 @@ namespace jv::ai
 				break;
 			case Neuron::Type::sigmoid:
 				propagatedValue = FastSigmoid(neuron.value);
+				neuron.value = 0;
+				break;
+			case Neuron::Type::sine:
+				propagatedValue = sin(neuron.value);
 				neuron.value = 0;
 				break;
 			default:

@@ -24,7 +24,7 @@ void MFree(void* ptr)
 
 int main()
 {
-	//srand(time(NULL));
+	srand(time(NULL));
 
 	jv::Arena arena, tempArena;
 	{
@@ -38,7 +38,7 @@ int main()
 	{
 		jv::ai::DynNNetCreateInfo info{};
 		info.inputCount = 4;
-		info.outputCount = 3;
+		info.outputCount = 1;
 		info.generationSize = 50;
 		auto nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
 
@@ -49,10 +49,10 @@ int main()
 
 		bool requiredOutput[]{ true, true, false };
 
-		bool out[3]{};
+		bool out[2];
 		jv::Array<bool> output{};
 		output.ptr = out;
-		output.length = 3;
+		output.length = 2;
 
 		for (uint32_t i = 0; i < 1e4; i++)
 		{
@@ -60,15 +60,32 @@ int main()
 			nnet.Construct(arena, tempArena, current);
 			nnet.CreateParameters(arena);
 
-			for (uint32_t j = 0; j < 1e4; j++)
+			uint32_t highestRating = 0;
+
+			for (uint32_t j = 0; j < 400; j++)
 			{
 				nnet.ConstructParameters(current, nnet.GetCurrentParameters());
-				nnet.Propagate(tempArena, input, output);
+				nnet.Flush(current);
 
+				jv::FPFNTester tester{};
 				uint32_t rating = 0;
-				for (uint32_t k = 0; k < 3; k++)
-					rating += output[k] == requiredOutput[k];
-				nnet.RateParameters(arena, tempArena, rating);
+
+				for (uint32_t k = 0; k < 100; k++)
+				{
+					nnet.Propagate(tempArena, input, output);
+					if (k < 0)
+						continue;
+
+					// Arbitrary input is supposed to find sine.
+					const bool wanted = sin(.2 * k) > 0;
+					rating += wanted == out[0];
+					rating += !wanted == out[1];
+					tester.AddResult(wanted, out[0]);
+					tester.AddResult(!wanted, out[1]);
+				}
+
+				highestRating = jv::Max(rating, highestRating);
+				nnet.RateParameters(arena, tempArena, tester.GetRating());
 			}
 
 			nnet.DestroyParameters(arena);
@@ -76,7 +93,16 @@ int main()
 			nnet.Rate(arena, tempArena);
 
 			if (nnet.currentId == 0)
-				std::cout << "gen " << nnet.generationId << ": " << nnet.rating << std::endl;
+			{
+				std::cout << "gen " << nnet.generationId << ": " << highestRating << " / " << nnet.rating << std::endl;
+				std::cout << "n: " << nnet.result.neurons.length << " w:" << nnet.result.weights.length << std::endl;
+
+				for (uint32_t j = 0; j < 10; j++)
+				{
+					std::cout << "n: " << nnet.generation[j].neurons.length << " w:" << nnet.generation[j].weights.length << std::endl;
+				}
+			}
+				
 		}
 	}
 	

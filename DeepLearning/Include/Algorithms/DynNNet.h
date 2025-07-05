@@ -29,6 +29,10 @@ namespace jv::ai
 		{
 
 		};
+		struct Sine final
+		{
+
+		};
 		struct Spike final
 		{
 			float threshold;
@@ -43,6 +47,7 @@ namespace jv::ai
 		enum class Type
 		{
 			sigmoid,
+			sine,
 			spike,
 			length
 		};
@@ -79,6 +84,7 @@ namespace jv::ai
 		float weightToNeuronMutateChance = .5f;
 		uint32_t alpha = 1;
 
+		uint32_t gaLength = 40;
 		float gaMutateChance = .01f;
 		float gaMutateAddition = 1;
 		float gaMutateMultiplier = .1f;
@@ -116,7 +122,8 @@ namespace jv::ai
 		void Construct(Arena& arena, Arena& tempArena, const DynInstance& instance);
 		void Deconstruct(Arena& arena, const DynInstance& instance);
 		void ConstructParameters(DynInstance& instance, float* values);
-
+		
+		void Flush(DynInstance& instance);
 		void Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output);
 
 		[[nodiscard]] static DynNNet Create(Arena& arena, Arena& tempArena, const DynNNetCreateInfo& info);

@@ -167,7 +167,6 @@ namespace jv
 	{
 		GeneticAlgorithmCreateInfo info{};
 		info.width = 30;
-		info.userPtr = this;
 		info.kmPointCount = 6;
 		ga = GeneticAlgorithm::Create(*arena, info);
 

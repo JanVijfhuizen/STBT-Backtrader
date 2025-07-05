@@ -13,7 +13,6 @@ namespace jv
 		float apexPct = .1f;
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;
-		void* userPtr = nullptr;
 		uint32_t kmPointCount = 5;
 		bool inbreedingOnly = false;
 	};

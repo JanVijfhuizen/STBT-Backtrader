@@ -169,7 +169,6 @@ namespace jv
 	{
 		GATrader trader{};
 		GeneticAlgorithmCreateInfo info{};
-		info.userPtr = &trader;
 		info.width = trader.width;
 		info.length = trader.length;
 		info.mutateChance = trader.mutateChance;

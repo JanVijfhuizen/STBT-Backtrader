@@ -42,6 +42,9 @@ int main()
 		info.generationSize = 50;
 		auto nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
 		nnet.alpha = 10;
+		nnet.kmPointCount = 3;
+		nnet.gaLength = 40;
+		nnet.gaKmPointCount = 3;
 
 		float iv[4]{ 0.2, 0.3, .1, -.5 };
 		jv::Array<float> input{};
@@ -53,6 +56,9 @@ int main()
 		output.ptr = out;
 		output.length = 2;
 
+		float bestFPFNRating = 0;
+		uint32_t cyclesSinceNewBestRating = 0;
+
 		for (uint32_t i = 0; i < 1e4; i++)
 		{
 			auto current = nnet.GetCurrent();
@@ -60,8 +66,13 @@ int main()
 			nnet.CreateParameters(arena);
 
 			float highestRating = 0;
+			float currentBestFPFNRating = 0;
 
-			for (uint32_t j = 0; j < 400; j++)
+			if (i % (nnet.generation.length / 10) == 0)
+				std::cout << "-";
+
+			const uint32_t l = nnet.generation.length * 10;
+			for (uint32_t j = 0; j < l; j++)
 			{
 				nnet.ConstructParameters(current, nnet.GetCurrentParameters());
 				nnet.Flush(current);
@@ -95,9 +106,12 @@ int main()
 					tester.AddResult(!o1, o2);
 				}
 
+				const float r = tester.GetRating();
+
 				highestRating = jv::Max(rating, highestRating);
-				nnet.RateParameters(arena, tempArena, tester.GetRating());
-			}
+				currentBestFPFNRating = jv::Max(currentBestFPFNRating, r);
+				nnet.RateParameters(arena, tempArena, r);
+			}	
 
 			nnet.DestroyParameters(arena);
 			nnet.Deconstruct(arena, current);
@@ -105,14 +119,25 @@ int main()
 
 			if (nnet.currentId == 0)
 			{
+				std::cout << std::endl;
 				std::cout << "gen " << nnet.generationId << ": " << highestRating << " / " << nnet.rating << std::endl;
 				std::cout << "n: " << nnet.result.neurons.length << " w:" << nnet.result.weights.length << std::endl;
 				std::cout << nnet.neurons.count << " \ " << nnet.weights.count << std::endl;
 
-				for (uint32_t j = 0; j < 10; j++)
+				const uint32_t l = nnet.generation.length * nnet.apexPct;
+				for (uint32_t j = 0; j < l; j++)
 				{
 					std::cout << "n: " << nnet.generation[j].neurons.length << " w:" << nnet.generation[j].weights.length << std::endl;
 				}
+
+				++cyclesSinceNewBestRating;
+				if (currentBestFPFNRating > bestFPFNRating)
+				{
+					cyclesSinceNewBestRating = 0;
+					bestFPFNRating = currentBestFPFNRating;
+				}
+				if (cyclesSinceNewBestRating > 10)
+					break;
 			}
 				
 		}

@@ -78,19 +78,20 @@ int main()
 						continue;
 
 					// Arbitrary input is supposed to find sine.
-					const bool wanted = sin(.2 * k) > 0;
+					const float si = sin(.2 * k);
+					const bool wanted = si > 0;
 					//const bool wanted = k % 3 == 0;
 					const float fWanted = float(wanted);
 
 					bool o1 = bool(int(round(out[0])));
 					bool o2 = bool(int(round(out[1])));
 
-					rating += o1 != o2;
 					rating += wanted == o1;
 					rating += wanted != o2;
+					rating += o1 != o2;
 
-					tester.AddResult(wanted, o1);
-					tester.AddResult(!wanted, o2);
+					tester.AddResult(o1, wanted);
+					tester.AddResult(02, !wanted);
 					tester.AddResult(!o1, o2);
 				}
 

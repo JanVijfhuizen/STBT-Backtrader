@@ -75,7 +75,8 @@ namespace jv::ai
 		float arrivalsPct = .1f;
 		float weightToNeuronMutateChance = .5f;
 		uint32_t alpha = 1;
-		uint32_t kmPointCount = 1;
+		uint32_t kmPointCount = 3;
+		uint32_t kmCycles = 50;
 
 		uint32_t gaLength = 40;
 		float gaMutateChance = .01f;

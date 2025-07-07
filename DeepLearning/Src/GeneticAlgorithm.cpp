@@ -131,6 +131,12 @@ namespace jv
 				}
 			}
 
+			assert(info.breedablePct > 0 && info.breedablePct <= 1);
+			const uint32_t apexLen = (float)info.length * info.apexPct;
+			const uint32_t breedableLen = (float)info.length * info.breedablePct;
+			const uint32_t end = info.length - (float)info.length * info.arrivalsPct;
+			assert(end < info.length && end > breedableLen);
+
 			// Sort again, but now with speciation in mind.
 			assert(info.kmPointCount < info.length);
 			if (info.kmPointCount > 1)
@@ -150,30 +156,28 @@ namespace jv
 
 				// Now order the breedables based on roundabout
 				uint32_t offset = 0;
-				for (uint32_t i = 0; i < info.apexPct; i++)
+				for (uint32_t i = 0; i < breedableLen; i++)
 				{
 					uint32_t groupId;
+					uint32_t ind;
+					uint32_t l;
+
 					do
 					{
 						groupId = offset++ % kmInfo.pointCount;
-					} while (conv[groupId].length == 0);
+						ind = offset / kmInfo.pointCount;
+						l = conv[groupId].length;
+					} while (l <= ind);
 
-					const uint32_t ind = offset / kmInfo.pointCount;
-					
 					const auto temp = cpyGen[i];
-					auto& apexInst = cpyGen[conv[groupId][ind]];
+					const auto& group = conv[groupId];
+					auto& apexInst = cpyGen[group[ind]];
 
 					// Swap places.
 					cpyGen[i] = apexInst;
 					apexInst = temp;
 				}
 			}
-
-			assert(info.breedablePct > 0 && info.breedablePct <= 1);
-			const uint32_t apexLen = (float)info.length * info.apexPct;
-			const uint32_t breedableLen = (float)info.length * info.breedablePct;
-			const uint32_t end = info.length - (float)info.length * info.arrivalsPct;
-			assert(end < info.length && end > breedableLen);
 
 			// Breed successfull instances.
 			for (uint32_t i = 0; i < end; i++)

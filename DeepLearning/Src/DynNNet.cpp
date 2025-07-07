@@ -3,6 +3,7 @@
 #include <Jlib/MapUtils.h>
 #include <JLib/ArrayUtils.h>
 #include <JLib/QueueUtils.h>
+#include <Algorithms/KMeans.h>
 
 namespace jv::ai
 {
@@ -37,16 +38,40 @@ namespace jv::ai
 		return a < b;
 	}
 
-	void ApplyKMeans(Arena& arena, Arena& tempArena, DynNNet& nnet)
+	[[nodiscard]] uint32_t Dist(const DynInstance& instance, int32_t* map, const uint32_t neuronCount)
 	{
-		auto arr = CreateArray<uint32_t>(arena, nnet.kmPointCount);
+		uint32_t d = 0;
+		for (auto& n : instance.neurons)
+			d += map[n] <= 0;
+		for (auto& w : instance.weights)
+			d += map[neuronCount + w] <= 0;
+		return d;
+	}
+
+	void Clear(int32_t* map, const uint32_t count)
+	{
+		for (uint32_t i = 0; i < count; i++)
+			map[i] = 0;
+	}
+
+	void Add(int32_t* map, const DynInstance& instance, const uint32_t neuronCount)
+	{
+		for (auto& n : instance.neurons)
+			++map[n];
+		for (auto& w : instance.weights)
+			++map[neuronCount + w];
+	}
+
+	Array<uint32_t> ApplyKMeans(Arena& arena, Arena& tempArena, DynNNet& nnet, const uint32_t maxCycles)
+	{
+		auto arr = CreateArray<uint32_t>(arena, nnet.generation.length);
 
 		auto tempScope = tempArena.CreateScope();
 
-		// Convert random instances in semi "bitmaps".
 		auto closedPoints = CreateVector<uint32_t>(tempArena, nnet.kmPointCount);
-		auto points = CreateArray<float*>(tempArena, nnet.kmPointCount);
+		auto points = CreateArray<int32_t*>(tempArena, nnet.kmPointCount);
 
+		// Convert random instances in semi "bitmaps".
 		for (uint32_t i = 0; i < nnet.kmPointCount; i++)
 		{
 			uint32_t rInd;
@@ -56,14 +81,79 @@ namespace jv::ai
 			} while (Contains(closedPoints, rInd) != -1);
 
 			closedPoints.Add() = rInd;
-			auto& point = points[i] = tempArena.New<float>(nnet.neurons.count + nnet.weights.count);
+			auto& point = points[i] = tempArena.New<int32_t>(nnet.neurons.count + nnet.weights.count);
 			auto& instance = nnet.generation[rInd];
 
-			for (auto& i : instance.neurons)
-				point[i] = 1;
-			for (auto& i : instance.weights)
-				point[nnet.neurons.count + i] = 1;
+			for (auto& n : instance.neurons)
+				point[n] = 1;
+			for (auto& w : instance.weights)
+				point[nnet.neurons.count + w] = 1;
 		}
+
+		uint32_t i = 0;
+		for (; i < maxCycles; i++)
+		{
+			bool changed = false;
+
+			// Assign instances to closest points.
+			for (uint32_t j = 0; j < nnet.generation.length; j++)
+			{
+				float minDis = FLT_MAX;
+				uint32_t p = 0;
+
+				for (uint32_t k = 0; k < nnet.kmPointCount; k++)
+				{
+					uint32_t dst = Dist(nnet.generation[j], points[k], nnet.neurons.count);
+					if (dst < minDis)
+					{
+						minDis = dst;
+						p = k;
+					}
+				}
+
+				// Assign point to instance.
+				changed = changed ? true : arr[j] != p;
+				arr[j] = p;
+			}
+
+			if (!changed)
+				break;
+
+			// Set points to the average of their positions.
+			if (i < maxCycles - 1)
+			{
+				// Reset the points.
+				const uint32_t c = nnet.neurons.count + nnet.weights.count;
+				for (uint32_t j = 0; j < nnet.kmPointCount; j++)
+					Clear(points[j], c);
+
+				auto tScope = tempArena.CreateScope();
+				auto counts = CreateArray<uint32_t>(tempArena, nnet.kmPointCount);
+
+				// Get average of point instances.
+				const uint32_t l = nnet.generation.length;
+				for (uint32_t j = 0; j < l; j++)
+				{
+					const uint32_t ind = arr[j];
+					++counts[ind];
+					Add(points[ind], nnet.generation[j], nnet.neurons.count);
+				}
+				for (uint32_t j = 0; j < nnet.kmPointCount; j++)
+				{
+					auto point = points[j];
+					for (uint32_t i = 0; i < c; i++)
+					{
+						auto& p = point[i];
+						p = p >= ((l + 1) / 2);
+					}
+				}
+
+				tempArena.DestroyScope(tScope);
+			}
+		}
+
+		tempArena.DestroyScope(tempScope);
+		return arr;
 	}
 
 	void Mutate(DynNNet& nnet, Vector<uint32_t>& neurons, Vector<uint32_t>& weights, const uint32_t times)
@@ -453,9 +543,38 @@ namespace jv::ai
 			const uint32_t end = length - (float)length * arrivalsPct;
 			assert(end < length && end > breedableLen);
 
+			if (kmPointCount > 1)
+			{
+				auto res = ApplyKMeans(arena, tempArena, *this, kmCycles);
+				const auto conv = jv::ConvKMeansRes(arena, tempArena, res, kmPointCount);
+
+				// Now order the breedables based on roundabout
+				uint32_t offset = 0;
+				for (uint32_t i = 0; i < breedableLen; i++)
+				{
+					uint32_t groupId;
+					uint32_t ind;
+					uint32_t l;
+
+					do
+					{
+						groupId = offset++ % kmPointCount;
+						ind = offset / kmPointCount;
+						l = conv[groupId].length;
+					} while (l <= ind);
+
+					const auto temp = cpyGen[i];
+					auto& apexInst = cpyGen[conv[groupId][ind]];
+
+					// Swap places.
+					cpyGen[i] = apexInst;
+					apexInst = temp;
+				}
+			}
+
 			// Copy apex.
 			for (uint32_t i = 0; i < apexLen; i++)
-				cpyGen[0].Copy(arena, generation[i]);
+				cpyGen[i].Copy(arena, generation[i]);
 
 			// Copy and mutate from apex.
 			for (uint32_t i = apexLen; i < end; i++)

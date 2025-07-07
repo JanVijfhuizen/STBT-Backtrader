@@ -37,6 +37,35 @@ namespace jv::ai
 		return a < b;
 	}
 
+	void ApplyKMeans(Arena& arena, Arena& tempArena, DynNNet& nnet)
+	{
+		auto arr = CreateArray<uint32_t>(arena, nnet.kmPointCount);
+
+		auto tempScope = tempArena.CreateScope();
+
+		// Convert random instances in semi "bitmaps".
+		auto closedPoints = CreateVector<uint32_t>(tempArena, nnet.kmPointCount);
+		auto points = CreateArray<float*>(tempArena, nnet.kmPointCount);
+
+		for (uint32_t i = 0; i < nnet.kmPointCount; i++)
+		{
+			uint32_t rInd;
+			do
+			{
+				rInd = (rand() % nnet.generation.length);
+			} while (Contains(closedPoints, rInd) != -1);
+
+			closedPoints.Add() = rInd;
+			auto& point = points[i] = tempArena.New<float>(nnet.neurons.count + nnet.weights.count);
+			auto& instance = nnet.generation[rInd];
+
+			for (auto& i : instance.neurons)
+				point[i] = 1;
+			for (auto& i : instance.weights)
+				point[nnet.neurons.count + i] = 1;
+		}
+	}
+
 	void Mutate(DynNNet& nnet, Vector<uint32_t>& neurons, Vector<uint32_t>& weights, const uint32_t times)
 	{
 		for (uint32_t i = 0; i < times; i++)

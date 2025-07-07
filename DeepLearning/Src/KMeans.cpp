@@ -69,11 +69,19 @@ namespace jv
 		auto arr = CreateArray<uint32_t>(arena, info.count);
 
 		auto tempScope = tempArena.CreateScope();
+
+		auto closedPoints = CreateVector<uint32_t>(tempArena, info.pointCount);
 		auto points = CreateArray<float*>(tempArena, info.pointCount);
 		for (uint32_t i = 0; i < info.pointCount; i++)
 		{
+			uint32_t rInd;
+			do
+			{
+				rInd = (rand() % info.count);
+			} while (Contains(closedPoints, rInd) != -1);
+
+			closedPoints.Add() = rInd;
 			points[i] = tempArena.New<float>(width);
-			const uint32_t rInd = (rand() % info.count);
 			KMSet(points[i], info.instances[rInd], width);
 		}		
 

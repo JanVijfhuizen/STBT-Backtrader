@@ -72,7 +72,7 @@ int main()
 				for (uint32_t k = 0; k < 25; k++)
 				{
 					input[0] = float(k % 3 == 0);
-					input[1] = sin(.2 * k);
+					//input[1] = sin(.2 * k);
 					nnet.Propagate(tempArena, input, output);
 					if (k < 0)
 						continue;

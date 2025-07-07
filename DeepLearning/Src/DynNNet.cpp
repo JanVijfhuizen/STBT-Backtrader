@@ -282,6 +282,31 @@ namespace jv::ai
 		return generation[currentId];
 	}
 
+	// Single parent breeding.
+	DynInstance Breed(Arena& arena, Arena& tempArena, DynNNet& nnet, const DynInstance& a)
+	{
+		const auto tempScope = tempArena.CreateScope();
+
+		auto neurons = CreateVector<uint32_t>(tempArena, a.neurons.length + nnet.alpha);
+		auto weights = CreateVector<uint32_t>(tempArena, a.weights.length + nnet.alpha * 2);
+		memcpy(neurons.ptr, a.neurons.ptr, sizeof(uint32_t) * a.neurons.length);
+		memcpy(weights.ptr, a.weights.ptr, sizeof(uint32_t) * a.weights.length);
+		neurons.count = a.neurons.length;
+		weights.count = a.weights.length;
+
+		Mutate(nnet, neurons, weights, rand() % (nnet.alpha + 1));
+
+		DynInstance instance{};
+		instance.neurons = CreateArray<uint32_t>(arena, neurons.count);
+		instance.weights = CreateArray<uint32_t>(arena, weights.count);
+		memcpy(instance.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.count);
+		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
+
+		tempArena.DestroyScope(tempScope);
+		return instance;
+	}
+
+	// Currently not in use.
 	DynInstance Breed(Arena& arena, Arena& tempArena, DynNNet& nnet, const DynInstance& a, const DynInstance& b)
 	{
 		const auto tempScope = tempArena.CreateScope();
@@ -399,17 +424,6 @@ namespace jv::ai
 			const uint32_t end = length - (float)length * arrivalsPct;
 			assert(end < length && end > breedableLen);
 
-			/*
-			// Breed successfull instances.
-			for (uint32_t i = 0; i < end; i++)
-			{
-				uint32_t a = rand() % apexLen;
-				uint32_t b = rand() % breedableLen;
-				generation[i] = Breed(arena, tempArena, *this, cpyGen[a], cpyGen[b]);
-			}
-			(
-			*/
-
 			// Copy apex.
 			for (uint32_t i = 0; i < apexLen; i++)
 				cpyGen[0].Copy(arena, generation[i]);
@@ -418,7 +432,7 @@ namespace jv::ai
 			for (uint32_t i = apexLen; i < end; i++)
 			{
 				uint32_t a = rand() % breedableLen;
-				generation[i] = Breed(arena, tempArena, *this, cpyGen[a], cpyGen[a]);
+				generation[i] = Breed(arena, tempArena, *this, cpyGen[a]);
 			}
 
 			// Create new instances.

@@ -58,14 +58,13 @@ int main()
 
 		float bestFPFNRating = 0;
 		uint32_t cyclesSinceNewBestRating = 0;
+		float highestRating = 0;
 
 		for (uint32_t i = 0; i < 1e4; i++)
 		{
 			auto current = nnet.GetCurrent();
 			nnet.Construct(arena, tempArena, current);
 			nnet.CreateParameters(arena);
-
-			float highestRating = 0;
 			float currentBestFPFNRating = 0;
 
 			if (i % (nnet.generation.length / 10) == 0)
@@ -102,12 +101,11 @@ int main()
 					rating += o1 != o2;
 
 					tester.AddResult(o1, wanted);
-					tester.AddResult(02, !wanted);
+					tester.AddResult(o2, !wanted);
 					tester.AddResult(!o1, o2);
 				}
 
 				const float r = tester.GetRating();
-
 				highestRating = jv::Max(rating, highestRating);
 				currentBestFPFNRating = jv::Max(currentBestFPFNRating, r);
 				nnet.RateParameters(arena, tempArena, r);
@@ -124,6 +122,8 @@ int main()
 				std::cout << "n: " << nnet.result.neurons.length << " w:" << nnet.result.weights.length << std::endl;
 				std::cout << nnet.neurons.count << " \ " << nnet.weights.count << std::endl;
 
+				highestRating = 0;
+
 				const uint32_t l = nnet.generation.length * nnet.apexPct;
 				for (uint32_t j = 0; j < l; j++)
 				{
@@ -131,7 +131,7 @@ int main()
 				}
 
 				++cyclesSinceNewBestRating;
-				if (currentBestFPFNRating > bestFPFNRating)
+				if (currentBestFPFNRating > bestFPFNRating) 
 				{
 					cyclesSinceNewBestRating = 0;
 					bestFPFNRating = currentBestFPFNRating;

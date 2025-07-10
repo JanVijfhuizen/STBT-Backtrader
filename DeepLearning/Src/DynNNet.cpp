@@ -365,6 +365,13 @@ namespace jv::ai
 				neuron.spike.decay = values[ind + 1];
 				neuron.spike.threshold = values[ind + 2];
 				break;
+			case Neuron::Type::step:
+				neuron.step.threshold = values[ind + 1];
+				break;
+			case Neuron::Type::gauss:
+				neuron.gauss.mean = values[ind + 1];
+				neuron.gauss.stddev = values[ind + 2];
+				break;
 			default:
 				break;
 			}
@@ -678,6 +685,42 @@ namespace jv::ai
 				break;
 			case Neuron::Type::sine:
 				propagatedValue = sin(neuron.value);
+				neuron.value = 0;
+				break;
+			case Neuron::Type::abs:
+				propagatedValue = abs(neuron.value);
+				neuron.value = 0;
+				break;
+			case Neuron::Type::inv:
+				propagatedValue = -neuron.value;
+				neuron.value = 0;
+				break;
+			case Neuron::Type::relu:
+				propagatedValue = Max(0.f, neuron.value);
+				neuron.value = 0;
+				break;
+			case Neuron::Type::sin:
+				propagatedValue = sin(neuron.value);
+				neuron.value = 0;
+				break;
+			case Neuron::Type::cos:
+				propagatedValue = cos(neuron.value);
+				neuron.value = 0;
+				break;
+			case Neuron::Type::step:
+				propagatedValue = neuron.value > neuron.step.threshold;
+				neuron.value = 0;
+				break;
+			case Neuron::Type::tanh:
+				propagatedValue = tanh(neuron.value);
+				neuron.value = 0;
+				break;
+			case Neuron::Type::lin:
+				propagatedValue = neuron.value;
+				neuron.value = 0;
+				break;
+			case Neuron::Type::gauss:
+				propagatedValue = Gauss(neuron.value, abs(neuron.gauss.mean), abs(neuron.gauss.stddev));
 				neuron.value = 0;
 				break;
 			default:

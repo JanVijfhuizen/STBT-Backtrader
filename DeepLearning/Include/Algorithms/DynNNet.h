@@ -19,23 +19,25 @@ namespace jv::ai
 
 	struct Neuron final
 	{
-		struct Sigmoid final
-		{
-
-		};
-		struct Sine final
-		{
-
-		};
 		struct Spike final
 		{
 			float threshold;
 			float decay;
 		};
+		struct Step final
+		{
+			float threshold;
+		};
+		struct Gauss final
+		{
+			float mean;
+			float stddev;
+		};
 		union
 		{
-			Sigmoid sigmoid;
 			Spike spike;
+			Step step;
+			Gauss gauss;
 		};
 
 		enum class Type
@@ -43,6 +45,15 @@ namespace jv::ai
 			sigmoid,
 			sine,
 			spike,
+			abs,
+			inv,
+			relu,
+			sin,
+			cos,
+			step,
+			tanh,
+			lin,
+			gauss,
 			length
 		};
 		Type type;

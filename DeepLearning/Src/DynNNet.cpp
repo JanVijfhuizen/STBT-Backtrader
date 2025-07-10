@@ -256,6 +256,11 @@ namespace jv::ai
 		LinearSort(weights.ptr, weights.count, ComparerI);
 	}
 
+	[[nodiscard]] size_t GetParameterSize(const DynInstance& instance)
+	{
+		return instance.neurons.length * NEURON_VARIABLE_COUNT + instance.weights.length;
+	}
+
 	DynInstance CreateArrivalInstance(Arena& arena, Arena& tempArena, DynNNet& nnet)
 	{
 		DynInstance instance{};
@@ -285,6 +290,8 @@ namespace jv::ai
 		instance.weights = CreateArray<uint32_t>(arena, weights.count);
 		memcpy(instance.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.count);
 		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
+
+		instance.parameters = arena.New<float>(GetParameterSize(instance));
 
 		tempArena.DestroyScope(tempScope);
 		return instance;
@@ -377,7 +384,7 @@ namespace jv::ai
 		GeneticAlgorithmCreateInfo info{};
 		info.length = gaLength;
 		// Neuron length first value is the type. First values are shared ones and the rest is type specific.
-		info.width = current.neurons.length * NEURON_VARIABLE_COUNT + current.weights.length;
+		info.width = GetParameterSize(current);
 		info.mutateChance = gaMutateChance;
 		info.mutateAddition = gaMutateAddition;
 		info.mutateMultiplier = gaMutateMultiplier;
@@ -420,6 +427,8 @@ namespace jv::ai
 		instance.weights = CreateArray<uint32_t>(arena, weights.count);
 		memcpy(instance.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.count);
 		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
+
+		instance.parameters = arena.New<float>(GetParameterSize(instance));
 
 		tempArena.DestroyScope(tempScope);
 		return instance;
@@ -516,7 +525,7 @@ namespace jv::ai
 			const uint32_t length = generation.length;
 			DynInstance* cpyGen = tempArena.New<DynInstance>(length);
 			for (uint32_t i = 0; i < length; i++)
-				generation[i].Copy(tempArena, cpyGen[i]);
+				generation[i].Copy(tempArena, cpyGen[i], true);
 
 			arena.DestroyScope(generationScope);
 
@@ -533,7 +542,7 @@ namespace jv::ai
 			{
 				arena.DestroyScope(resultScope);
 				this->rating = bestRating;
-				cpyGen[0].Copy(arena, result);
+				cpyGen[0].Copy(arena, result, true);
 				generationScope = arena.CreateScope();
 			}
 
@@ -574,7 +583,7 @@ namespace jv::ai
 
 			// Copy apex.
 			for (uint32_t i = 0; i < apexLen; i++)
-				cpyGen[i].Copy(arena, generation[i]);
+				cpyGen[i].Copy(arena, generation[i], true);
 
 			// Copy and mutate from apex.
 			for (uint32_t i = apexLen; i < end; i++)
@@ -599,6 +608,13 @@ namespace jv::ai
 	void DynNNet::RateParameters(Arena& arena, Arena& tempArena, float rating)
 	{
 		ga.Rate(arena, tempArena, rating, nullptr);
+		if (ga.trainId == 0)
+		{
+			auto& instance = generation[currentId];
+			const auto result = ga.result;
+			const size_t s = sizeof(float) * ga.info.width;
+			memcpy(instance.parameters, result, s);
+		}
 	}
 
 	void DynNNet::Flush(DynInstance& instance)
@@ -745,11 +761,16 @@ namespace jv::ai
 	{
 		arena.DestroyScope(nnet.scope);
 	}
-	void DynInstance::Copy(Arena& arena, DynInstance& dst) const
+	void DynInstance::Copy(Arena& arena, DynInstance& dst, const bool copyParameters) const
 	{
 		dst.neurons = CreateArray<uint32_t>(arena, neurons.length);
 		dst.weights = CreateArray<uint32_t>(arena, weights.length);
 		memcpy(dst.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.length);
 		memcpy(dst.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.length);
+
+		const size_t s = GetParameterSize(*this);
+		dst.parameters = arena.New<float>(s);
+		if (copyParameters)
+			memcpy(dst.parameters, parameters, s);
 	}
 }

@@ -63,8 +63,9 @@ namespace jv::ai
 	{
 		Array<uint32_t> neurons;
 		Array<uint32_t> weights;
+		float* parameters;
 
-		void Copy(Arena& arena, DynInstance& dst) const;
+		void Copy(Arena& arena, DynInstance& dst, bool copyParameters) const;
 	};
 
 	struct DynNNet final

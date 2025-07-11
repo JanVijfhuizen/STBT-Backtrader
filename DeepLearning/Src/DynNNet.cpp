@@ -261,6 +261,25 @@ namespace jv::ai
 		return instance.neurons.length * NEURON_VARIABLE_COUNT + instance.weights.length;
 	}
 
+	[[nodiscard]] Array<DynInstance::OutputType> GetOutputTypes(Arena& arena, const DynType type)
+	{
+		Array<DynInstance::OutputType> ret;
+		switch (type)
+		{
+		case DynType::classification:
+			ret = CreateArray<DynInstance::OutputType>(arena, 2);
+			ret[0] = DynInstance::OutputType::lin;
+			ret[1] = DynInstance::OutputType::softmax;
+			break;
+		default:
+			ret = CreateArray<DynInstance::OutputType>(arena, 1);
+			ret[0] = DynInstance::OutputType::lin;
+			break;
+		}
+
+		return ret;
+	}
+
 	DynInstance CreateArrivalInstance(Arena& arena, Arena& tempArena, DynNNet& nnet)
 	{
 		DynInstance instance{};
@@ -292,6 +311,10 @@ namespace jv::ai
 		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
 
 		instance.parameters = arena.New<float>(GetParameterSize(instance));
+
+		// Choose output type. This never mutates.
+		auto oTypes = GetOutputTypes(tempArena, info.type);
+		instance.outputType = Rand(oTypes);
 
 		tempArena.DestroyScope(tempScope);
 		return instance;
@@ -326,6 +349,7 @@ namespace jv::ai
 			cWeight = i;
 		}
 
+		outputType = instance.outputType;
 		tempArena.DestroyScope(tempScope);
 	}
 	void DynNNet::Deconstruct(Arena& arena, const DynInstance& instance)
@@ -353,7 +377,7 @@ namespace jv::ai
 
 			const uint32_t ind = instance.weights.length + i * NEURON_VARIABLE_COUNT;
 			
-			const uint32_t typeCount = static_cast<uint32_t>(Neuron::Type::length);
+			const uint32_t typeCount = static_cast<uint32_t>(Neuron::Type::output);
 			const float f = values[ind];
 			const uint32_t currentType = floor((f + 1) / 2 * typeCount);
 			const Neuron::Type convType = static_cast<Neuron::Type>(currentType);
@@ -379,7 +403,7 @@ namespace jv::ai
 
 		// Always set the output to a single type.
 		for (uint32_t i = 0; i < info.outputCount; i++)
-			neurons[info.inputCount + i].type = Neuron::Type::length;
+			neurons[info.inputCount + i].type = Neuron::Type::output;
 	}
 
 	void DynNNet::CreateParameters(Arena& arena)
@@ -436,83 +460,7 @@ namespace jv::ai
 		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
 
 		instance.parameters = arena.New<float>(GetParameterSize(instance));
-
-		tempArena.DestroyScope(tempScope);
-		return instance;
-	}
-
-	// Currently not in use.
-	DynInstance Breed(Arena& arena, Arena& tempArena, DynNNet& nnet, const DynInstance& a, const DynInstance& b)
-	{
-		const auto tempScope = tempArena.CreateScope();
-
-		auto neurons = CreateVector<uint32_t>(tempArena, a.neurons.length + b.neurons.length + nnet.alpha);
-		uint32_t iA = 0, iB = 0;
-
-		while (iA < a.neurons.length && iB < b.neurons.length)
-		{
-			const uint32_t nA = a.neurons[iA];
-			const uint32_t nB = b.neurons[iB];
-
-			const bool equal = nA == nB;
-			const bool dir = nA < nB;
-
-			iA += equal ? 1 : dir ? 1 : 0;
-			iB += equal ? 1 : dir ? 0 : 1;
-
-			// Pick lowest and continue.
-			if (!equal)
-			{
-				neurons.Add() = dir ? nA : nB;
-				continue;
-			}
-
-			// Just pick the first one, since they're the same anyway.
-			neurons.Add() = nA;
-		}
-
-		// Add remaining neurons.
-		while (iA < a.neurons.length)
-			neurons.Add() = a.neurons[iA++];
-		while (iB < b.neurons.length)
-			neurons.Add() = b.neurons[iB++];
-
-		// Do the same thing for weights.
-		auto weights = CreateVector<uint32_t>(tempArena, a.weights.length + b.weights.length + nnet.alpha * 2);
-		iA = 0; iB = 0;
-
-		while (iA < a.weights.length && iB < b.weights.length)
-		{
-			const uint32_t wA = a.weights[iA];
-			const uint32_t wB = b.weights[iB];
-
-			const bool equal = wA == wB;
-			const bool dir = wA < wB;
-
-			iA += equal ? 1 : dir ? 1 : 0;
-			iB += equal ? 1 : dir ? 0 : 1;
-
-			if (!equal)
-			{
-				weights.Add() = dir ? wA : wB;
-				continue;
-			}
-
-			weights.Add() = wA;
-		}
-
-		while (iA < a.weights.length)
-			weights.Add() = a.weights[iA++];
-		while (iB < b.weights.length)
-			weights.Add() = b.weights[iB++];
-
-		Mutate(nnet, neurons, weights, rand() % (nnet.alpha + 1));
-
-		DynInstance instance{};
-		instance.neurons = CreateArray<uint32_t>(arena, neurons.count);
-		instance.weights = CreateArray<uint32_t>(arena, weights.count);
-		memcpy(instance.neurons.ptr, neurons.ptr, sizeof(uint32_t) * neurons.count);
-		memcpy(instance.weights.ptr, weights.ptr, sizeof(uint32_t) * weights.count);
+		instance.outputType = a.outputType;
 
 		tempArena.DestroyScope(tempScope);
 		return instance;
@@ -630,6 +578,32 @@ namespace jv::ai
 			neurons[n].value = 0;
 	}
 
+	void Linear(const DynNNet& nnet, const Array<float>& output)
+	{
+		const uint32_t iC = nnet.info.inputCount;
+		const uint32_t oC = nnet.info.outputCount;
+
+		for (uint32_t i = 0; i < oC; i++)
+			output[i] = nnet.neurons[iC + i].value;
+	}
+
+	void SoftMax(const DynNNet& nnet, const Array<float>& output)
+	{
+		const uint32_t iC = nnet.info.inputCount;
+		const uint32_t oC = nnet.info.outputCount;
+
+		float sum = 0;
+		for (uint32_t i = 0; i < oC; i++)
+		{
+			auto& o = output[i] = nnet.neurons[iC + i].value;
+			o = exp(o);
+			sum += o;
+		}
+		sum = 1.f / sum;
+		for (uint32_t i = 0; i < oC; i++)
+			output[i] *= sum;
+	}
+
 	void DynNNet::Propagate(Arena& tempArena, const Array<float>& input, const Array<float>& output)
 	{
 		const auto tempScope = tempArena.CreateScope();
@@ -738,11 +712,14 @@ namespace jv::ai
 			}
 		}
 
-		// Return output.
-		for (uint32_t i = 0; i < output.length; i++)
+		switch (outputType)
 		{
-			const uint32_t ind = input.length + i;
-			output[i] = neurons[ind].value;
+		case DynInstance::OutputType::softmax:
+			SoftMax(*this, output);
+			break;
+		default:
+			Linear(*this, output);
+			break;
 		}
 
 		for (auto& neuron : neurons)
@@ -754,7 +731,7 @@ namespace jv::ai
 				neuron.value -= neuron.spike.decay;
 				break;
 				// Doubles as output.
-			case Neuron::Type::length:
+			case Neuron::Type::output:
 				neuron.value = 0;
 				break;
 			default:
@@ -815,5 +792,6 @@ namespace jv::ai
 		dst.parameters = arena.New<float>(s);
 		if (copyParameters)
 			memcpy(dst.parameters, parameters, s);
+		dst.outputType = outputType;
 	}
 }

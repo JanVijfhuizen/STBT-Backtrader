@@ -4,10 +4,16 @@
 
 namespace jv::ai
 {
+	enum class DynType
+	{
+		classification
+	};
+
 	struct DynNNetCreateInfo final
 	{
 		uint32_t inputCount;
 		uint32_t outputCount;
+		DynType type = DynType::classification;
 
 		uint32_t generationSize = 500;
 		// How many mutations per new (non conceived) instance.
@@ -54,13 +60,12 @@ namespace jv::ai
 			tanh,
 			lin,
 			gauss,
-			length
+			output
 		};
-		Type type;
 
+		Type type;
 		float value;
 		bool signalled;
-
 		Array<uint32_t> cWeights{};
 	};
 
@@ -72,9 +77,16 @@ namespace jv::ai
 
 	struct DynInstance final
 	{
+		enum class OutputType
+		{
+			lin,
+			softmax
+		};
+
 		Array<uint32_t> neurons;
 		Array<uint32_t> weights;
 		float* parameters;
+		OutputType outputType;
 
 		void Copy(Arena& arena, DynInstance& dst, bool copyParameters) const;
 	};
@@ -117,6 +129,7 @@ namespace jv::ai
 
 		uint64_t parameterScope;
 		GeneticAlgorithm ga;
+		DynInstance::OutputType outputType;
 
 		void CreateParameters(Arena& arena);
 		void DestroyParameters(Arena& arena);

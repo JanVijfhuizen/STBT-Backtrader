@@ -41,16 +41,21 @@ namespace jv
 			const uint32_t l = info.scope->GetTimeSeriesCount();
 
 			const auto tempScope = gt.tempArena->CreateScope();
-			auto input = CreateArray<float>(*gt.tempArena, l);
+			auto input = CreateArray<float>(*gt.tempArena, l + 2);
 			auto output = CreateArray<bool>(*gt.tempArena, l * 2);
 
 			if (info.current > 1)
 			{
 				for (uint32_t i = 0; i < l; i++)
 				{
-					auto series = info.scope->GetTimeSeries(i);
+					const auto series = info.scope->GetTimeSeries(i);
 					input[i] = -1.f + series.open[info.current - 1] / series.open[info.current - 2];
 				}
+
+				const auto& mainSeries = info.scope->GetTimeSeries(0);
+				const auto& date = mainSeries.dates[info.current - 1];
+				input[l] = static_cast<float>(date.day) / 31;
+				input[l + 1] = static_cast<float>(date.month) / 12;
 			
 				algo.Propagate(*gt.tempArena, input, output);
 
@@ -180,7 +185,7 @@ namespace jv
 		trader.running = false;
 
 		jv::nnet::GroupCreateInfo createInfo{};
-		createInfo.inputCount = 20;
+		createInfo.inputCount = 20 + 2; // 2 for date.
 		createInfo.outputCount = 20 * 2;
 		createInfo.maxNeurons = 100;
 		createInfo.maxWeights = 500;

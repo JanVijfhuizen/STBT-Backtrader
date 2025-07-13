@@ -208,6 +208,22 @@ namespace jv::bt
 			// Skip first line.
 			getline(ss, subStr, ',');
 
+			{
+				std::stringstream test(subStr);
+				std::string segment;
+				std::string strs[3];
+
+				for (uint32_t j = 0; j < 3; j++)
+				{
+					std::getline(test, segment, '-');
+					strs[j] = segment;
+				}
+
+				Date date{};
+				date.day = std::stoi(strs[2]);
+				date.month = std::stoi(strs[1]);
+			}
+
 			// Open and close are reversed in dataset for some reason.
 
 			getline(ss, subStr, ',');

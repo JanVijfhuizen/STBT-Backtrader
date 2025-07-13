@@ -35,6 +35,7 @@ int main()
 		tempArena = jv::Arena::Create(arenaCreateInfo);
 	}
 
+	if(false)
 	{
 		jv::ai::DynNNetCreateInfo info{};
 		info.inputCount = 4;

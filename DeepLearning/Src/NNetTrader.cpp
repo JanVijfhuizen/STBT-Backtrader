@@ -51,8 +51,8 @@ namespace jv
 		Array<float> output{};
 		output.length = 2;
 		output.ptr = o;
-		for (uint32_t i = 0; i < info.buffer; i++)
-			Propagate(info, info.start - (info.buffer - i), output);
+		for (uint32_t i = 1; i < info.buffer; i++)
+			Propagate(info, info.start + (info.buffer - i), output);
 
 		return true;
 	}

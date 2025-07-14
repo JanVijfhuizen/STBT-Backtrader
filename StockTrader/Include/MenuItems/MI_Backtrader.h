@@ -37,7 +37,7 @@ namespace jv::bt
 		char lengthBuffer[8];
 		char zoomBuffer[8];
 		char feeBuffer[8];
-		char runCountBuffer[8];
+		char runCountBuffer[16];
 		bool log;
 		bool training;
 		bool approximateLines;

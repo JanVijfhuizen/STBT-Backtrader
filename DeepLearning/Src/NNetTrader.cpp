@@ -11,9 +11,15 @@ namespace jv
 		const auto tempScope = tempArena.CreateScope();
 
 		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
-		auto input = CreateArray<float>(tempArena, 1);
+		auto input = CreateArray<float>(tempArena, 6);
 
 		input[0] = ts.open[index + 1];
+		input[1] = ts.close[index + 1];
+		input[2] = ts.high[index + 1];
+		input[3] = ts.low[index + 1];
+		input[4] = ts.dates[index + 1].day;
+		input[5] = ts.dates[index + 1].month;
+
 		ptr->nnet.Propagate(tempArena, input, output);
 		tempArena.DestroyScope(tempScope);
 	}
@@ -162,7 +168,7 @@ namespace jv
 		trader.scope = arena.CreateScope();
 
 		jv::ai::DynNNetCreateInfo info{};
-		info.inputCount = 1;
+		info.inputCount = 6;
 		info.outputCount = 2;
 		info.generationSize = 50;
 		auto& nnet = trader.nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
@@ -187,6 +193,7 @@ namespace jv
 		bot.update = NNTraderUpdate;
 		bot.cleanup = NNTraderCleanup;
 		bot.customRender = NNTraderRender;
+		bot.reset = NNTraderReset;
 		bot.userPtr = this;
 		return bot;
 	}

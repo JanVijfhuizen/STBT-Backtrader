@@ -617,7 +617,7 @@ namespace jv::bt
 
 	void MI_Backtrader::DrawRunSubMenu(STBT& stbt)
 	{
-		if (ImGui::InputText("Runs", runCountBuffer, 7, ImGuiInputTextFlags_CharsDecimal))
+		if (ImGui::InputText("Runs", runCountBuffer, 9, ImGuiInputTextFlags_CharsDecimal))
 		{
 			int32_t n = std::atoi(runCountBuffer);
 			n = Max(n, 1);

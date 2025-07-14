@@ -11,6 +11,7 @@
 #include <Algorithms/NNet.h>
 #include <Algorithms/HyperNNet.h>
 #include <Algorithms/DynNNet.h>
+#include <Traders/NNetTrader.h>
 
 void* MAlloc(const uint32_t size)
 {
@@ -83,14 +84,14 @@ int main()
 				for (uint32_t k = 0; k < 25; k++)
 				{
 					input[0] = float(k % 3 == 0);
-					//input[1] = sin(.2 * k);
 					nnet.Propagate(tempArena, input, output);
 					if (k < 0)
 						continue;
 
 					// Arbitrary input is supposed to find sine.
 					const float si = sin(.2 * k);
-					const bool wanted = si > 0;
+					const float a = 2.f * (k % 13) - 1;
+					const bool wanted = si * a > 0;
 					//const bool wanted = k % 3 == 0;
 					const float fWanted = float(wanted);
 
@@ -148,13 +149,15 @@ int main()
 	auto gaTrader = jv::GATrader::Create(arena, tempArena);
 	auto mainTrader = jv::MainTrader::Create(arena, tempArena);
 	auto corTrader = jv::CorrolationTrader::Create(arena, tempArena);
+	auto nnetTrader = jv::NNetTrader::Create(arena, tempArena);
 	mainTrader.InitGA();
 
-	jv::bt::STBTBot bots[4];
+	jv::bt::STBTBot bots[5];
 	bots[0] = gaTrader.GetBot();
 	bots[1] = tradTrader.GetBot();
 	bots[2] = mainTrader.GetBot();
 	bots[3] = corTrader.GetBot();
+	bots[4] = nnetTrader.GetBot();
 
 	auto stbt = jv::bt::CreateSTBT(bots, sizeof(bots) / sizeof(jv::bt::STBTBot));
 	while (!stbt.Update())

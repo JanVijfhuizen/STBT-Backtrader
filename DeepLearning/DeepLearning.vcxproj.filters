@@ -57,6 +57,9 @@
     <ClInclude Include="Include\Algorithms\DynNNet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Traders\NNetTrader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\pch.cpp">
@@ -102,6 +105,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\DynNNet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\NNetTrader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

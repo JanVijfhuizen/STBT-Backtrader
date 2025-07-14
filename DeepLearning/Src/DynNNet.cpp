@@ -62,14 +62,16 @@ namespace jv::ai
 			++map[neuronCount + w];
 	}
 
-	Array<uint32_t> ApplyKMeans(Arena& arena, Arena& tempArena, DynNNet& nnet, const uint32_t maxCycles)
+	Array<uint32_t> ApplyKMeans(Arena& arena, Arena& tempArena, DynNNet& nnet, DynInstance* cpyGen, const uint32_t maxCycles)
 	{
-		auto arr = CreateArray<uint32_t>(arena, nnet.generation.length);
+		auto arr = CreateArray<uint32_t>(arena, nnet.info.generationSize);
 
 		auto tempScope = tempArena.CreateScope();
 
 		auto closedPoints = CreateVector<uint32_t>(tempArena, nnet.kmPointCount);
 		auto points = CreateArray<int32_t*>(tempArena, nnet.kmPointCount);
+
+		const uint32_t l = nnet.info.generationSize;
 
 		// Convert random instances in semi "bitmaps".
 		for (uint32_t i = 0; i < nnet.kmPointCount; i++)
@@ -77,12 +79,12 @@ namespace jv::ai
 			uint32_t rInd;
 			do
 			{
-				rInd = (rand() % nnet.generation.length);
+				rInd = rand() % l;
 			} while (Contains(closedPoints, rInd) != -1);
 
 			closedPoints.Add() = rInd;
 			auto& point = points[i] = tempArena.New<int32_t>(nnet.neurons.count + nnet.weights.count);
-			auto& instance = nnet.generation[rInd];
+			auto& instance = cpyGen[rInd];
 
 			for (auto& n : instance.neurons)
 				point[n] = 1;
@@ -96,14 +98,14 @@ namespace jv::ai
 			bool changed = false;
 
 			// Assign instances to closest points.
-			for (uint32_t j = 0; j < nnet.generation.length; j++)
+			for (uint32_t j = 0; j < l; j++)
 			{
 				float minDis = FLT_MAX;
 				uint32_t p = 0;
 
 				for (uint32_t k = 0; k < nnet.kmPointCount; k++)
 				{
-					uint32_t dst = Dist(nnet.generation[j], points[k], nnet.neurons.count);
+					uint32_t dst = Dist(cpyGen[j], points[k], nnet.neurons.count);
 					if (dst < minDis)
 					{
 						minDis = dst;
@@ -131,12 +133,11 @@ namespace jv::ai
 				auto counts = CreateArray<uint32_t>(tempArena, nnet.kmPointCount);
 
 				// Get average of point instances.
-				const uint32_t l = nnet.generation.length;
 				for (uint32_t j = 0; j < l; j++)
 				{
 					const uint32_t ind = arr[j];
 					++counts[ind];
-					Add(points[ind], nnet.generation[j], nnet.neurons.count);
+					Add(points[ind], cpyGen[j], nnet.neurons.count);
 				}
 				for (uint32_t j = 0; j < nnet.kmPointCount; j++)
 				{
@@ -509,7 +510,7 @@ namespace jv::ai
 
 			if (kmPointCount > 1)
 			{
-				auto res = ApplyKMeans(arena, tempArena, *this, kmCycles);
+				auto res = ApplyKMeans(arena, tempArena, *this, cpyGen, kmCycles);
 				const auto conv = jv::ConvKMeansRes(arena, tempArena, res, kmPointCount);
 
 				// Now order the breedables based on roundabout

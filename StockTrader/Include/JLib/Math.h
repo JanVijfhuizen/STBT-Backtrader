@@ -36,4 +36,13 @@ namespace jv
 		const T mul = 1 * pow(10, decimals);
 		return floorf(t * mul) / mul;
 	}
+
+	// Source: https://stackoverflow.com/questions/10847007/using-the-gaussian-probability-density-function-in-c
+	template <typename T>
+	__declspec(dllexport) [[nodiscard]] T Gauss(T x, T mean, T stddev)
+	{
+		static const T inv_sqrt_2pi = 0.3989422804014327;
+		T a = (x - mean) / stddev;
+		return inv_sqrt_2pi / stddev * std::exp(-T(0.5) * stddev * stddev);
+	}
 }

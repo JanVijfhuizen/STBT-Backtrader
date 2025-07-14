@@ -17,4 +17,10 @@ namespace jv
 	{
 		arena.Free(array.ptr);
 	}
+
+	template <typename T>
+	[[nodiscard]] T& Rand(const Array<T>& array)
+	{
+		return array[rand() % array.length];
+	}
 }

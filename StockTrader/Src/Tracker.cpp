@@ -23,6 +23,8 @@ namespace jv::bt
 		const std::string symbolName = symbol;
 		const std::string extension = ".sym";
 		const auto fileName = path + symbolName + extension;
+
+		std::string errorMsg = "{\nUnknown issue.\n}";
 		
 		{
 			bool validButOutdated = false;
@@ -82,12 +84,14 @@ namespace jv::bt
 			const auto res = curl_easy_perform(_curl);
 			curl_easy_cleanup(_curl);
 
+			errorMsg = readBuffer;
+
 			// If the downloaded data is invalid / no internet connection.
 			if (res != 0)
 			{
 				// If there is no old data, return nothing.
 				if (!f.good())
-					return "{";
+					return "{\nNo Internet connection!\n}";
 
 				// Return old data.
 				std::ostringstream buf;
@@ -165,7 +169,7 @@ namespace jv::bt
 
 		std::ifstream f(fileName);
 		if (!f.good())
-			return "{";
+			return errorMsg;
 
 		std::ostringstream buf;
 		buf << f.rdbuf();
@@ -203,6 +207,22 @@ namespace jv::bt
 			
 			// Skip first line.
 			getline(ss, subStr, ',');
+
+			{
+				std::stringstream test(subStr);
+				std::string segment;
+				std::string strs[3];
+
+				for (uint32_t j = 0; j < 3; j++)
+				{
+					std::getline(test, segment, '-');
+					strs[j] = segment;
+				}
+
+				Date date{};
+				date.day = std::stoi(strs[2]);
+				date.month = std::stoi(strs[1]);
+			}
 
 			// Open and close are reversed in dataset for some reason.
 

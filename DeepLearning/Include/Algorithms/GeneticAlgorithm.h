@@ -4,16 +4,17 @@ namespace jv
 {
 	struct GeneticAlgorithmCreateInfo final
 	{
-		uint32_t length;
+		uint32_t width = 400;
+		uint32_t length = 100;
+		float mutateChance = .01f;
+		float mutateAddition = 1;
+		float mutateMultiplier = .1f;
 
-		void* (*create)(Arena& arena, void* userPtr);
-		void* (*copy)(Arena& arena, void* a, void* userPtr);
-		void (*mutate)(Arena& arena, void* instance, void* userPtr);
-		void* (*breed)(Arena& arena, void* a, void* b, void* userPtr);
-		
-		float surviverPct = .4f;
+		float apexPct = .1f;
+		float breedablePct = .4f;
 		float arrivalsPct = .1f;
-		void* userPtr = nullptr;
+		uint32_t kmPointCount = 5;
+		bool inbreedingOnly = false;
 	};
 
 	struct GeneticAlgorithm final
@@ -24,15 +25,16 @@ namespace jv
 		uint64_t resScope;
 		uint64_t genScope;
 
-		void** generation;
-		void* result;
+		float** generation;
+		float* result;
 		float* genRatings;
 		float rating;
+		float genRating;
 		uint32_t genId;
 		uint32_t trainId;
 
-		[[nodiscard]] void* GetTrainee();
-		void Rate(Arena& arena, Arena& tempArena, float rating);
+		[[nodiscard]] float* GetTrainee();
+		void Rate(Arena& arena, Arena& tempArena, float rating, Queue<bt::OutputMsg>* output = nullptr);
 
 		[[nodiscard]] static GeneticAlgorithm Create(Arena& arena, GeneticAlgorithmCreateInfo& info);
 		static void Destroy(Arena& arena, GeneticAlgorithm& ga);

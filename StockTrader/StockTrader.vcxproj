@@ -176,6 +176,7 @@
     <ClInclude Include="Include\JLib\VectorUtils.h" />
     <ClInclude Include="Include\Log.h" />
     <ClInclude Include="Include\MenuItems\MI_Main.h" />
+    <ClInclude Include="Include\OutputMsg.h" />
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\Graphics\Shader.h" />
     <ClInclude Include="Include\Portfolio.h" />
@@ -193,6 +194,8 @@
     <ClInclude Include="Include\Utils\UT_Time.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\LinearSort.cpp" />
+    <ClCompile Include="Src\OutputMsg.cpp" />
     <ClCompile Include="Src\ImGuiTextUtils.cpp" />
     <ClCompile Include="Src\Log.cpp" />
     <ClCompile Include="Src\Portfolio.cpp" />
@@ -206,7 +209,7 @@
     <ClCompile Include="Src\Renderer.cpp" />
     <ClCompile Include="Src\Mesh.cpp" />
     <ClCompile Include="Src\dllmain.cpp" />
-    <ClCompile Include="Include\JLib\Math.cpp" />
+    <ClCompile Include="Src\Math.cpp" />
     <ClCompile Include="Src\Arena.cpp" />
     <ClCompile Include="Src\FPFNTester.cpp" />
     <ClCompile Include="Src\framework.cpp" />

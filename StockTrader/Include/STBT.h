@@ -2,6 +2,8 @@
 #include <Graphics/Renderer.h>
 #include "JLib/Queue.h"
 #include "Portfolio.h"
+#include <OutputMsg.h>
+#include <JLib/FPFNTester.h>
 
 namespace jv::bt
 {
@@ -34,6 +36,28 @@ namespace jv::bt
 		int32_t change = 0;
 	};
 
+	struct STBTBotInfo
+	{
+		STBTScope* scope;
+		Queue<OutputMsg>* output;
+		Queue<float>* progress;
+		FPFNTester* fpfnTester;
+
+		void* userPtr;
+		uint32_t start;
+		uint32_t end;
+		uint32_t runIndex;
+		uint32_t nRuns;
+		uint32_t buffer;
+		bool training;
+	};
+
+	struct STBTBotUpdateInfo final : STBTBotInfo
+	{
+		STBTTrade* trades;
+		uint32_t current;
+	};
+
 	// AI stock trader. Can be tested in the STBT program.
 	struct STBTBot final
 	{
@@ -42,13 +66,11 @@ namespace jv::bt
 		const char* description = "NO DESCRIPTION GIVEN";
 
 		// Executes once at the start of a run.
-		bool(*init)(const STBTScope& scope, void* userPtr, uint32_t start, uint32_t end,
-			uint32_t runIndex, uint32_t nRuns, uint32_t buffer, Queue<const char*>& output) = nullptr;
+		bool(*init)(const STBTBotInfo& info) = nullptr;
 		// Executes every day in a run.
-		bool(*update)(const STBTScope& scope, STBTTrade* trades, uint32_t current, 
-			void* userPtr, Queue<const char*>& output);
+		bool(*update)(const STBTBotUpdateInfo& info);
 		// Executes at the end of a run.
-		void(*cleanup)(const STBTScope& scope, void* userPtr, Queue<const char*>& output) = nullptr;
+		void(*cleanup)(const STBTBotInfo& info) = nullptr;
 		// A custom pointer can be given here.
 		void* userPtr = nullptr;
 
@@ -57,9 +79,10 @@ namespace jv::bt
 		const char** boolsNames;
 		uint32_t boolsLength = 0;
 		char** buffers;
-		const char** buffersNames;
+		const char** bufferNames;
 		uint32_t* bufferSizes;
 		uint32_t buffersLength = 0;
+		void(*customRender)(const STBTBotInfo& info, gr::RenderProxy proxy, glm::vec2 center) = nullptr;
 	};
 
 	struct STBTCreateInfo final
@@ -74,7 +97,7 @@ namespace jv::bt
 		gr::Renderer renderer;
 		Tracker tracker;
 		Arena arena, tempArena, frameArena;
-		Queue<const char*> output;
+		Queue<OutputMsg> output;
 		Menu<STBT> menu;
 
 		Array<STBTBot> bots;
@@ -82,6 +105,7 @@ namespace jv::bt
 		char license[32];
 		int graphType;
 		uint32_t range;
+		bool outputFocused;
 
 		__declspec(dllexport) bool Update();
 	};

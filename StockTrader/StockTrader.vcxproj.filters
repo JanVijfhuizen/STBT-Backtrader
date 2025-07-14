@@ -138,12 +138,15 @@
     <ClInclude Include="Include\Ext\ImGuiTextUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\OutputMsg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Include\JLib\Math.cpp">
+    <ClCompile Include="Src\Math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\Arena.cpp">
@@ -207,6 +210,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\ImGuiTextUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\OutputMsg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\LinearSort.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

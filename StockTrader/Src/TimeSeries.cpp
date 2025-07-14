@@ -15,6 +15,7 @@ namespace jv::bt
 		timeSeries.high = static_cast<float*>(arena.Alloc(sizeof(float) * timeSeries.length));
 		timeSeries.low = static_cast<float*>(arena.Alloc(sizeof(float) * timeSeries.length));
 		timeSeries.volume = static_cast<uint32_t*>(arena.Alloc(sizeof(uint32_t) * timeSeries.length));
+		timeSeries.dates = static_cast<Date*>(arena.Alloc(sizeof(Date) * timeSeries.length));
 		return timeSeries;
 	}
 

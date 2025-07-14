@@ -49,7 +49,7 @@ namespace jv::bt
 			for (auto& name : names)
 				if (name == s)
 				{
-					stbt.output.Add() = "ERROR: Symbol already present.";
+					stbt.output.Add() = OutputMsg::Create("Symbol already present.", OutputMsg::error);
 					return false;
 				}
 
@@ -58,7 +58,13 @@ namespace jv::bt
 			stbt.tempArena.DestroyScope(tempScope);
 			if (c[0] == '{')
 			{
-				stbt.output.Add() = "ERROR: Unable to download symbol data.";	
+				stbt.output.Add() = OutputMsg::Create("Unable to download symbol data.", OutputMsg::error);
+
+				const auto scope = stbt.tempArena.CreateScope();
+				const auto msgs = OutputMsg::CreateMultiple(stbt.tempArena, c.c_str());
+				for (auto& msg : msgs)
+					stbt.output.Add() = msg;
+				stbt.tempArena.DestroyScope(scope);
 				return false;
 			}
 
@@ -197,14 +203,14 @@ namespace jv::bt
 		// If the data is invalid.
 		if (str[0] == '{')
 		{
-			stbt.output.Add() = "ERROR: No valid symbol data found.";
+			stbt.output.Add() = OutputMsg::Create("No valid symbol data found.", OutputMsg::error);
 		}
 		else
 		{
 			index = i;
 			auto timeSeries = stbt.tracker.ConvertDataToTimeSeries(stbt.arena, str);
 			if (!CompDates(timeSeries.date, GetTime()))
-				stbt.output.Add() = "WARNING: Symbol data is outdated.";
+				stbt.output.Add() = OutputMsg::Create("Symbol data is outdated.", OutputMsg::warning);
 			return timeSeries;
 		}
 
@@ -355,7 +361,7 @@ namespace jv::bt
 			const int i = std::atoi(dayBuffer);
 			if (i < 0)
 			{
-				stbt.output.Add() = "ERROR: Invalid number of days given.";
+				stbt.output.Add() = OutputMsg::Create("Invalid number of days given.", OutputMsg::error);
 				stbt.range = 0;
 			}
 			else

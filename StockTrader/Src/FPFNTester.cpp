@@ -20,4 +20,11 @@ namespace jv
 		// Pow2 to exponentially punish higher offsets.
 		return 1.f - (powf(p, 2) + powf(n, 2)) * .5;
 	}
+	void FPFNTester::Reset()
+	{
+		positives = 0;
+		negatives = 0;
+		falsePositives = 0;
+		falseNegatives = 0;
+	}
 }

@@ -190,6 +190,48 @@ namespace jv::gr
 		Draw(VertType::points);
 	}
 
+	bool TryDrawTitle(const char* title, glm::vec2 position, glm::vec2 scale, float aspectRatio, bool interactable)
+	{
+		bool interacted = false;
+		if (title)
+		{
+			glm::vec2 convPos = position;
+			convPos += glm::vec2(1);
+			convPos *= .5f;
+			convPos.y = 1.f - convPos.y;
+
+			convPos *= RESOLUTION;
+
+			glm::vec2 winSize = { scale.x * RESOLUTION.x / 4, 36 };
+
+			convPos.x -= winSize.x * aspectRatio;
+			convPos.y += scale.y * RESOLUTION.y / 4;
+			winSize.x *= 2;
+			winSize.x *= aspectRatio;
+
+			const float WIN_OFFSET = 6;
+
+			ImGuiWindowFlags FLAGS = 0;
+			//FLAGS |= ImGuiWindowFlags_NoBackground;
+			FLAGS |= ImGuiWindowFlags_NoTitleBar;
+			ImGui::Begin(title, nullptr, WIN_FLAGS | FLAGS);
+			ImGui::SetWindowPos({ convPos.x, convPos.y + WIN_OFFSET });
+			ImGui::SetWindowSize({ winSize.x, winSize.y });
+
+			if (interactable)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+				interacted = ImGui::ButtonCenter(title);
+				ImGui::PopStyleColor();
+			}
+			else
+				ImGui::TextCenter(title);
+
+			ImGui::End();
+		}
+		return interacted;
+	}
+
 	bool Renderer::DrawScatterGraph(const DrawScatterGraphInfo info)
 	{
 		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1) * .5f;
@@ -209,49 +251,57 @@ namespace jv::gr
 			DrawPoint(pos + p, color, info.pointSize);
 		}
 
-		bool interacted = false;
-		if (info.title)
-		{
-			glm::vec2 convPos = info.position;
-			convPos += glm::vec2(1);
-			convPos *= .5f;
-			convPos.y = 1.f - convPos.y;
-
-			convPos *= RESOLUTION;
-
-			glm::vec2 winSize = { info.scale.x * RESOLUTION.x / 4, 36 };
-
-			convPos.x -= winSize.x * info.aspectRatio;
-			convPos.y += info.scale.y * RESOLUTION.y / 4;
-			winSize.x *= 2;
-			winSize.x *= info.aspectRatio;
-
-			const float WIN_OFFSET = 6;
-
-			ImGuiWindowFlags FLAGS = 0;
-			//FLAGS |= ImGuiWindowFlags_NoBackground;
-			FLAGS |= ImGuiWindowFlags_NoTitleBar;
-			ImGui::Begin(info.title, nullptr, WIN_FLAGS | FLAGS);
-			ImGui::SetWindowPos({ convPos.x, convPos.y + WIN_OFFSET });
-			ImGui::SetWindowSize({ winSize.x, winSize.y });
-
-			if (info.textIsButton)
-			{
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-				interacted = ImGui::ButtonCenter(info.title);
-				ImGui::PopStyleColor();
-			}
-			else
-				ImGui::TextCenter(info.title);
-
-			ImGui::End();
-		}
-
-		return interacted;
+		return TryDrawTitle(info.title, info.position, info.scale, info.aspectRatio, info.textIsButton);
 	}
 
-	bool Renderer::DrawLineGraph(DrawLineGraphInfo info)
+	bool Renderer::DrawDistributionGraph(const DrawDistributionGraphInfo info)
 	{
+		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1) * .5f;
+
+		const auto pos = info.position;
+		const auto c = glm::vec4(1);
+		DrawLine(glm::vec2(pos.x - aspScale.x, pos.y), glm::vec2(pos.x + aspScale.x, pos.y), c);
+		DrawLine(glm::vec2(pos.x, pos.y - aspScale.y), glm::vec2(pos.x, pos.y + aspScale.y), c);
+
+		const float stepSize = info.scale.x / info.length * aspScale.x * info.zoom;
+		const float off = stepSize * (info.length - 1) / 2;
+		const float org = -off + info.position.x;
+
+		float ceiling = 0;
+		for (uint32_t i = 0; i < info.length; i++)
+			ceiling = Max(ceiling, info.values[i]);
+		if (info.overrideCeiling != -1)
+			ceiling = info.overrideCeiling;
+
+		for (uint32_t i = 0; i < info.length; i++)
+		{
+			float xStart = org + stepSize * i;
+			float xEnd = xStart + stepSize;
+
+			const float height = (float)info.values[i] / ceiling * .5f;
+
+			const float dir = (2 * !info.inverse - 1);
+			const float yOrg = pos.y + height / 2 * dir;
+
+			glm::vec2 a = glm::vec2(xStart, yOrg);
+			glm::vec2 b = glm::vec2((xEnd - xStart), height);
+
+			auto color = info.color;
+			const float cMul = i % 2 == 0 ? 1 : .6f;
+			color *= cMul;
+			color.a = 1;
+
+			DrawPlane(a, b, color);
+		}
+
+		return TryDrawTitle(info.title, info.position, info.scale, info.aspectRatio, info.textIsButton);
+	}
+
+	bool Renderer::DrawLineGraph(const DrawLineGraphInfo info)
+	{
+		if (info.length == 0)
+			return false;
+
 		glm::vec2 aspScale = info.scale * glm::vec2(info.aspectRatio, 1);
 
 		if (!info.noBackground)
@@ -357,7 +407,7 @@ namespace jv::gr
 
 			const float WIN_OFFSET = 6;
 			
-			ImGuiWindowFlags FLAGS = 0;
+			ImGuiWindowFlags FLAGS = ImGuiWindowFlags_NoFocusOnAppearing;
 			//FLAGS |= ImGuiWindowFlags_NoBackground;
 			FLAGS |= ImGuiWindowFlags_NoTitleBar;
 			ImGui::Begin(info.title, nullptr, WIN_FLAGS | FLAGS);
@@ -390,5 +440,39 @@ namespace jv::gr
 		}
 
 		return interacted;
+	}
+	RenderProxy Renderer::GetProxy()
+	{
+		RenderProxy proxy{};
+		proxy.renderer = this;
+		return proxy;
+	}
+	void RenderProxy::DrawPlane(glm::vec2 position, glm::vec2 scale, glm::vec4 color)
+	{
+		renderer->DrawPlane(position, scale, color);
+	}
+	void RenderProxy::DrawLine(glm::vec2 start, glm::vec2 end, glm::vec4 color)
+	{
+		renderer->DrawLine(start, end, color);
+	}
+	void RenderProxy::DrawPoint(glm::vec2 position, glm::vec4 color, float size)
+	{
+		renderer->DrawPoint(position, color, size);
+	}
+	bool RenderProxy::DrawScatterGraph(DrawScatterGraphInfo info)
+	{
+		return renderer->DrawScatterGraph(info);
+	}
+	bool RenderProxy::DrawDistributionGraph(DrawDistributionGraphInfo info)
+	{
+		return renderer->DrawDistributionGraph(info);
+	}
+	bool RenderProxy::DrawLineGraph(DrawLineGraphInfo info)
+	{
+		return renderer->DrawLineGraph(info);
+	}
+	float RenderProxy::GetAspectRatio()
+	{
+		return renderer->GetAspectRatio();
 	}
 }

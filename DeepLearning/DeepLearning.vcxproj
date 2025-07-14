@@ -19,14 +19,31 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Algorithms\DynNNet.h" />
+    <ClInclude Include="Include\Algorithms\HyperNNet.h" />
+    <ClInclude Include="Include\Traders\CorrolationTrader.h" />
     <ClInclude Include="Include\Traders\GATrader.h" />
     <ClInclude Include="Include\Algorithms\GeneticAlgorithm.h" />
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\TraderUtils.h" />
     <ClInclude Include="Include\Traders\TradTrader.h" />
     <ClInclude Include="Include\Traders\MainTrader.h" />
+    <ClInclude Include="Include\Traders\TMM.h" />
+    <ClInclude Include="Include\Traders\Modules\ModMA.h" />
+    <ClInclude Include="Include\Traders\Modules\ModBounds.h" />
+    <ClInclude Include="Include\Algorithms\KMeans.h" />
+    <ClInclude Include="Include\Algorithms\NNet.h" />
+    <ClInclude Include="Include\Traders\NNetTrader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\NNetTrader.cpp" />
+    <ClCompile Include="Src\DynNNet.cpp" />
+    <ClCompile Include="Src\HyperNNet.cpp" />
+    <ClCompile Include="Src\NNet.cpp" />
+    <ClCompile Include="Src\CorrolationTrader.cpp" />
+    <ClCompile Include="Src\KMeans.cpp" />
+    <ClCompile Include="Src\ModBounds.cpp" />
+    <ClCompile Include="Src\ModMA.cpp" />
     <ClCompile Include="Src\MainTrader.cpp" />
     <ClCompile Include="Src\GATrader.cpp" />
     <ClCompile Include="Src\GeneticAlgorithm.cpp" />
@@ -37,6 +54,7 @@
     </ClCompile>
     <ClCompile Include="Src\TraderUtils.cpp" />
     <ClCompile Include="Src\TradTrader.cpp" />
+    <ClCompile Include="Src\TMM.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

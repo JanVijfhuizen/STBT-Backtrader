@@ -47,6 +47,7 @@ namespace jv
 		__declspec(dllexport) [[nodiscard]] T& Peek() const;
 		__declspec(dllexport) T Pop();
 
+		__declspec(dllexport) void Clear();
 		__declspec(dllexport) [[nodiscard]] uint32_t GetIndex(uint32_t i) const;
 	};
 
@@ -120,14 +121,24 @@ namespace jv
 	T& Queue<T>::Peek() const
 	{
 		assert(count > 0);
-		return ptr[GetIndex(count - 1)];
+		return ptr[GetIndex(0)];
 	}
 
 	template <typename T>
 	T Queue<T>::Pop()
 	{
 		assert(count > 0);
-		return ptr[GetIndex(--count)];
+		auto t = ptr[GetIndex(0)];
+		front = (front + 1) % length;
+		--count;
+		return t;
+	}
+
+	template <typename T>
+	void Queue<T>::Clear()
+	{
+		count = 0;
+		front = 0;
 	}
 
 	template <typename T>

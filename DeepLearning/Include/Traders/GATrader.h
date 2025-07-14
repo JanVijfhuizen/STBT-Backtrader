@@ -1,5 +1,6 @@
 #pragma once
 #include <Algorithms/GeneticAlgorithm.h>
+#include <Algorithms/NNet.h>
 
 namespace jv
 {
@@ -8,8 +9,7 @@ namespace jv
 		jv::Arena* arena;
 		jv::Arena* tempArena;
 		jv::GeneticAlgorithm ga;
-		bool training = true;
-		const char* boolsNames = "Training";
+		jv::nnet::Group group;
 
 		// Train instance info.
 		float startV;
@@ -17,28 +17,48 @@ namespace jv
 
 		uint64_t tempScope;
 		float* ma30;
+		float score;
+		float* correctness;
+		bool running;
+
+		union
+		{
+			struct
+			{
+				const char* useSpeciationText;
+				const char* useGroupText;
+			};
+			const char* boolTexts[2]
+			{
+				"Speciation",
+				"Group NNET"
+			};
+		};
+
+		union
+		{
+			struct
+			{
+				bool useSpeciation;
+				bool useGroup;
+			};
+			bool bools[2]
+			{
+				true,
+				true
+			};
+		};
 
 		// GE info.
-		uint32_t width = 30;
-		uint32_t length = 20;
-		float mutateChance = .2f;
+		uint32_t width = 400;
+		uint32_t length = 100;
+		float mutateChance = .01f;
 		float mutateAddition = 1;
 		float mutateMultiplier = .1f;
+		uint32_t nnetWarmupPeriod = 50;
+		bool useDominance = true;
 
 		[[nodiscard]] static GATrader Create(Arena& arena, Arena& tempArena);
 		[[nodiscard]] jv::bt::STBTBot GetBot();
 	};
-
-	bool GATraderInit(const jv::bt::STBTScope& scope, void* userPtr,
-		const uint32_t start, const uint32_t end,
-		const uint32_t runIndex, const uint32_t nRuns, const uint32_t buffer,
-		jv::Queue<const char*>& output);
-	bool GATraderUpdate(const jv::bt::STBTScope& scope, jv::bt::STBTTrade* trades,
-		uint32_t current, void* userPtr, jv::Queue<const char*>& output);
-	void GATraderCleanup(const jv::bt::STBTScope& scope, void* userPtr, jv::Queue<const char*>& output);
-
-	void* GACreate(jv::Arena& arena, void* userPtr);
-	void* GACopy(jv::Arena& arena, void* instance, void* userPtr);
-	void GAMutate(jv::Arena& arena, void* instance, void* userPtr);
-	void* GABreed(jv::Arena& arena, void* a, void* b, void* userPtr);
 }

@@ -664,13 +664,20 @@ namespace jv::bt
 		ImGui::Checkbox("Approx Lines", &approximateLines);
 		ImGui::Checkbox("Log", &log);
 		ImGui::Checkbox("Training", &training);
-		if (ImGui::Button("Reset progress"))
+		if (ImGui::Button("Reset Progress"))
 		{
 			progress.Clear();
 			prevProgress = FLT_MIN;
 		}
 		if (ImGui::Button("Reset FPFN"))
 			fpfnTester.Reset();
+
+		if (ImGui::Button("Reset Trader"))
+		{
+			auto botInfo = GetBotInfo(stbt);
+			auto& bot = stbt.bots[algoIndex];
+			bot.reset(botInfo);
+		}
 
 		const auto SAVE_PATH = "BT.set";
 

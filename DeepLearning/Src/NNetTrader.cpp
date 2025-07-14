@@ -70,6 +70,13 @@ namespace jv
 		ptr->rating += validOutput;
 		ptr->tester.AddResult(!o1, o2);
 
+		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
+		const bool wanted = ts.open[info.current] > ts.open[info.current + 1];
+		ptr->rating += wanted == o1;
+		ptr->rating += !wanted == o2;
+		ptr->tester.AddResult(o1, wanted);
+		ptr->tester.AddResult(!o2, wanted);
+
 		tempArena.DestroyScope(tempScope);
 		return true;
 	}
@@ -98,13 +105,38 @@ namespace jv
 				s += std::to_string(nnet.generationId);
 				s += ": ";
 				s += std::to_string(ptr->genRating);
+				s += " / ";
+				s += std::to_string(nnet.rating);
 				info.output->Add() = bt::OutputMsg::Create(s.c_str());
+
+				s = "n: ";
+				s += std::to_string(nnet.result.neurons.length);
+				s += " w: ";
+				s += std::to_string(nnet.result.weights.length);
+				s += " gn: ";
+				s += std::to_string(nnet.neurons.count);
+				s += " gw: ";
+				s += std::to_string(nnet.weights.count);
+				auto msg = bt::OutputMsg::Create(s.c_str());
+				msg.color = glm::vec4(.8, .8, .8, 1);
+				info.output->Add() = msg;
+
 				info.progress->Add() = nnet.rating;
 				ptr->genRating = 0;
 			}
 		}
 
 		arena.DestroyScope(ptr->runScope);
+	}
+
+	void NNTraderReset(const bt::STBTBotInfo& info)
+	{
+		auto ptr = reinterpret_cast<NNetTrader*>(info.userPtr);
+
+		auto arena = ptr->arena;
+		auto tempArena = ptr->tempArena;
+		arena->DestroyScope(ptr->scope);
+		*ptr = NNetTrader::Create(*arena, *tempArena);
 	}
 
 	void NNTraderRender(const bt::STBTBotInfo& info, gr::RenderProxy renderer, glm::vec2 center)

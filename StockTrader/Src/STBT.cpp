@@ -57,7 +57,12 @@ namespace jv::bt
 			outputFocused = ImGui::IsWindowFocused();
 
 			for (auto& a : output)
+			{
+				ImVec4 col = { a.color.r, a.color.g, a.color.b, a.color.a };
+				ImGui::PushStyleColor(ImGuiCol_Text, col);
 				ImGui::Text(a.buffer);
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::End();
 

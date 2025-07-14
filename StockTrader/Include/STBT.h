@@ -71,6 +71,8 @@ namespace jv::bt
 		bool(*update)(const STBTBotUpdateInfo& info);
 		// Executes at the end of a run.
 		void(*cleanup)(const STBTBotInfo& info) = nullptr;
+		// Reset training progression, if any.
+		void(*reset)(const STBTBotInfo& info) = nullptr;
 		// A custom pointer can be given here.
 		void* userPtr = nullptr;
 

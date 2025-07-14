@@ -93,6 +93,8 @@ namespace jv
 		auto& tempArena = *ptr->tempArena;
 		auto& nnet = ptr->nnet;
 
+		*info.progressPct = static_cast<float>(nnet.currentId) / nnet.generation.length;
+
 		if (++ptr->currentBatch == ptr->batchSize)
 		{
 			nnet.RateParameters(arena, tempArena, ptr->tester.GetRating());

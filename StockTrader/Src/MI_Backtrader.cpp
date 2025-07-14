@@ -101,6 +101,7 @@ namespace jv::bt
 		runType = 0;
 		showIndex = 0;
 		zoom = 1;
+		progressPct = 0;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
 
@@ -541,6 +542,7 @@ namespace jv::bt
 		botUpdateInfo.nRuns = runInfo.totalRuns;
 		botUpdateInfo.buffer = runInfo.buffer;
 		botUpdateInfo.training = training;
+		botUpdateInfo.progressPct = &progressPct;
 		return botUpdateInfo;
 	}
 
@@ -1026,7 +1028,7 @@ namespace jv::bt
 
 	glm::vec2 GetGrPos2()
 	{
-		return { .5f, .14f };
+		return { .5f, .18f };
 	}
 
 	void MI_Backtrader::RenderGraphs(STBT& stbt, const RunInfo& runInfo, const bool render)
@@ -1246,8 +1248,16 @@ namespace jv::bt
 		if (!render)
 			return;
 
-		//ImGui::BufferingBar("handle", .6, { 1, 1 }, IM_COL32_BLACK, IM_COL32_WHITE);
-		//ImGui::Spinner("zandle", 6, 2, IM_COL32_WHITE);
+		ImGuiWindowFlags FLAGS = 0;
+		FLAGS |= ImGuiWindowFlags_NoBackground;
+		FLAGS |= ImGuiWindowFlags_NoTitleBar;
+		FLAGS |= ImGuiWindowFlags_NoInputs;
+		ImGui::Begin("progress", nullptr, FLAGS);
+		ImGui::SetWindowPos({ MENU_RESOLUTION_SMALL.x * 2, 2 });
+		ImGui::SetWindowSize({ MENU_RESOLUTION_SMALL.x * 3, MENU_RESOLUTION_SMALL.y });
+		const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+		ImGui::BufferingBar("progressh", progressPct, { 560, 6 }, bg, IM_COL32_WHITE);
+		ImGui::End();
 
 		const float ratio = stbt.renderer.GetAspectRatio();
 

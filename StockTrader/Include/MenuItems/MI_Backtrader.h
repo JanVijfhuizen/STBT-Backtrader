@@ -77,6 +77,7 @@ namespace jv::bt
 		Queue<float> progress;
 		float prevProgress;
 		FPFNTester fpfnTester;
+		float progressPct;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

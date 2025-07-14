@@ -42,7 +42,7 @@ namespace jv::bt
 		Queue<OutputMsg>* output;
 		Queue<float>* progress;
 		FPFNTester* fpfnTester;
-		float* percentage;
+		float* progressPct;
 
 		void* userPtr;
 		uint32_t start;

@@ -645,6 +645,7 @@ namespace jv::bt
 
 		const char* items[]{ "Default", "Stepwise", "Instant"};
 		ImGui::Combo("Type", &runType, items, 3);
+		prevRunType = runType;
 		RenderShowIndexDropDown(*this);
 
 		ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
@@ -811,6 +812,18 @@ namespace jv::bt
 	{
 		MI_Symbols::DrawBottomRightWindow("Current Run");
 
+		{
+			const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+			const float p = static_cast<float>(runIndex) / runInfo.totalRuns;
+			ImGui::BufferingBar("handle", p, { 560, 6 }, bg, IM_COL32_WHITE);
+
+			if (runIndex < runInfo.totalRuns - 1)
+			{
+				ImGui::Spinner("spinner", 6, 2, IM_COL32_WHITE);
+				ImGui::SameLine();
+			}
+		}
+
 		const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
 
@@ -858,11 +871,14 @@ namespace jv::bt
 		if (static_cast<RunType>(runType) != RunType::stepwise)
 		{
 			if (ImGui::Button("Pause"))
+			{
+				prevRunType = runType;
 				runType = static_cast<int>(RunType::stepwise);
+			}
 		}
 		else
 			if (ImGui::Button("Continue"))
-				runType = static_cast<int>(RunType::normal);
+				runType = prevRunType;		
 
 		ImGui::SameLine();
 		bool runFinished = runDayIndex >= runInfo.length;
@@ -1229,6 +1245,9 @@ namespace jv::bt
 
 		if (!render)
 			return;
+
+		//ImGui::BufferingBar("handle", .6, { 1, 1 }, IM_COL32_BLACK, IM_COL32_WHITE);
+		//ImGui::Spinner("zandle", 6, 2, IM_COL32_WHITE);
 
 		const float ratio = stbt.renderer.GetAspectRatio();
 

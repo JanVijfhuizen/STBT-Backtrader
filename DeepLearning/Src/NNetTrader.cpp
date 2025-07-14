@@ -37,7 +37,13 @@ namespace jv
 			nnet.CreateParameters(arena);
 		}
 		
-		nnet.ConstructParameters(current, nnet.GetCurrentParameters());
+		if (ptr->currentBatch == 0)
+		{
+			ptr->tester = {};
+			ptr->rating = 0;
+			nnet.ConstructParameters(current, nnet.GetCurrentParameters());
+		}
+			
 		nnet.Flush(current);
 
 		// Warmup period.
@@ -48,8 +54,6 @@ namespace jv
 		for (uint32_t i = 0; i < info.buffer; i++)
 			Propagate(info, info.start - (info.buffer - i), output);
 
-		ptr->tester = {};
-		ptr->rating = 0;
 		return true;
 	}
 
@@ -89,10 +93,15 @@ namespace jv
 		auto& tempArena = *ptr->tempArena;
 		auto& nnet = ptr->nnet;
 
-		nnet.RateParameters(arena, tempArena, ptr->tester.GetRating());
-		ptr->genRating = Max(ptr->genRating, ptr->rating);
+		if (++ptr->currentBatch == ptr->batchSize)
+		{
+			nnet.RateParameters(arena, tempArena, ptr->tester.GetRating());
+			ptr->currentBatch = 0;
+			ptr->genRating = Max(ptr->genRating, ptr->rating);
+			++ptr->currentEpoch;
+		}
 
-		if (++ptr->currentEpoch == ptr->epochs * nnet.ga.info.length)
+		if (ptr->currentEpoch == ptr->epochs * nnet.ga.info.length)
 		{
 			nnet.DestroyParameters(arena);
 			nnet.Deconstruct(arena, nnet.GetCurrent());

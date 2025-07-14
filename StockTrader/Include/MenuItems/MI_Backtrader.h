@@ -45,6 +45,7 @@ namespace jv::bt
 		bool pauseOnFinishAll;
 		bool running;
 		int runType;
+		int prevRunType;
 
 		RunInfo runInfo;
 

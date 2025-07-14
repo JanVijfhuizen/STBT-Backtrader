@@ -8,7 +8,7 @@ namespace jv
 		uint32_t epochs = 10;
 		uint32_t currentEpoch = 0;
 
-		uint32_t batchSize = 10;
+		uint32_t batchSize = 5;
 		uint32_t currentBatch = 0;
 
 		Arena* arena;

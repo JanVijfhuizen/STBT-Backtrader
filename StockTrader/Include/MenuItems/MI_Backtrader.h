@@ -78,6 +78,7 @@ namespace jv::bt
 		float prevProgress;
 		FPFNTester fpfnTester;
 		float progressPct;
+		bool normalizeProgress;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

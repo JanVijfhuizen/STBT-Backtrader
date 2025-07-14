@@ -99,7 +99,11 @@ namespace jv
 		auto& tempArena = *ptr->tempArena;
 		auto& nnet = ptr->nnet;
 
-		*info.progressPct = static_cast<float>(nnet.currentId) / nnet.generation.length;
+		const float chunk = 1.f / nnet.generation.length;
+		const uint32_t maxEpochs = ptr->epochs * nnet.ga.info.length;
+
+		const float epochsPct = (static_cast<float>(ptr->currentEpoch) / maxEpochs) * chunk;
+		*info.progressPct = chunk * nnet.currentId + epochsPct;
 
 		if (++ptr->currentBatch == ptr->batchSize)
 		{
@@ -109,7 +113,7 @@ namespace jv
 			++ptr->currentEpoch;
 		}
 
-		if (ptr->currentEpoch == ptr->epochs * nnet.ga.info.length)
+		if (ptr->currentEpoch == maxEpochs)
 		{
 			nnet.DestroyParameters(arena);
 			nnet.Deconstruct(arena, nnet.GetCurrent());
@@ -170,11 +174,11 @@ namespace jv
 		jv::ai::DynNNetCreateInfo info{};
 		info.inputCount = 6;
 		info.outputCount = 2;
-		info.generationSize = 50;
+		info.generationSize = 26;
 		auto& nnet = trader.nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
 		nnet.alpha = 10;
 		nnet.kmPointCount = 3;
-		nnet.gaLength = 40;
+		nnet.gaLength = 20;
 		nnet.gaKmPointCount = 3;
 
 		return trader;

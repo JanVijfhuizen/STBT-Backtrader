@@ -102,6 +102,7 @@ namespace jv::bt
 		showIndex = 0;
 		zoom = 1;
 		progressPct = 0;
+		normalizeProgress = true;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
 
@@ -1248,12 +1249,20 @@ namespace jv::bt
 		if (!render)
 			return;
 
-		ImGuiWindowFlags FLAGS = 0;
+		ImGuiWindowFlags FLAGS = WIN_FLAGS;
 		FLAGS |= ImGuiWindowFlags_NoBackground;
 		FLAGS |= ImGuiWindowFlags_NoTitleBar;
+
+		ImGui::Begin("progresst", nullptr, FLAGS);
+		ImGui::SetWindowPos({ MENU_RESOLUTION_SMALL.x * 2, 0 });
+		ImGui::Checkbox("Normalize", &normalizeProgress);
+		ImGui::SetWindowSize({ MENU_RESOLUTION_SMALL.x * 3, MENU_RESOLUTION_SMALL.y });
+		ImGui::End();
+
 		FLAGS |= ImGuiWindowFlags_NoInputs;
+		
 		ImGui::Begin("progress", nullptr, FLAGS);
-		ImGui::SetWindowPos({ MENU_RESOLUTION_SMALL.x * 2, 2 });
+		ImGui::SetWindowPos({ MENU_RESOLUTION_SMALL.x * 2, RESOLUTION.y - MENU_RESOLUTION_SMALL.y - 30 });
 		ImGui::SetWindowSize({ MENU_RESOLUTION_SMALL.x * 3, MENU_RESOLUTION_SMALL.y });
 		const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
 		ImGui::BufferingBar("progressh", progressPct, { 560, 6 }, bg, IM_COL32_WHITE);
@@ -1264,6 +1273,14 @@ namespace jv::bt
 		auto arr = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
 		auto arrPrev = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
 
+		float lowest = 0;
+		if (normalizeProgress)
+		{
+			lowest = FLT_MAX;
+			for (uint32_t i = 1; i < progress.count; i++)
+				lowest = Min(progress[i], lowest);
+		}
+
 		float max = prevProgress;
 		for (uint32_t i = 0; i < progress.count; i++)
 		{
@@ -1273,12 +1290,12 @@ namespace jv::bt
 			arr[i].open = max;
 			arr[i].close = max;
 			arr[i].high = max;
-			arr[i].low = 0;
+			arr[i].low = normalizeProgress;
 
 			arrPrev[i].open = f;
 			arrPrev[i].close = f;
 			arrPrev[i].high = max;
-			arrPrev[i].low = 0;
+			arrPrev[i].low = normalizeProgress;
 		}
 
 		std::string title = "progress [C: ";

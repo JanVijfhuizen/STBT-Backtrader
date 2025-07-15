@@ -64,14 +64,13 @@ namespace jv::ai
 
 	Array<uint32_t> ApplyKMeans(Arena& arena, Arena& tempArena, DynNNet& nnet, DynInstance* cpyGen, const uint32_t maxCycles)
 	{
-		auto arr = CreateArray<uint32_t>(arena, nnet.info.generationSize);
+		const uint32_t genSize = nnet.info.generationSize;
+		auto arr = CreateArray<uint32_t>(arena, genSize);
 
 		auto tempScope = tempArena.CreateScope();
 
 		auto closedPoints = CreateVector<uint32_t>(tempArena, nnet.kmPointCount);
 		auto points = CreateArray<int32_t*>(tempArena, nnet.kmPointCount);
-
-		const uint32_t l = nnet.info.generationSize;
 
 		// Convert random instances in semi "bitmaps".
 		for (uint32_t i = 0; i < nnet.kmPointCount; i++)
@@ -79,7 +78,7 @@ namespace jv::ai
 			uint32_t rInd;
 			do
 			{
-				rInd = rand() % l;
+				rInd = rand() % genSize;
 			} while (Contains(closedPoints, rInd) != -1);
 
 			closedPoints.Add() = rInd;
@@ -98,7 +97,7 @@ namespace jv::ai
 			bool changed = false;
 
 			// Assign instances to closest points.
-			for (uint32_t j = 0; j < l; j++)
+			for (uint32_t j = 0; j < genSize; j++)
 			{
 				float minDis = FLT_MAX;
 				uint32_t p = 0;
@@ -133,7 +132,7 @@ namespace jv::ai
 				auto counts = CreateArray<uint32_t>(tempArena, nnet.kmPointCount);
 
 				// Get average of point instances.
-				for (uint32_t j = 0; j < l; j++)
+				for (uint32_t j = 0; j < genSize; j++)
 				{
 					const uint32_t ind = arr[j];
 					++counts[ind];
@@ -145,7 +144,7 @@ namespace jv::ai
 					for (uint32_t i = 0; i < c; i++)
 					{
 						auto& p = point[i];
-						p = p >= ((l + 1) / 2);
+						p = p >= ((genSize + 1) / 2);
 					}
 				}
 
@@ -328,7 +327,7 @@ namespace jv::ai
 		const auto nums = CreateArray<uint32_t>(tempArena, neurons.count);
 		for (const auto& i : instance.weights)
 		{
-			auto& weight = weights[i];
+			auto& weight = weights[i]; // HERE
 			nums[weight.from]++;
 		}
 
@@ -346,7 +345,8 @@ namespace jv::ai
 		{
 			auto& weight = weights[i];
 			auto& n = nums[weight.from];
-			auto& cWeight = neurons[weight.from].cWeights[n++];
+			auto& neuron = neurons[weight.from];
+			auto& cWeight = neuron.cWeights[n++]; // HERE
 			cWeight = i;
 		}
 
@@ -366,7 +366,7 @@ namespace jv::ai
 		for (uint32_t i = 0; i < instance.weights.length; i++)
 		{
 			const uint32_t w = instance.weights[i];
-			auto& weight = weights[w];
+			auto& weight = weights[w]; // HERE
 			weight.value = values[i];
 		}
 
@@ -537,6 +537,10 @@ namespace jv::ai
 				}
 			}
 
+			for (uint32_t i = 0; i < info.generationSize; i++)
+				for (const auto& j : cpyGen[i].weights)
+					assert(j < weights.count);
+
 			// Copy apex.
 			for (uint32_t i = 0; i < apexLen; i++)
 				cpyGen[i].Copy(arena, generation[i], true);
@@ -551,6 +555,10 @@ namespace jv::ai
 			// Create new instances.
 			for (uint32_t i = end; i < length; i++)
 				generation[i] = CreateArrivalInstance(arena, tempArena, *this);
+
+			for(auto& n : generation)
+				for (const auto& i : n.weights)
+					assert(i < weights.count);
 
 			tempArena.DestroyScope(tempScope);
 		}

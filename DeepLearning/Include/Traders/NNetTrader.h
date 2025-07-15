@@ -5,10 +5,10 @@ namespace jv
 {
 	struct NNetTrader final
 	{
-		uint32_t epochs = 10;
+		uint32_t epochs = 1; // 10
 		uint32_t currentEpoch = 0;
 
-		uint32_t batchSize = 5;
+		uint32_t batchSize = 1; // 5
 		uint32_t currentBatch = 0;
 
 		Arena* arena;
@@ -17,7 +17,6 @@ namespace jv
 		uint64_t scope;
 		ai::DynNNet nnet;
 
-		uint64_t runScope;
 		uint32_t stockId;
 
 		jv::FPFNTester tester;

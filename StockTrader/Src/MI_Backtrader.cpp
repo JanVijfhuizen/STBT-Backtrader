@@ -648,7 +648,7 @@ namespace jv::bt
 
 		const char* items[]{ "Default", "Stepwise", "Instant"};
 		ImGui::Combo("Type", &runType, items, 3);
-		prevRunType = runType;
+		prevRunType = runType == 1 ? prevRunType : runType;
 		RenderShowIndexDropDown(*this);
 
 		ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
@@ -1243,7 +1243,8 @@ namespace jv::bt
 
 	void MI_Backtrader::RenderProgress(STBT& stbt, bool render)
 	{
-		if(progress.count >= progress.length)
+		const bool progressOverflowing = progress.count >= progress.length;
+		if(progressOverflowing)
 			prevProgress = Max(prevProgress, progress.Peek());
 
 		if (!render)
@@ -1276,7 +1277,7 @@ namespace jv::bt
 		float lowest = 0;
 		if (normalizeProgress)
 		{
-			lowest = FLT_MAX;
+			lowest = progressOverflowing ? prevProgress : FLT_MAX;
 			for (uint32_t i = 1; i < progress.count; i++)
 				lowest = Min(progress[i], lowest);
 		}
@@ -1290,12 +1291,12 @@ namespace jv::bt
 			arr[i].open = max;
 			arr[i].close = max;
 			arr[i].high = max;
-			arr[i].low = normalizeProgress;
+			arr[i].low = lowest;
 
 			arrPrev[i].open = f;
 			arrPrev[i].close = f;
 			arrPrev[i].high = max;
-			arrPrev[i].low = normalizeProgress;
+			arrPrev[i].low = lowest;
 		}
 
 		std::string title = "progress [C: ";
@@ -1311,6 +1312,7 @@ namespace jv::bt
 		drawInfo.color = glm::vec4(1, 0, 0, 1);
 		drawInfo.title = title.c_str();
 		drawInfo.maxLinesDrawn = approximateLines ? drawInfo.maxLinesDrawn : -1;
+		drawInfo.normalize = normalizeProgress;
 		stbt.renderer.DrawLineGraph(drawInfo);
 
 		drawInfo.points = arrPrev.ptr;

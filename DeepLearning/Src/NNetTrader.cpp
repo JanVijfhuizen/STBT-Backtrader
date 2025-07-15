@@ -31,8 +31,7 @@ namespace jv
 		auto& arena = *ptr->arena;
 		auto& tempArena = *ptr->tempArena;
 		auto& nnet = ptr->nnet;
-		
-		ptr->runScope = arena.CreateScope();
+
 		ptr->stockId = rand() % info.scope->GetTimeSeriesCount();
 
 		auto current = nnet.GetCurrent();
@@ -42,14 +41,14 @@ namespace jv
 			nnet.Construct(arena, tempArena, current);
 			nnet.CreateParameters(arena);
 		}
-		
+
 		if (ptr->currentBatch == 0)
 		{
 			ptr->tester = {};
 			ptr->rating = 0;
 			nnet.ConstructParameters(current, nnet.GetCurrentParameters());
 		}
-			
+
 		nnet.Flush(current);
 
 		// Warmup period.
@@ -118,6 +117,7 @@ namespace jv
 			nnet.DestroyParameters(arena);
 			nnet.Deconstruct(arena, nnet.GetCurrent());
 			nnet.Rate(arena, tempArena);
+
 			ptr->currentEpoch = 0;
 			
 			if (nnet.currentId == 0)
@@ -146,8 +146,6 @@ namespace jv
 				ptr->genRating = 0;
 			}
 		}
-
-		arena.DestroyScope(ptr->runScope);
 	}
 
 	void NNTraderReset(const bt::STBTBotInfo& info)

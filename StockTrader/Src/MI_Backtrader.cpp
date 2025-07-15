@@ -1278,7 +1278,7 @@ namespace jv::bt
 		if (normalizeProgress)
 		{
 			lowest = progressOverflowing ? prevProgress : FLT_MAX;
-			for (uint32_t i = 1; i < progress.count; i++)
+			for (uint32_t i = 0; i < progress.count; i++)
 				lowest = Min(progress[i], lowest);
 		}
 

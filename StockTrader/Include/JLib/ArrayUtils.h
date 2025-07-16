@@ -23,4 +23,12 @@ namespace jv
 	{
 		return array[rand() % array.length];
 	}
+
+	template <typename T>
+	[[nodiscard]] Array<T> Copy(Arena& arena, const Array<T>& array)
+	{
+		auto ret = CreateArray<T>(arena, array.length);
+		memcpy(ret.ptr, array.ptr, sizeof(T) * array.length);
+		return ret;
+	}
 }

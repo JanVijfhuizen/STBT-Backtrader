@@ -10,15 +10,18 @@ namespace jv
 		auto& tempArena = *ptr->tempArena;
 		const auto tempScope = tempArena.CreateScope();
 
-		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
-		auto input = CreateArray<float>(tempArena, 6);
+		uint32_t l = 0;
+		for (const auto& mod : ptr->mods)
+			l += mod.outputCount;
 
-		input[0] = ts.open[index + 1];
-		input[1] = ts.close[index + 1];
-		input[2] = ts.high[index + 1];
-		input[3] = ts.low[index + 1];
-		input[4] = ts.dates[index + 1].day;
-		input[5] = ts.dates[index + 1].month;
+		auto input = CreateArray<float>(tempArena, l);
+
+		l = 0;
+		for (const auto& mod : ptr->mods)
+		{
+			mod.update(info, ptr->stockId, index, &input.ptr[l]);
+			l += mod.outputCount;
+		}
 
 		ptr->nnet.Propagate(tempArena, input, output);
 		tempArena.DestroyScope(tempScope);
@@ -32,6 +35,7 @@ namespace jv
 		auto& tempArena = *ptr->tempArena;
 		auto& nnet = ptr->nnet;
 
+		// Pick a random stock.
 		ptr->stockId = rand() % info.scope->GetTimeSeriesCount();
 
 		auto current = nnet.GetCurrent();
@@ -50,6 +54,9 @@ namespace jv
 		}
 
 		nnet.Flush(current);
+
+		for (const auto& mod : ptr->mods)
+			mod.init(info, ptr->stockId);
 
 		// Warmup period.
 		float o[2]{};
@@ -76,13 +83,17 @@ namespace jv
 		const bool o2 = static_cast<bool>(output[1]);
 		const bool validOutput = o1 != o2;
 
-		ptr->rating += validOutput;
 		ptr->tester.AddResult(!o1, o2);
 
 		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
 		const bool wanted = ts.open[info.current] > ts.open[info.current + 1];
-		ptr->rating += wanted == o1;
-		ptr->rating += !wanted == o2;
+
+		if (validOutput)
+		{
+			ptr->rating += wanted == o1;
+			ptr->rating += !wanted == o2;
+		}
+		
 		ptr->tester.AddResult(o1, wanted);
 		ptr->tester.AddResult(!o2, wanted);
 
@@ -142,7 +153,7 @@ namespace jv
 				msg.color = glm::vec4(.8, .8, .8, 1);
 				info.output->Add() = msg;
 
-				info.progress->Add() = nnet.rating;
+				info.progress->Add() = nnet.generationRating;
 				ptr->genRating = 0;
 			}
 		}
@@ -154,25 +165,36 @@ namespace jv
 
 		auto arena = ptr->arena;
 		auto tempArena = ptr->tempArena;
+
+		const auto tempScope = tempArena->CreateScope();
+		auto cpy = Copy(*tempArena, ptr->mods);
+
 		arena->DestroyScope(ptr->scope);
-		*ptr = NNetTrader::Create(*arena, *tempArena);
+		*ptr = NNetTrader::Create(*arena, *tempArena, cpy);
+
+		tempArena->DestroyScope(tempScope);
 	}
 
 	void NNTraderRender(const bt::STBTBotInfo& info, gr::RenderProxy renderer, glm::vec2 center)
 	{
 	}
 
-	NNetTrader NNetTrader::Create(Arena& arena, Arena& tempArena)
+	NNetTrader NNetTrader::Create(Arena& arena, Arena& tempArena, const Array<NNetTraderMod>& mods)
 	{
 		NNetTrader trader{};
 		trader.arena = &arena;
 		trader.tempArena = &tempArena;
 		trader.scope = arena.CreateScope();
+		trader.mods = Copy(arena, mods);
+
+		uint32_t outputCount = 0;
+		for (auto& mod : trader.mods)
+			outputCount += mod.outputCount;
 
 		jv::ai::DynNNetCreateInfo info{};
-		info.inputCount = 6;
+		info.inputCount = outputCount;
 		info.outputCount = 2;
-		info.generationSize = 80;
+		info.generationSize = 60;
 		auto& nnet = trader.nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
 		nnet.alpha = 10;
 		nnet.kmPointCount = 3;
@@ -198,5 +220,31 @@ namespace jv
 		bot.reset = NNTraderReset;
 		bot.userPtr = this;
 		return bot;
+	}
+
+	void ModInit(const bt::STBTBotInfo& info, uint32_t stockId)
+	{
+
+	}
+	void ModUpdate(const bt::STBTBotInfo& info, const uint32_t stockId, const uint32_t current, float* out) 
+	{
+		auto ptr = reinterpret_cast<NNetTrader*>(info.userPtr);
+		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
+
+		out[0] = ts.open[current + 1];
+		out[1] = ts.close[current + 1];
+		out[2] = ts.high[current + 1];
+		out[3] = ts.low[current + 1];
+		out[4] = ts.dates[current + 1].day;
+		out[5] = ts.dates[current + 1].month;
+	}
+
+	NNetTraderMod NNetGetDefaultMod()
+	{
+		NNetTraderMod mod{};
+		mod.outputCount = 6;
+		mod.init = ModInit;
+		mod.update = ModUpdate;
+		return mod;
 	}
 }

@@ -3,6 +3,14 @@
 
 namespace jv
 {
+	struct NNetTraderMod final
+	{
+		void (*init)(const bt::STBTBotInfo& info, uint32_t stockId);
+		void (*update)(const bt::STBTBotInfo& info, uint32_t stockId, uint32_t current, float* out);
+
+		uint32_t outputCount = 1;
+	};
+
 	struct NNetTrader final
 	{
 		uint32_t epochs = 10;
@@ -15,6 +23,7 @@ namespace jv
 		Arena* tempArena;
 
 		uint64_t scope;
+		Array<NNetTraderMod> mods;
 		ai::DynNNet nnet;
 
 		uint32_t stockId;
@@ -23,10 +32,12 @@ namespace jv
 		float rating;
 		float genRating;
 
-		[[nodiscard]] static NNetTrader Create(Arena& arena, Arena& tempArena);
+		[[nodiscard]] static NNetTrader Create(Arena& arena, Arena& tempArena, const Array<NNetTraderMod>& mods);
 		static void Destroy(Arena& arena, NNetTrader& trader);
 		[[nodiscard]] jv::bt::STBTBot GetBot();
 	};
+
+	[[nodiscard]] NNetTraderMod NNetGetDefaultMod();
 }
 
 

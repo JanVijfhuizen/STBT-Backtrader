@@ -276,7 +276,10 @@ namespace jv::bt
 					{
 						auto botInfo = GetBotInfo(stbt);
 						if (!bot.init(botInfo))
+						{
+							running = false;
 							runDayIndex = runInfo.length;
+						}
 					}
 
 					runScope = stbt.arena.CreateScope();
@@ -544,6 +547,8 @@ namespace jv::bt
 		botUpdateInfo.buffer = runInfo.buffer;
 		botUpdateInfo.training = training;
 		botUpdateInfo.progressPct = &progressPct;
+		botUpdateInfo.arena = &stbt.arena;
+		botUpdateInfo.tempArena = &stbt.tempArena;
 		return botUpdateInfo;
 	}
 

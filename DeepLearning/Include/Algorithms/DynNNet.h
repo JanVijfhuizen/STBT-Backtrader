@@ -102,7 +102,7 @@ namespace jv::ai
 		uint32_t kmPointCount = 3;
 		uint32_t kmCycles = 50;
 
-		uint32_t gaLength = 40;
+		uint32_t gaLength = 80;
 		float gaMutateChance = .01f;
 		float gaMutateAddition = 1;
 		float gaMutateMultiplier = .1f;

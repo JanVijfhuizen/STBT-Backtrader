@@ -327,7 +327,7 @@ namespace jv::ai
 		const auto nums = CreateArray<uint32_t>(tempArena, neurons.count);
 		for (const auto& i : instance.weights)
 		{
-			auto& weight = weights[i]; // HERE
+			auto& weight = weights[i];
 			nums[weight.from]++;
 		}
 
@@ -346,7 +346,7 @@ namespace jv::ai
 			auto& weight = weights[i];
 			auto& n = nums[weight.from];
 			auto& neuron = neurons[weight.from];
-			auto& cWeight = neuron.cWeights[n++]; // HERE
+			auto& cWeight = neuron.cWeights[n++];
 			cWeight = i;
 		}
 
@@ -366,7 +366,7 @@ namespace jv::ai
 		for (uint32_t i = 0; i < instance.weights.length; i++)
 		{
 			const uint32_t w = instance.weights[i];
-			auto& weight = weights[w]; // HERE
+			auto& weight = weights[w];
 			weight.value = values[i];
 		}
 

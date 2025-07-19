@@ -19,7 +19,7 @@ namespace jv
 		l = 0;
 		for (const auto& mod : ptr->mods)
 		{
-			mod.update(info, ptr->stockId, index, &input.ptr[l]);
+			mod.update(info, ptr->stockId, index, &input.ptr[l], mod.userPtr);
 			l += mod.outputCount;
 		}
 
@@ -56,14 +56,30 @@ namespace jv
 		nnet.Flush(current);
 
 		for (const auto& mod : ptr->mods)
-			mod.init(info, ptr->stockId);
+			mod.init(info, ptr->stockId, mod.userPtr);
 
 		// Warmup period.
+		uint32_t warmup = 1;
+		for (auto& mod : ptr->mods)
+			if (mod.getMinBufferSize)
+				warmup = Max(warmup, mod.getMinBufferSize(info, ptr->stockId, mod.userPtr));
+
+		if (warmup > info.buffer)
+		{
+			std::string s = "Buffer too small! Minimum size required: ";
+			s += std::to_string(warmup);
+			info.output->Add() = bt::OutputMsg::Create(s.c_str(), bt::OutputMsg::error);
+			info.output->Add() = bt::OutputMsg::Create("It's recommended to make the buffer larger than what is needed.");
+			info.output->Add() = bt::OutputMsg::Create("Any excess from the buffer is used as a warmup period, which stabilizes the algorithm.");
+			return false;
+		}
+		
 		float o[2]{};
 		Array<float> output{};
 		output.length = 2;
 		output.ptr = o;
-		for (uint32_t i = 1; i < info.buffer; i++)
+
+		for (uint32_t i = warmup; i < info.buffer; i++)
 			Propagate(info, info.start + (info.buffer - i), output);
 
 		return true;
@@ -83,10 +99,10 @@ namespace jv
 		const bool o2 = static_cast<bool>(output[1]);
 		const bool validOutput = o1 != o2;
 
-		ptr->tester.AddResult(!o1, o2);
+		//ptr->tester.AddResult(!o1, o2);
 
 		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
-		const bool wanted = ts.open[info.current] > ts.open[info.current + 1];
+		const bool wanted = ts.close[info.current] > ts.close[info.current + 1];
 
 		if (validOutput)
 		{
@@ -117,7 +133,11 @@ namespace jv
 
 		if (++ptr->currentBatch == ptr->batchSize)
 		{
-			nnet.RateParameters(arena, tempArena, ptr->tester.GetRating());
+			auto r = ptr->tester.GetRating();
+			if (r > nnet.rating)
+				*info.fpfnTester = ptr->tester;
+
+			nnet.RateParameters(arena, tempArena, r);
 			ptr->currentBatch = 0;
 			ptr->genRating = Max(ptr->genRating, ptr->rating);
 			++ptr->currentEpoch;
@@ -194,11 +214,11 @@ namespace jv
 		jv::ai::DynNNetCreateInfo info{};
 		info.inputCount = outputCount;
 		info.outputCount = 2;
-		info.generationSize = 60;
+		info.generationSize = 80;
 		auto& nnet = trader.nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
 		nnet.alpha = 10;
 		nnet.kmPointCount = 3;
-		nnet.gaLength = 40;
+		nnet.gaLength = 60;
 		nnet.gaKmPointCount = 3;
 
 		return trader;
@@ -222,11 +242,11 @@ namespace jv
 		return bot;
 	}
 
-	void ModInit(const bt::STBTBotInfo& info, uint32_t stockId)
+	void ModInit(const bt::STBTBotInfo& info, uint32_t stockId, void* userPtr)
 	{
 
 	}
-	void ModUpdate(const bt::STBTBotInfo& info, const uint32_t stockId, const uint32_t current, float* out) 
+	void ModUpdate(const bt::STBTBotInfo& info, const uint32_t stockId, const uint32_t current, float* out, void* userPtr) 
 	{
 		auto ptr = reinterpret_cast<NNetTrader*>(info.userPtr);
 		const auto ts = info.scope->GetTimeSeries(ptr->stockId);

@@ -38,6 +38,9 @@ namespace jv::bt
 
 	struct STBTBotInfo
 	{
+		Arena* arena;
+		Arena* tempArena;
+
 		STBTScope* scope;
 		Queue<OutputMsg>* output;
 		Queue<float>* progress;

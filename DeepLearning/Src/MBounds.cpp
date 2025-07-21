@@ -20,10 +20,11 @@ namespace jv
 		const auto ts = info.scope->GetTimeSeries(stockId);
 
 		auto series = info.scope->GetTimeSeries(stockId);
-		const float point = series.close[current];
+		auto& close = series.close[current + 1];
+		const float point = close;
 		const float maPoint = ptr->ma[info.start + info.buffer - current];
 
-		const float std = TraderUtils::GetStandardDeviation(&series.close[current], ptr->stdLen);
+		const float std = TraderUtils::GetStandardDeviation(&close, ptr->stdLen);
 		const float lower = point - std * ptr->stdMul;
 		const float upper = point + std * ptr->stdMul;
 

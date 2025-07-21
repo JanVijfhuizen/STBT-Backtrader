@@ -470,6 +470,7 @@ namespace jv::ai
 	void DynNNet::Rate(Arena& arena, Arena& tempArena)
 	{
 		ratings[currentId++] = ga.rating;
+
 		if (currentId >= generation.length)
 		{
 			currentId = 0;

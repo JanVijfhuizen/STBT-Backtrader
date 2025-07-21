@@ -5,7 +5,7 @@
 
 namespace jv
 {
-	void NNetTraderModBoundsInit(const bt::STBTBotInfo& info, uint32_t stockId, void* userPtr)
+	void NNetTraderModBoundsInit(const bt::STBTBotInfo& info, uint32_t stockId, uint32_t warmup, void* userPtr)
 	{
 		auto ptr = reinterpret_cast<NNetTraderModBounds*>(userPtr);
 

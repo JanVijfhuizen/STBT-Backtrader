@@ -55,10 +55,6 @@ namespace jv
 
 		nnet.Flush(current);
 
-		for (const auto& mod : ptr->mods)
-			mod.init(info, ptr->stockId, mod.userPtr);
-
-		// Warmup period.
 		uint32_t warmup = 1;
 		for (auto& mod : ptr->mods)
 			if (mod.getMinBufferSize)
@@ -73,6 +69,9 @@ namespace jv
 			info.output->Add() = bt::OutputMsg::Create("Any excess from the buffer is used as a warmup period, which stabilizes the algorithm.");
 			return false;
 		}
+
+		for (const auto& mod : ptr->mods)
+			mod.init(info, ptr->stockId, info.buffer - warmup, mod.userPtr);
 		
 		float o[2]{};
 		Array<float> output{};
@@ -141,6 +140,20 @@ namespace jv
 			ptr->currentBatch = 0;
 			ptr->genRating = Max(ptr->genRating, ptr->rating);
 			++ptr->currentEpoch;
+
+			// If a new generation was just created.
+			if (nnet.ga.trainId == 0)
+			{
+				const uint32_t genId = nnet.ga.genId;
+				if (nnet.rating > ptr->cycleHighestRating)
+				{
+					ptr->cycleHighestRating = nnet.rating;
+					ptr->lastCycleWithProgress = genId;
+				}
+				// If the network hasn't had a better score for a while already, stop the training for this instance.
+				else if ((ptr->lastCycleWithProgress + ptr->maxCyclesWithoutProgress) <= genId)
+					ptr->currentEpoch = maxEpochs;
+			}
 		}
 
 		if (ptr->currentEpoch == maxEpochs)
@@ -149,7 +162,9 @@ namespace jv
 			nnet.Deconstruct(arena, nnet.GetCurrent());
 			nnet.Rate(arena, tempArena);
 
+			ptr->cycleHighestRating = 0;
 			ptr->currentEpoch = 0;
+			ptr->lastCycleWithProgress = 0;
 			
 			if (nnet.currentId == 0)
 			{
@@ -242,29 +257,36 @@ namespace jv
 		return bot;
 	}
 
-	void ModInit(const bt::STBTBotInfo& info, uint32_t stockId, void* userPtr)
+	void ModInit(const bt::STBTBotInfo& info, uint32_t stockId, uint32_t warmup, void* userPtr)
 	{
-
+		auto ptr = reinterpret_cast<NNetTrader*>(info.userPtr);
+		auto modPtr = reinterpret_cast<NNetTraderDefaultMod*>(userPtr);
+		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
+		modPtr->multiplier = 1.f / ts.close[info.start - warmup];
 	}
 	void ModUpdate(const bt::STBTBotInfo& info, const uint32_t stockId, const uint32_t current, float* out, void* userPtr) 
 	{
 		auto ptr = reinterpret_cast<NNetTrader*>(info.userPtr);
+		auto modPtr = reinterpret_cast<NNetTraderDefaultMod*>(userPtr);
 		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
+		const float mul = modPtr->multiplier;
 
-		out[0] = ts.open[current + 1];
-		out[1] = ts.close[current + 1];
-		out[2] = ts.high[current + 1];
-		out[3] = ts.low[current + 1];
+		out[0] = ts.open[current + 1] * mul;
+		out[1] = ts.close[current + 1] * mul;
+		out[2] = ts.high[current + 1] * mul;
+		out[3] = ts.low[current + 1] * mul;
 		out[4] = ts.dates[current + 1].day;
 		out[5] = ts.dates[current + 1].month;
 	}
 
-	NNetTraderMod NNetGetDefaultMod()
+	NNetTraderMod NNetGetDefaultMod(NNetTraderDefaultMod& out)
 	{
 		NNetTraderMod mod{};
 		mod.outputCount = 6;
 		mod.init = ModInit;
 		mod.update = ModUpdate;
+		mod.userPtr = &out;
+		out = {};
 		return mod;
 	}
 }

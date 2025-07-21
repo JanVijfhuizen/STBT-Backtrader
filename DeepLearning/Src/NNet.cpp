@@ -105,6 +105,7 @@ namespace jv::nnet
 	Instance Instance::Create(Arena& arena, Arena& tempArena, const InstanceCreateInfo& info, Group& group)
 	{
 		Instance instance{};
+
 		instance.neurons = CreateArray<Neuron>(arena, info.inputCount + info.outputCount);
 		if (info.connected)
 		{
@@ -165,6 +166,7 @@ namespace jv::nnet
 	Instance Copy(Arena& arena, Arena& tempArena, Group& group, Instance& instance, const bool isTemp)
 	{
 		Instance cpy{};
+		cpy.previousScore = instance.previousScore;
 		cpy.neurons = CreateArray<Neuron>(arena, instance.neurons.length);
 		for (uint32_t i = 0; i < instance.neurons.length; i++)
 			cpy.neurons[i] = instance.neurons[i];
@@ -376,17 +378,6 @@ namespace jv::nnet
 
 	void Group::Rate(Arena& arena, Arena& tempArena, const float rating, Queue<bt::OutputMsg>& output)
 	{
-		// TODO 
-		// KMEANS SPECIATION
-		// BREEDING WITHIN SPECIES ONLY
-		// Punish large solutions
-		// Check if weight connection already exists before mutating? If disabled just enable it again
-
-		// probably being so bad bc from 1-2 + 3 it now goes 1-3(pause)-2
-
-		// NEW NEURONS ARE ALMOST NEVER FAVORABLE.
-		// THIS EXTREME BIAS SHOULD NOT EXIST, SO IM DOING SOMETHING WRONG WITH CREATING THEM
-
 		// Finish generation and start new one if applicable.
 		genRatings[trainId++] = rating;
 		if (trainId >= info.length)

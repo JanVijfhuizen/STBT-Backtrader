@@ -63,6 +63,7 @@ namespace jv::nnet
 		Array<Neuron> neurons;
 		Array<Weight> weights{};
 		Array<Connections> connections{};
+		float previousScore = -1;
 
 		void Propagate(Arena& tempArena, const Array<float>& input, const Array<bool>& output);
 		void Flush();

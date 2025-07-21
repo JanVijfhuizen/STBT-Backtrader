@@ -3,9 +3,14 @@
 
 namespace jv
 {
+	struct NNetTraderDefaultMod final
+	{
+		float multiplier;
+	};
+
 	struct NNetTraderMod final
 	{
-		void (*init)(const bt::STBTBotInfo& info, uint32_t stockId, void* userPtr);
+		void (*init)(const bt::STBTBotInfo& info, uint32_t stockId, uint32_t warmup, void* userPtr);
 		void (*update)(const bt::STBTBotInfo& info, uint32_t stockId, uint32_t current, float* out, void* userPtr);
 		uint32_t(*getMinBufferSize)(const bt::STBTBotInfo& info, uint32_t stockId, void* userPtr) = nullptr;
 
@@ -15,10 +20,13 @@ namespace jv
 
 	struct NNetTrader final
 	{
-		uint32_t epochs = 10;
-		uint32_t currentEpoch = 0;
-
+		uint32_t epochs = 25;
 		uint32_t batchSize = 5;
+		uint32_t maxCyclesWithoutProgress = 5;
+
+		float cycleHighestRating = 0;
+		uint32_t lastCycleWithProgress = 0;
+		uint32_t currentEpoch = 0;
 		uint32_t currentBatch = 0;
 
 		Arena* arena;
@@ -39,7 +47,7 @@ namespace jv
 		[[nodiscard]] jv::bt::STBTBot GetBot();
 	};
 
-	[[nodiscard]] NNetTraderMod NNetGetDefaultMod();
+	[[nodiscard]] NNetTraderMod NNetGetDefaultMod(NNetTraderDefaultMod& out);
 }
 
 

@@ -40,7 +40,8 @@ int main()
 	auto corTrader = jv::CorrolationTrader::Create(arena, tempArena);
 	
 	auto mods = CreateArray<jv::NNetTraderMod>(arena, 2);
-	mods[0] = jv::NNetGetDefaultMod();
+	jv::NNetTraderDefaultMod defaultMod;
+	mods[0] = jv::NNetGetDefaultMod(defaultMod);
 	jv::NNetTraderModBounds mBounds;
 	mods[1] = jv::NNetGetTraderModBounds(mBounds);
 	auto nnetTrader = jv::NNetTrader::Create(arena, tempArena, mods);

@@ -120,8 +120,8 @@ namespace jv
 
 		for (uint32_t i = 0; i < c; i++)
 		{
-			const bool o1 = static_cast<bool>(output[i * 2]);
-			const bool o2 = static_cast<bool>(output[i * 2 + 1]);
+			const bool o1 = static_cast<bool>(round(output[i * 2]));
+			const bool o2 = static_cast<bool>(round(output[i * 2 + 1]));
 			const bool validOutput = o1 != o2;
 
 			auto& tester = ptr->testers[i];

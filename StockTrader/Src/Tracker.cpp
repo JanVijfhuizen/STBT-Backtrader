@@ -222,6 +222,7 @@ namespace jv::bt
 				Date date{};
 				date.day = std::stoi(strs[2]);
 				date.month = std::stoi(strs[1]);
+				timeSeries.dates[i] = date;
 			}
 
 			// Open and close are reversed in dataset for some reason.

@@ -47,10 +47,10 @@ int main()
 		mods[0] = jv::NNetGetDefaultMod(defaultMod);
 		mods[1] = jv::NNetGetTraderModBounds(mBounds);
 
-		auto timeFrames = CreateArray<uint32_t>(arena, 3);
+		auto timeFrames = CreateArray<uint32_t>(arena, 1);
 		timeFrames[0] = 0;
-		timeFrames[1] = 3;
-		timeFrames[2] = 6;
+		//timeFrames[1] = 3;
+		//timeFrames[2] = 6;
 
 		jv::NNetTraderCreateInfo info{};
 		info.mods = mods;

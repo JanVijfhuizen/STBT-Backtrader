@@ -316,8 +316,8 @@ namespace jv
 		out[1] = ts.close[current + 1] * mul;
 		out[2] = ts.high[current + 1] * mul;
 		out[3] = ts.low[current + 1] * mul;
-		out[4] = ts.dates[current + 1].day;
-		out[5] = ts.dates[current + 1].month;
+		out[4] = ts.dates[current + 1].day / 30;
+		out[5] = ts.dates[current + 1].month / 12;
 	}
 
 	NNetTraderMod NNetGetDefaultMod(NNetTraderDefaultMod& out)

@@ -29,7 +29,7 @@ namespace jv
 		NNetTraderCreateInfo info;
 
 		uint32_t epochs = 25;
-		uint32_t batchSize = 5;
+		uint32_t batchSize = 20;
 		uint32_t maxCyclesWithoutProgress = 5;
 
 		float cycleHighestRating = 0;

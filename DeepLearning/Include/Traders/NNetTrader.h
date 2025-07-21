@@ -18,8 +18,16 @@ namespace jv
 		void* userPtr = nullptr;
 	};
 
+	struct NNetTraderCreateInfo final
+	{
+		Array<NNetTraderMod> mods;
+		Array<uint32_t> timeFrames;
+	};
+
 	struct NNetTrader final
 	{
+		NNetTraderCreateInfo info;
+
 		uint32_t epochs = 25;
 		uint32_t batchSize = 5;
 		uint32_t maxCyclesWithoutProgress = 5;
@@ -34,15 +42,15 @@ namespace jv
 
 		uint64_t scope;
 		Array<NNetTraderMod> mods;
+		Array<uint32_t> timeFrames;
+		Array<jv::FPFNTester> testers;
 		ai::DynNNet nnet;
 
 		uint32_t stockId;
-
-		jv::FPFNTester tester;
 		float rating;
 		float genRating;
 
-		[[nodiscard]] static NNetTrader Create(Arena& arena, Arena& tempArena, const Array<NNetTraderMod>& mods);
+		[[nodiscard]] static NNetTrader Create(Arena& arena, Arena& tempArena, const NNetTraderCreateInfo& info);
 		static void Destroy(Arena& arena, NNetTrader& trader);
 		[[nodiscard]] jv::bt::STBTBot GetBot();
 	};

@@ -48,7 +48,8 @@ namespace jv
 
 		if (ptr->currentBatch == 0)
 		{
-			ptr->tester = {};
+			for (auto& tester : ptr->testers)
+				tester = {};
 			ptr->rating = 0;
 			nnet.ConstructParameters(current, nnet.GetCurrentParameters());
 		}
@@ -65,21 +66,34 @@ namespace jv
 			std::string s = "Buffer too small! Minimum size required: ";
 			s += std::to_string(warmup);
 			info.output->Add() = bt::OutputMsg::Create(s.c_str(), bt::OutputMsg::error);
-			info.output->Add() = bt::OutputMsg::Create("It's recommended to make the buffer larger than what is needed.");
-			info.output->Add() = bt::OutputMsg::Create("Any excess from the buffer is used as a warmup period, which stabilizes the algorithm.");
+			info.output->Add() = bt::OutputMsg::Create(
+				"It's recommended to make the buffer larger than what is needed.");
+			info.output->Add() = bt::OutputMsg::Create(
+				"Any excess from the buffer is used as a warmup period, which stabilizes the algorithm.");
+			return false;
+		}
+
+		uint32_t cooldown = 0;
+		for (const uint32_t timeFrame : ptr->timeFrames)
+			cooldown = Max(cooldown, timeFrame);
+
+		if (cooldown >= info.start - info.end)
+		{
+			std::string s = "Timeframe too large! Minimum run size required: ";
+			s += std::to_string(cooldown);
+			info.output->Add() = bt::OutputMsg::Create(s.c_str(), bt::OutputMsg::error);
+			info.output->Add() = bt::OutputMsg::Create(
+				"It's recommended to make the run size significantly larger than what is needed.");
 			return false;
 		}
 
 		for (const auto& mod : ptr->mods)
 			mod.init(info, ptr->stockId, info.buffer - warmup, mod.userPtr);
 		
-		float o[2]{};
-		Array<float> output{};
-		output.length = 2;
-		output.ptr = o;
-
+		auto output = CreateArray<float>(tempArena, 2 * ptr->timeFrames.length);
 		for (uint32_t i = warmup; i < info.buffer; i++)
 			Propagate(info, info.start + (info.buffer - i), output);
+		DestroyArray(tempArena, output);
 
 		return true;
 	}
@@ -88,29 +102,46 @@ namespace jv
 	{
 		auto ptr = reinterpret_cast<NNetTrader*>(info.userPtr);
 
+		// Ignore everything above the cooldown threshold.
+		uint32_t cooldown = 0;
+		for (const uint32_t timeFrame : ptr->timeFrames)
+			cooldown = Max(cooldown, timeFrame);
+		if (info.current <= info.end + cooldown)
+			return true;
+
 		auto& tempArena = *ptr->tempArena;
 		const auto tempScope = tempArena.CreateScope();
 
-		auto output = CreateArray<float>(tempArena, 2);
+		const uint32_t c = ptr->timeFrames.length;
+		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
+		auto output = CreateArray<float>(tempArena, 2 * c);
+
 		Propagate(info, info.current, output);
 
-		const bool o1 = static_cast<bool>(output[0]);
-		const bool o2 = static_cast<bool>(output[1]);
-		const bool validOutput = o1 != o2;
-
-		//ptr->tester.AddResult(!o1, o2);
-
-		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
-		const bool wanted = ts.close[info.current] > ts.close[info.current + 1];
-
-		if (validOutput)
+		for (uint32_t i = 0; i < c; i++)
 		{
+			const bool o1 = static_cast<bool>(output[i * 2]);
+			const bool o2 = static_cast<bool>(output[i * 2 + 1]);
+			const bool validOutput = o1 != o2;
+
+			auto& tester = ptr->testers[i];
+
+			if (!validOutput)
+			{
+				tester.AddResult(true, false);
+				tester.AddResult(false, true);
+				continue;
+			}
+
+			const uint32_t timeFrame = ptr->timeFrames[i];
+			const bool wanted = ts.close[info.current + timeFrame] > ts.close[info.current + 1];
+
 			ptr->rating += wanted == o1;
 			ptr->rating += !wanted == o2;
+			
+			tester.AddResult(o1, wanted);
+			tester.AddResult(!o2, wanted);
 		}
-		
-		ptr->tester.AddResult(o1, wanted);
-		ptr->tester.AddResult(!o2, wanted);
 
 		tempArena.DestroyScope(tempScope);
 		return true;
@@ -132,9 +163,13 @@ namespace jv
 
 		if (++ptr->currentBatch == ptr->batchSize)
 		{
-			auto r = ptr->tester.GetRating();
+			float r = 0;
+			for (auto& tester : ptr->testers)
+				r += tester.GetRating();
+
+			// Not ideal that it can only show a single one atm.
 			if (r > nnet.rating)
-				*info.fpfnTester = ptr->tester;
+				*info.fpfnTester = ptr->testers[0];
 
 			nnet.RateParameters(arena, tempArena, r);
 			ptr->currentBatch = 0;
@@ -202,10 +237,13 @@ namespace jv
 		auto tempArena = ptr->tempArena;
 
 		const auto tempScope = tempArena->CreateScope();
-		auto cpy = Copy(*tempArena, ptr->mods);
+
+		NNetTraderCreateInfo nnetInfo{};
+		nnetInfo.mods = Copy(*tempArena, ptr->mods);
+		nnetInfo.timeFrames = Copy(*tempArena, ptr->timeFrames);
 
 		arena->DestroyScope(ptr->scope);
-		*ptr = NNetTrader::Create(*arena, *tempArena, cpy);
+		*ptr = NNetTrader::Create(*arena, *tempArena, nnetInfo);
 
 		tempArena->DestroyScope(tempScope);
 	}
@@ -214,23 +252,26 @@ namespace jv
 	{
 	}
 
-	NNetTrader NNetTrader::Create(Arena& arena, Arena& tempArena, const Array<NNetTraderMod>& mods)
+	NNetTrader NNetTrader::Create(Arena& arena, Arena& tempArena, const NNetTraderCreateInfo& info)
 	{
 		NNetTrader trader{};
 		trader.arena = &arena;
 		trader.tempArena = &tempArena;
 		trader.scope = arena.CreateScope();
-		trader.mods = Copy(arena, mods);
+
+		trader.mods = Copy(arena, info.mods);
+		trader.timeFrames = Copy(arena, info.timeFrames);
+		trader.testers = CreateArray<jv::FPFNTester>(arena, info.timeFrames.length);
 
 		uint32_t outputCount = 0;
 		for (auto& mod : trader.mods)
 			outputCount += mod.outputCount;
 
-		jv::ai::DynNNetCreateInfo info{};
-		info.inputCount = outputCount;
-		info.outputCount = 2;
-		info.generationSize = 80;
-		auto& nnet = trader.nnet = jv::ai::DynNNet::Create(arena, tempArena, info);
+		jv::ai::DynNNetCreateInfo dynInfo{};
+		dynInfo.inputCount = outputCount;
+		dynInfo.outputCount = 2 * info.timeFrames.length;
+		dynInfo.generationSize = 80;
+		auto& nnet = trader.nnet = jv::ai::DynNNet::Create(arena, tempArena, dynInfo);
 		nnet.alpha = 10;
 		nnet.kmPointCount = 3;
 		nnet.gaLength = 60;
@@ -262,7 +303,7 @@ namespace jv
 		auto ptr = reinterpret_cast<NNetTrader*>(info.userPtr);
 		auto modPtr = reinterpret_cast<NNetTraderDefaultMod*>(userPtr);
 		const auto ts = info.scope->GetTimeSeries(ptr->stockId);
-		modPtr->multiplier = 1.f / ts.close[info.start - warmup];
+		modPtr->multiplier = 1.f / ts.close[info.start + warmup];
 	}
 	void ModUpdate(const bt::STBTBotInfo& info, const uint32_t stockId, const uint32_t current, float* out, void* userPtr) 
 	{

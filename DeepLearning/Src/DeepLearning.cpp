@@ -38,13 +38,25 @@ int main()
 	auto mainTrader = jv::MainTrader::Create(arena, tempArena);
 	mainTrader.InitGA();
 	auto corTrader = jv::CorrolationTrader::Create(arena, tempArena);
-	
-	auto mods = CreateArray<jv::NNetTraderMod>(arena, 2);
+
 	jv::NNetTraderDefaultMod defaultMod;
-	mods[0] = jv::NNetGetDefaultMod(defaultMod);
 	jv::NNetTraderModBounds mBounds;
-	mods[1] = jv::NNetGetTraderModBounds(mBounds);
-	auto nnetTrader = jv::NNetTrader::Create(arena, tempArena, mods);
+	jv::NNetTrader nnetTrader;
+	{
+		auto mods = CreateArray<jv::NNetTraderMod>(arena, 2);
+		mods[0] = jv::NNetGetDefaultMod(defaultMod);
+		mods[1] = jv::NNetGetTraderModBounds(mBounds);
+
+		auto timeFrames = CreateArray<uint32_t>(arena, 3);
+		timeFrames[0] = 0;
+		timeFrames[1] = 3;
+		timeFrames[2] = 6;
+
+		jv::NNetTraderCreateInfo info{};
+		info.mods = mods;
+		info.timeFrames = timeFrames;
+		nnetTrader = jv::NNetTrader::Create(arena, tempArena, info);
+	}
 
 	jv::bt::STBTBot bots[5];
 	bots[0] = gaTrader.GetBot();

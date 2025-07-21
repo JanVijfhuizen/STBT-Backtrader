@@ -63,8 +63,9 @@ namespace jv::bt
 
 	void MI_Main::DrawBottomRightWindow(const char* name)
 	{
-		const ImVec2 pos = { 400, 500 };
-		const ImVec2 size = { 400, MENU_RESOLUTION_SMALL.y };
+		const uint32_t d = 10;
+		const ImVec2 pos = { 400, 500 - d };
+		const ImVec2 size = { 400, MENU_RESOLUTION_SMALL.y + d };
 
 		ImGui::Begin(name, nullptr, WIN_FLAGS);
 		ImGui::SetWindowPos(pos);

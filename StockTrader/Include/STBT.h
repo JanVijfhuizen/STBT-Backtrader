@@ -38,10 +38,14 @@ namespace jv::bt
 
 	struct STBTBotInfo
 	{
+		Arena* arena;
+		Arena* tempArena;
+
 		STBTScope* scope;
 		Queue<OutputMsg>* output;
 		Queue<float>* progress;
 		FPFNTester* fpfnTester;
+		float* progressPct;
 
 		void* userPtr;
 		uint32_t start;
@@ -71,6 +75,8 @@ namespace jv::bt
 		bool(*update)(const STBTBotUpdateInfo& info);
 		// Executes at the end of a run.
 		void(*cleanup)(const STBTBotInfo& info) = nullptr;
+		// Reset training progression, if any.
+		void(*reset)(const STBTBotInfo& info) = nullptr;
 		// A custom pointer can be given here.
 		void* userPtr = nullptr;
 

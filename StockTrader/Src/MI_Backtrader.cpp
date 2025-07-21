@@ -101,6 +101,8 @@ namespace jv::bt
 		runType = 0;
 		showIndex = 0;
 		zoom = 1;
+		progressPct = 0;
+		normalizeProgress = true;
 
 		trades = stbt.arena.New<STBTTrade>(timeSeries.length);
 
@@ -274,7 +276,10 @@ namespace jv::bt
 					{
 						auto botInfo = GetBotInfo(stbt);
 						if (!bot.init(botInfo))
+						{
+							running = false;
 							runDayIndex = runInfo.length;
+						}
 					}
 
 					runScope = stbt.arena.CreateScope();
@@ -541,6 +546,9 @@ namespace jv::bt
 		botUpdateInfo.nRuns = runInfo.totalRuns;
 		botUpdateInfo.buffer = runInfo.buffer;
 		botUpdateInfo.training = training;
+		botUpdateInfo.progressPct = &progressPct;
+		botUpdateInfo.arena = &stbt.arena;
+		botUpdateInfo.tempArena = &stbt.tempArena;
 		return botUpdateInfo;
 	}
 
@@ -615,7 +623,7 @@ namespace jv::bt
 
 	void MI_Backtrader::DrawRunSubMenu(STBT& stbt)
 	{
-		if (ImGui::InputText("Runs", runCountBuffer, 7, ImGuiInputTextFlags_CharsDecimal))
+		if (ImGui::InputText("Runs", runCountBuffer, 9, ImGuiInputTextFlags_CharsDecimal))
 		{
 			int32_t n = std::atoi(runCountBuffer);
 			n = Max(n, 1);
@@ -645,6 +653,7 @@ namespace jv::bt
 
 		const char* items[]{ "Default", "Stepwise", "Instant"};
 		ImGui::Combo("Type", &runType, items, 3);
+		prevRunType = runType == 1 ? prevRunType : runType;
 		RenderShowIndexDropDown(*this);
 
 		ImGui::Checkbox("Pause On Finish", &pauseOnFinish);
@@ -664,13 +673,20 @@ namespace jv::bt
 		ImGui::Checkbox("Approx Lines", &approximateLines);
 		ImGui::Checkbox("Log", &log);
 		ImGui::Checkbox("Training", &training);
-		if (ImGui::Button("Reset progress"))
+		if (ImGui::Button("Reset Progress"))
 		{
 			progress.Clear();
 			prevProgress = FLT_MIN;
 		}
 		if (ImGui::Button("Reset FPFN"))
 			fpfnTester.Reset();
+
+		if (ImGui::Button("Reset Trader"))
+		{
+			auto botInfo = GetBotInfo(stbt);
+			auto& bot = stbt.bots[algoIndex];
+			bot.reset(botInfo);
+		}
 
 		const auto SAVE_PATH = "BT.set";
 
@@ -804,6 +820,18 @@ namespace jv::bt
 	{
 		MI_Symbols::DrawBottomRightWindow("Current Run");
 
+		{
+			const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+			const float p = static_cast<float>(runIndex) / runInfo.totalRuns;
+			ImGui::BufferingBar("handle", p, { 560, 6 }, bg, IM_COL32_WHITE);
+
+			if (runIndex < runInfo.totalRuns - 1)
+			{
+				ImGui::Spinner("spinner", 6, 2, IM_COL32_WHITE);
+				ImGui::SameLine();
+			}
+		}
+
 		const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
 
@@ -851,11 +879,14 @@ namespace jv::bt
 		if (static_cast<RunType>(runType) != RunType::stepwise)
 		{
 			if (ImGui::Button("Pause"))
+			{
+				prevRunType = runType;
 				runType = static_cast<int>(RunType::stepwise);
+			}
 		}
 		else
 			if (ImGui::Button("Continue"))
-				runType = static_cast<int>(RunType::normal);
+				runType = prevRunType;		
 
 		ImGui::SameLine();
 		bool runFinished = runDayIndex >= runInfo.length;
@@ -1003,7 +1034,7 @@ namespace jv::bt
 
 	glm::vec2 GetGrPos2()
 	{
-		return { .5f, .14f };
+		return { .5f, .18f };
 	}
 
 	void MI_Backtrader::RenderGraphs(STBT& stbt, const RunInfo& runInfo, const bool render)
@@ -1217,16 +1248,44 @@ namespace jv::bt
 
 	void MI_Backtrader::RenderProgress(STBT& stbt, bool render)
 	{
-		if(progress.count >= progress.length)
+		const bool progressOverflowing = progress.count >= progress.length;
+		if(progressOverflowing)
 			prevProgress = Max(prevProgress, progress.Peek());
 
 		if (!render)
 			return;
 
+		ImGuiWindowFlags FLAGS = WIN_FLAGS;
+		FLAGS |= ImGuiWindowFlags_NoBackground;
+		FLAGS |= ImGuiWindowFlags_NoTitleBar;
+
+		ImGui::Begin("progresst", nullptr, FLAGS);
+		ImGui::SetWindowPos({ MENU_RESOLUTION_SMALL.x * 2, 0 });
+		ImGui::Checkbox("Normalize", &normalizeProgress);
+		ImGui::SetWindowSize({ MENU_RESOLUTION_SMALL.x * 3, MENU_RESOLUTION_SMALL.y });
+		ImGui::End();
+
+		FLAGS |= ImGuiWindowFlags_NoInputs;
+		
+		ImGui::Begin("progress", nullptr, FLAGS);
+		ImGui::SetWindowPos({ MENU_RESOLUTION_SMALL.x * 2, RESOLUTION.y - MENU_RESOLUTION_SMALL.y - 30 });
+		ImGui::SetWindowSize({ MENU_RESOLUTION_SMALL.x * 3, MENU_RESOLUTION_SMALL.y });
+		const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+		ImGui::BufferingBar("progressh", progressPct, { 560, 6 }, bg, IM_COL32_WHITE);
+		ImGui::End();
+
 		const float ratio = stbt.renderer.GetAspectRatio();
 
 		auto arr = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
 		auto arrPrev = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
+
+		float lowest = 0;
+		if (normalizeProgress)
+		{
+			lowest = progressOverflowing ? prevProgress : FLT_MAX;
+			for (uint32_t i = 0; i < progress.count; i++)
+				lowest = Min(progress[i], lowest);
+		}
 
 		float max = prevProgress;
 		for (uint32_t i = 0; i < progress.count; i++)
@@ -1237,12 +1296,12 @@ namespace jv::bt
 			arr[i].open = max;
 			arr[i].close = max;
 			arr[i].high = max;
-			arr[i].low = 0;
+			arr[i].low = lowest;
 
 			arrPrev[i].open = f;
 			arrPrev[i].close = f;
 			arrPrev[i].high = max;
-			arrPrev[i].low = 0;
+			arrPrev[i].low = lowest;
 		}
 
 		std::string title = "progress [C: ";
@@ -1258,6 +1317,7 @@ namespace jv::bt
 		drawInfo.color = glm::vec4(1, 0, 0, 1);
 		drawInfo.title = title.c_str();
 		drawInfo.maxLinesDrawn = approximateLines ? drawInfo.maxLinesDrawn : -1;
+		drawInfo.normalize = normalizeProgress;
 		stbt.renderer.DrawLineGraph(drawInfo);
 
 		drawInfo.points = arrPrev.ptr;

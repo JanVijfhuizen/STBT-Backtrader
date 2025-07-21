@@ -34,8 +34,10 @@
     <ClInclude Include="Include\Algorithms\KMeans.h" />
     <ClInclude Include="Include\Algorithms\NNet.h" />
     <ClInclude Include="Include\Traders\NNetTrader.h" />
+    <ClInclude Include="Include\Traders\Modules\MBounds.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\MBounds.cpp" />
     <ClCompile Include="Src\NNetTrader.cpp" />
     <ClCompile Include="Src\DynNNet.cpp" />
     <ClCompile Include="Src\HyperNNet.cpp" />

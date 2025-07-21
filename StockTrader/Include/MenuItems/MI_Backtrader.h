@@ -37,7 +37,7 @@ namespace jv::bt
 		char lengthBuffer[8];
 		char zoomBuffer[8];
 		char feeBuffer[8];
-		char runCountBuffer[8];
+		char runCountBuffer[16];
 		bool log;
 		bool training;
 		bool approximateLines;
@@ -45,6 +45,7 @@ namespace jv::bt
 		bool pauseOnFinishAll;
 		bool running;
 		int runType;
+		int prevRunType;
 
 		RunInfo runInfo;
 
@@ -76,6 +77,8 @@ namespace jv::bt
 		Queue<float> progress;
 		float prevProgress;
 		FPFNTester fpfnTester;
+		float progressPct;
+		bool normalizeProgress;
 
 		void Load(STBT& stbt) override;
 		bool DrawMainMenu(STBT& stbt, uint32_t& index);

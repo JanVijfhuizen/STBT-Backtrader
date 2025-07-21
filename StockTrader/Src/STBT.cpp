@@ -50,14 +50,22 @@ namespace jv::bt
 			uint32_t mul = menu.index == 0 ? 1 : 2;
 			mul = outputFocused ? 4 : mul;
 
+			auto flags = WIN_FLAGS;
+			flags |= outputFocused ? ImGuiWindowFlags_HorizontalScrollbar : 0;
+
 			// Draw output window.
-			ImGui::Begin("Output", nullptr, WIN_FLAGS | ImGuiWindowFlags_HorizontalScrollbar);
+			ImGui::Begin("Output", nullptr, flags);
 			ImGui::SetWindowPos({ 0, 400 });
 			ImGui::SetWindowSize({ 200.f * mul, 200 });
 			outputFocused = ImGui::IsWindowFocused();
 
 			for (auto& a : output)
+			{
+				ImVec4 col = { a.color.r, a.color.g, a.color.b, a.color.a };
+				ImGui::PushStyleColor(ImGuiCol_Text, col);
 				ImGui::Text(a.buffer);
+				ImGui::PopStyleColor();
+			}
 
 			ImGui::End();
 

@@ -29,8 +29,13 @@ int main()
 		jv::ArenaCreateInfo arenaCreateInfo{};
 		arenaCreateInfo.alloc = MAlloc;
 		arenaCreateInfo.free = MFree;
+		arenaCreateInfo.memorySize = 4096 * 256 * 32 * 16;
 		arena = jv::Arena::Create(arenaCreateInfo);
-		tempArena = jv::Arena::Create(arenaCreateInfo);
+
+		auto tempArenaCreateInfo = arenaCreateInfo;
+		tempArenaCreateInfo.memorySize = 4096 * 256 * 32;
+
+		tempArena = jv::Arena::Create(tempArenaCreateInfo);
 	}
 
 	auto tradTrader = jv::TradTrader::Create(arena, tempArena);

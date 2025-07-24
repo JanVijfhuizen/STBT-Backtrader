@@ -245,7 +245,26 @@ namespace jv::ai
 				const uint32_t to = info.inputCount + (rand() % (neurons.count - info.inputCount));
 
 				const Key key(from, to);
-				if (!nnet.weightMap.Contains(key.value))
+				const uint64_t* index = nnet.neuronMap.Contains(key.value);
+
+				bool valid = true;
+
+				if (index)
+				{
+					// Check if this instance already has this weight.			
+					for (auto& weight : weights)
+						if (weight == *index)
+						{
+							valid = false;
+							break;
+						}
+
+					if (valid)
+					{
+						weights.Add() = *index;
+					}
+				}		
+				else
 				{
 					const uint32_t weightIndex = nnet.weights.count;
 					auto& newWeight = nnet.weights.Add();

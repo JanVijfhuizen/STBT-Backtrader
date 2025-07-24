@@ -245,7 +245,7 @@ namespace jv::ai
 				const uint32_t to = info.inputCount + (rand() % (neurons.count - info.inputCount));
 
 				const Key key(from, to);
-				const uint64_t* index = nnet.neuronMap.Contains(key.value);
+				const uint64_t* index = nnet.weightMap.Contains(key.value);
 
 				bool valid = true;
 

@@ -1396,7 +1396,7 @@ namespace jv::bt
 			info.color = colors[i];
 			info.noBackground = i == 1;
 			info.inverse = i == 1;
-			info.zoom = zoom;
+			//info.zoom = zoom;
 			info.overrideCeiling = ceiling;
 			stbt.renderer.DrawDistributionGraph(info);
 		}

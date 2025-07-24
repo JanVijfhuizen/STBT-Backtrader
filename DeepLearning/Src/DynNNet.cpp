@@ -331,12 +331,28 @@ namespace jv::ai
 			nums[weight.from]++;
 		}
 
+		for (auto& instance : generation)
+		{
+			for (auto& w : instance.weights)
+				assert(w < 5000);
+			for (auto& n : instance.neurons)
+				assert(n < 5000);
+		}
+
 		for (uint32_t i = 0; i < neurons.count; i++)
 		{
 			if (nums[i] == 0)
 				continue;
 			auto& neuron = neurons[i];
 			neuron.cWeights = CreateArray<uint32_t>(arena, nums[i]);
+		}
+
+		for (auto& instance : generation)
+		{
+			for (auto& w : instance.weights)
+				assert(w < 5000);
+			for (auto& n : instance.neurons)
+				assert(n < 5000);
 		}
 
 		for (auto& i : nums)
@@ -790,6 +806,181 @@ namespace jv::ai
 	void DynNNet::Destroy(Arena& arena, const DynNNet& nnet)
 	{
 		arena.DestroyScope(nnet.scope);
+	}
+
+	[[nodiscard]] std::string ConvToFilePath(const char* file)
+	{
+		return "DynNNets/" + std::string(file) + ".dnnet";
+	}
+
+	void DynNNet::Save(const char* file)
+	{
+		if (std::string(file).empty())
+			return;
+
+		const auto path = ConvToFilePath(file);
+		std::ofstream fout(path);
+		assert(fout.is_open());
+
+		fout << neurons.count << std::endl;
+		fout << weights.count << std::endl;
+		fout << generation.length << std::endl;
+
+		// Save neurons/weights.
+		for (const auto& neuron : neurons)
+			fout << static_cast<uint32_t>(neuron.type) << std::endl;
+		for (const auto& weight : weights)
+		{
+			fout << weight.from << std::endl;
+			fout << weight.to << std::endl;
+		}
+
+		// Save result.
+		fout << result.neurons.length << std::endl;
+		fout << result.weights.length << std::endl;
+		for (auto& neuron : result.neurons)
+			fout << neuron << std::endl;
+		for (auto& weight : result.weights)
+			fout << weight << std::endl;
+
+		const size_t s = GetParameterSize(result);
+		for (uint32_t i = 0; i < s; i++)
+		{
+			const float f = result.parameters[i];
+			fout << f << std::endl;
+		}	
+
+		// Save generation.
+		for (auto& instance : generation)
+		{
+			fout << instance.neurons.length << std::endl;
+			fout << instance.weights.length << std::endl;
+			for (auto& neuron : instance.neurons)
+				fout << neuron << std::endl;
+			for (auto& weight : instance.weights)
+				fout << weight << std::endl;
+		}
+
+		fout.close();
+	}
+	void DynNNet::Load(const char* file, Arena& arena)
+	{
+		if (std::string(file).empty())
+			return;
+
+		const auto path = ConvToFilePath(file);
+		std::ifstream fin(path);
+		if (!fin.is_open())
+			return;
+
+		std::string line;
+
+		// Load lengths/counts so that data can easily get converted into the nnet.
+		
+		std::getline(fin, line);
+		const uint32_t neuronCount = std::stoi(line);
+		std::getline(fin, line);
+		const uint32_t weightCount = std::stoi(line);
+		std::getline(fin, line);
+		const uint32_t generationLength = std::stoi(line);
+
+		if (generationLength != generation.length)
+			return;
+
+		// Reset scope.
+		arena.DestroyScope(scope);
+
+		neurons.count = neuronCount;
+		weights.count = weightCount;
+
+		// Set up DynNNets architecture.
+
+		for (uint32_t i = 0; i < neuronCount; i++)
+		{
+			std::getline(fin, line);
+			const uint32_t type = std::stoi(line);
+			auto& neuron = neurons[i] = {};
+			neuron.type = static_cast<Neuron::Type>(type);
+		}
+
+		for (uint32_t i = 0; i < weightCount; i++)
+		{
+			std::getline(fin, line);
+			const uint32_t from = std::stoi(line);
+			std::getline(fin, line);
+			const uint32_t to = std::stoi(line);
+			
+			auto& weight = weights[i];
+			weight.from = from;
+			weight.to = to;
+		}
+
+		// Now load in the main result.
+		resultScope = arena.CreateScope();
+		result = {};
+
+		std::getline(fin, line);
+		const uint32_t neuronLength = std::stoi(line);
+		result.neurons = CreateArray<uint32_t>(arena, neuronLength);
+
+		std::getline(fin, line);
+		const uint32_t weightLength = std::stoi(line);
+		result.weights = CreateArray<uint32_t>(arena, weightLength);
+
+		for (uint32_t i = 0; i < neuronLength; i++)
+		{
+			std::getline(fin, line);
+			const uint32_t v = std::stoi(line);
+			result.neurons[i] = v;
+		}
+
+		for (uint32_t i = 0; i < weightLength; i++)
+		{
+			std::getline(fin, line);
+			const uint32_t v = std::stoi(line);
+			result.weights[i] = v;
+		}
+
+		const size_t s = GetParameterSize(result);
+		
+		result.parameters = arena.New<float>();
+		for (uint32_t i = 0; i < s; i++)
+		{
+			std::getline(fin, line);
+			float f = std::stof(line);
+			result.parameters[i] = f;
+		}
+
+		// Load in the generation.
+		generationScope = arena.CreateScope();
+
+		for (uint32_t i = 0; i < generationLength; i++)
+		{
+			// I don't load in parameters because it's irrelevant.
+			auto& instance = generation[i] = {};
+
+			std::getline(fin, line);
+			const uint32_t neuronLength = std::stoi(line);
+			instance.neurons = CreateArray<uint32_t>(arena, neuronLength);
+
+			std::getline(fin, line);
+			const uint32_t weightLength = std::stoi(line);
+			instance.weights = CreateArray<uint32_t>(arena, weightLength);
+
+			for (uint32_t i = 0; i < neuronLength; i++)
+			{
+				std::getline(fin, line);
+				const uint32_t v = std::stoi(line);
+				instance.neurons[i] = v;
+			}
+
+			for (uint32_t i = 0; i < weightLength; i++)
+			{
+				std::getline(fin, line);
+				const uint32_t v = std::stoi(line);
+				instance.weights[i] = v;
+			}
+		}
 	}
 	void DynInstance::Copy(Arena& arena, DynInstance& dst, const bool copyParameters) const
 	{

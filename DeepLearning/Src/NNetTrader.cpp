@@ -225,6 +225,9 @@ namespace jv
 
 				info.progress->Add() = nnet.generationRating;
 				ptr->genRating = 0;
+
+				if (ptr->saveFile)
+					ptr->nnet.Save(ptr->saveFile);
 			}
 		}
 	}
@@ -276,6 +279,10 @@ namespace jv
 		nnet.kmPointCount = 3;
 		nnet.gaLength = 60;
 		nnet.gaKmPointCount = 3;
+
+		// I do some things twice but it's fine, it won't be a performance bottleneck or anything.
+		if (trader.loadFile)
+			nnet.Load(trader.loadFile, arena);
 
 		return trader;
 	}

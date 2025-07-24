@@ -26,10 +26,11 @@ namespace jv
 
 	struct NNetTrader final
 	{
-		NNetTraderCreateInfo info;
+		const char* loadFile = "loadfile";
+		const char* saveFile = "savefile";
 
-		uint32_t epochs = 25;
-		uint32_t batchSize = 20;
+		uint32_t epochs = 1; // 25
+		uint32_t batchSize = 1; // 20
 		uint32_t maxCyclesWithoutProgress = 5;
 
 		float cycleHighestRating = 0;

@@ -18,8 +18,8 @@ namespace jv::ai
 		uint32_t generationSize = 500;
 		// How many mutations per new (non conceived) instance.
 		uint32_t initialAlpha = 10;
-		uint32_t neuronCapacity = 1000;
-		uint32_t weightCapacity = 5000;
+		uint32_t neuronCapacity = 4000;
+		uint32_t weightCapacity = 20000;
 		bool connectStartingNeurons = true;
 	};
 
@@ -148,6 +148,9 @@ namespace jv::ai
 
 		[[nodiscard]] static DynNNet Create(Arena& arena, Arena& tempArena, const DynNNetCreateInfo& info);
 		static void Destroy(Arena& arena, const DynNNet& nnet);
+
+		void Save(const char* file);
+		void Load(const char* file, Arena& arena);
 	};
 }
 

@@ -21,6 +21,11 @@ namespace jv::ai
 			uint64_t value;
 		};
 
+		Key() 
+		{
+
+		}
+
 		Key(const uint32_t from, const uint32_t to)
 		{
 			this->from = from;
@@ -835,6 +840,39 @@ namespace jv::ai
 			fout << weight.to << std::endl;
 		}
 
+		// Save maps.
+		fout << neuronMap.count << std::endl;
+		for (uint32_t i = 0; i < neuronMap.length; i++)
+		{
+			auto& keyPair = neuronMap.ptr[i];
+			if (keyPair.key == SIZE_MAX)
+				continue;
+
+			Key key{};
+			key.value = keyPair.key;
+
+			fout << i << std::endl;
+			fout << key.from << std::endl;
+			fout << key.to << std::endl;
+			fout << keyPair.value << std::endl;
+		}
+
+		fout << weightMap.count << std::endl;
+		for (uint32_t i = 0; i < weightMap.length; i++)
+		{
+			auto& keyPair = weightMap.ptr[i];
+			if (keyPair.key == SIZE_MAX)
+				continue;
+
+			Key key{};
+			key.value = keyPair.key;
+
+			fout << i << std::endl;
+			fout << key.from << std::endl;
+			fout << key.to << std::endl;
+			fout << keyPair.value << std::endl;
+		}
+
 		// Save result.
 		fout << result.neurons.length << std::endl;
 		fout << result.weights.length << std::endl;
@@ -876,7 +914,6 @@ namespace jv::ai
 		std::string line;
 
 		// Load lengths/counts so that data can easily get converted into the nnet.
-		
 		std::getline(fin, line);
 		const uint32_t neuronCount = std::stoi(line);
 		std::getline(fin, line);
@@ -888,13 +925,12 @@ namespace jv::ai
 			return;
 
 		// Reset scope.
-		arena.DestroyScope(scope);
+		arena.DestroyScope(resultScope);
 
 		neurons.count = neuronCount;
 		weights.count = weightCount;
 
 		// Set up DynNNets architecture.
-
 		for (uint32_t i = 0; i < neuronCount; i++)
 		{
 			std::getline(fin, line);
@@ -913,6 +949,49 @@ namespace jv::ai
 			auto& weight = weights[i];
 			weight.from = from;
 			weight.to = to;
+		}
+
+		// Load maps.
+		std::getline(fin, line);
+		const uint32_t nMapCount = std::stoi(line);
+		for (uint32_t i = 0; i < neurons.length; i++)
+			neuronMap.ptr[i] = {};
+		neuronMap.count = nMapCount;
+		for (uint32_t i = 0; i < nMapCount; i++)
+		{
+			std::getline(fin, line);
+			const uint32_t id = std::stoi(line);
+			std::getline(fin, line);
+			const uint32_t from = std::stoi(line);
+			std::getline(fin, line);
+			const uint32_t to = std::stoi(line);
+			std::getline(fin, line);
+			const uint64_t value = std::stoll(line);
+
+			auto& keyPair = neuronMap.ptr[id];
+			keyPair.key = Key{ from, to }.value;
+			keyPair.value = value;
+		}
+
+		std::getline(fin, line);
+		const uint32_t wMapCount = std::stoi(line);
+		for (uint32_t i = 0; i < weights.length; i++)
+			weightMap.ptr[i] = {};
+		weightMap.count = wMapCount;
+		for (uint32_t i = 0; i < wMapCount; i++)
+		{
+			std::getline(fin, line);
+			const uint32_t id = std::stoi(line);
+			std::getline(fin, line);
+			const uint32_t from = std::stoi(line);
+			std::getline(fin, line);
+			const uint32_t to = std::stoi(line);
+			std::getline(fin, line);
+			const uint64_t value = std::stoll(line);
+
+			auto& keyPair = weightMap.ptr[id];
+			keyPair.key = Key{ from, to }.value;
+			keyPair.value = value;
 		}
 
 		// Now load in the main result.
@@ -942,8 +1021,8 @@ namespace jv::ai
 		}
 
 		const size_t s = GetParameterSize(result);
-		
-		result.parameters = arena.New<float>();
+		result.parameters = arena.New<float>(s);
+
 		for (uint32_t i = 0; i < s; i++)
 		{
 			std::getline(fin, line);
@@ -956,7 +1035,6 @@ namespace jv::ai
 
 		for (uint32_t i = 0; i < generationLength; i++)
 		{
-			// I don't load in parameters because it's irrelevant.
 			auto& instance = generation[i] = {};
 
 			std::getline(fin, line);
@@ -966,6 +1044,10 @@ namespace jv::ai
 			std::getline(fin, line);
 			const uint32_t weightLength = std::stoi(line);
 			instance.weights = CreateArray<uint32_t>(arena, weightLength);
+
+			// I don't load in parameters because it's irrelevant.
+			const size_t s = GetParameterSize(instance);
+			instance.parameters = arena.New<float>(s);
 
 			for (uint32_t i = 0; i < neuronLength; i++)
 			{

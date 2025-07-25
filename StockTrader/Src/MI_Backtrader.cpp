@@ -272,6 +272,8 @@ namespace jv::bt
 						trades[i].change = 0;
 
 					runDayIndex = 0;
+					runScope = stbt.arena.CreateScope();
+
 					if (bot.init)
 					{
 						auto botInfo = GetBotInfo(stbt);
@@ -281,8 +283,7 @@ namespace jv::bt
 							runDayIndex = runInfo.length;
 						}
 					}
-
-					runScope = stbt.arena.CreateScope();
+					
 					runLog = Log::Create(stbt.arena, stbtScope, runInfo.from, runInfo.to);
 					stepCompleted = false;
 					tpStart = std::chrono::steady_clock::now();

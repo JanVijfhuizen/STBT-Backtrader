@@ -92,7 +92,7 @@ namespace jv::bt
 		ArenaCreateInfo arenaCreateInfo{};
 		arenaCreateInfo.alloc = MAlloc;
 		arenaCreateInfo.free = MFree;
-		arenaCreateInfo.memorySize = 4096 * 256 * 32;
+		arenaCreateInfo.memorySize = 4096 * 256 * 32 * 8;
 
 		auto otherArenasCreateInfo = arenaCreateInfo;
 		otherArenasCreateInfo.memorySize = 4096 * 256 * 32;

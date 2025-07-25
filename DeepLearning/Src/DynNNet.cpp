@@ -200,8 +200,10 @@ namespace jv::ai
 						// We can assume the connections will also be there.
 						const Key inpKey(weight.from, *index);
 						const Key outpKey(*index, weight.to);
-						weights.Add() = *nnet.weightMap.Contains(inpKey.value);
-						weights.Add() = *nnet.weightMap.Contains(outpKey.value);
+						const uint32_t from = *nnet.weightMap.Contains(inpKey.value);
+						const uint32_t to = *nnet.weightMap.Contains(outpKey.value);
+						weights.Add() = from;
+						weights.Add() = to;
 					}
 				}
 				else
@@ -231,7 +233,8 @@ namespace jv::ai
 				}
 
 				// Remove old weight.
-				weights.RemoveAtOrdered(refWeightIndex);
+				//if(valid)
+					//weights.RemoveAtOrdered(refWeightIndex);
 			}
 			else if(canGenerateWeight)
 			{
@@ -260,9 +263,7 @@ namespace jv::ai
 						}
 
 					if (valid)
-					{
 						weights.Add() = *index;
-					}
 				}		
 				else
 				{
@@ -273,6 +274,7 @@ namespace jv::ai
 					nnet.weightMap.Insert(weightIndex, key.value);
 					weights.Add() = weightIndex;
 				}
+				
 			}
 		}
 		LinearSort(neurons.ptr, neurons.count, ComparerI);
@@ -354,28 +356,12 @@ namespace jv::ai
 			nums[weight.from]++;
 		}
 
-		for (auto& instance : generation)
-		{
-			for (auto& w : instance.weights)
-				assert(w < 5000);
-			for (auto& n : instance.neurons)
-				assert(n < 5000);
-		}
-
 		for (uint32_t i = 0; i < neurons.count; i++)
 		{
 			if (nums[i] == 0)
 				continue;
 			auto& neuron = neurons[i];
 			neuron.cWeights = CreateArray<uint32_t>(arena, nums[i]);
-		}
-
-		for (auto& instance : generation)
-		{
-			for (auto& w : instance.weights)
-				assert(w < 5000);
-			for (auto& n : instance.neurons)
-				assert(n < 5000);
 		}
 
 		for (auto& i : nums)
@@ -811,9 +797,12 @@ namespace jv::ai
 			for (uint32_t i = 0; i < info.inputCount; i++)
 				for (uint32_t j = 0; j < info.outputCount; j++)
 				{
+					Key key{ i, info.inputCount + j };
+					nnet.weightMap.Insert(nnet.weights.count, key.value);
+
 					auto& weight = nnet.weights.Add();
-					weight.from = i;
-					weight.to = info.inputCount + j;
+					weight.from = key.from;
+					weight.to = key.to;
 				}	
 
 		nnet.resultScope = arena.CreateScope();

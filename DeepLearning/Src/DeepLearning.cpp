@@ -29,7 +29,7 @@ int main()
 		jv::ArenaCreateInfo arenaCreateInfo{};
 		arenaCreateInfo.alloc = MAlloc;
 		arenaCreateInfo.free = MFree;
-		arenaCreateInfo.memorySize = 4096 * 256 * 32;
+		arenaCreateInfo.memorySize = 4096 * 256 * 32 * 8;
 		arena = jv::Arena::Create(arenaCreateInfo);
 
 		auto tempArenaCreateInfo = arenaCreateInfo;

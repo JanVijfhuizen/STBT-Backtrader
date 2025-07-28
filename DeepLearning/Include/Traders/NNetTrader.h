@@ -30,7 +30,7 @@ namespace jv
 		const char* saveFile = "savefile";
 
 		uint32_t epochs = 1; // 25
-		uint32_t batchSize = 20; // 20
+		uint32_t batchSize = 5; // 20
 		uint32_t maxCyclesWithoutProgress = 8;
 
 		float cycleHighestRating = 0;

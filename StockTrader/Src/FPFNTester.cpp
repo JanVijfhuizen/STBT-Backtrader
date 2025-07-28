@@ -12,13 +12,11 @@ namespace jv
 	}
 	float FPFNTester::GetRating()
 	{
-		float p = falsePositives;
-		p /= negatives;
-		float n = falseNegatives;
-		n /= positives;
+		float p = float(positives - falseNegatives) / float(positives + falsePositives);
+		float n = float(negatives - falsePositives) / float(negatives + falseNegatives);
 
 		// Pow2 to exponentially punish higher offsets.
-		return 1.f - (powf(p, 2) + powf(n, 2)) * .5;
+		return (powf(p, 2) + powf(n, 2)) * .5;
 	}
 	void FPFNTester::Reset()
 	{

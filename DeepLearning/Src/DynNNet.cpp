@@ -447,6 +447,11 @@ namespace jv::ai
 		info.mutateMultiplier = gaMutateMultiplier;
 		info.kmPointCount = gaKmPointCount;
 		ga = GeneticAlgorithm::Create(arena, info);
+		if (generationId > 0)
+		{
+			// Set first instance of GA to previous values.
+			memcpy(ga.generation[0], current.parameters, GetParameterSize(current));
+		}
 	}
 
 	void DynNNet::DestroyParameters(Arena& arena)
@@ -567,12 +572,15 @@ namespace jv::ai
 				for (const auto& j : cpyGen[i].weights)
 					assert(j < weights.count);
 
+			// Copy result.
+			result.Copy(arena, generation[0], true);
+
 			// Copy apex.
 			for (uint32_t i = 0; i < apexLen; i++)
-				cpyGen[i].Copy(arena, generation[i], true);
+				cpyGen[i].Copy(arena, generation[i + 1], true);
 
 			// Copy and mutate from apex.
-			for (uint32_t i = apexLen; i < end; i++)
+			for (uint32_t i = apexLen + 1; i < end; i++)
 			{
 				uint32_t a = rand() % breedableLen;
 				generation[i] = Breed(arena, tempArena, *this, cpyGen[a]);

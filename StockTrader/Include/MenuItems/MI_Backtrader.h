@@ -75,6 +75,7 @@ namespace jv::bt
 
 		float zoom;
 		Queue<float> progress;
+		Queue<float> progressResult;
 		float prevProgress;
 		FPFNTester fpfnTester;
 		float progressPct;

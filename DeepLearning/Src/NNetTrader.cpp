@@ -167,9 +167,13 @@ namespace jv
 			for (auto& tester : ptr->testers)
 				r += tester.GetRating();
 
-			// Not ideal that it can only show a single one atm.
-			if (r > nnet.rating)
+			const bool isBestOfPrevGen = nnet.currentId == 0 && nnet.ga.genId == 0 && nnet.ga.trainId == 0;
+
+			if (isBestOfPrevGen)
+			{
 				*info.fpfnTester = ptr->testers[0];
+				info.progressResult->Add() = r;
+			}
 
 			nnet.RateParameters(arena, tempArena, r);
 			ptr->currentBatch = 0;

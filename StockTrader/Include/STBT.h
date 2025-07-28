@@ -44,6 +44,7 @@ namespace jv::bt
 		STBTScope* scope;
 		Queue<OutputMsg>* output;
 		Queue<float>* progress;
+		Queue<float>* progressResult;
 		FPFNTester* fpfnTester;
 		float* progressPct;
 

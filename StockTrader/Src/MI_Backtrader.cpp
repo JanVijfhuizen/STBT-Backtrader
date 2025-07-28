@@ -121,6 +121,7 @@ namespace jv::bt
 		highlightedGraphIndex = 0;
 
 		progress = CreateQueue<float>(stbt.arena, 128);
+		progressResult = CreateQueue<float>(stbt.arena, 128);
 		prevProgress = FLT_MIN;
 	}
 
@@ -539,6 +540,7 @@ namespace jv::bt
 		botUpdateInfo.scope = &stbtScope;
 		botUpdateInfo.output = &stbt.output;
 		botUpdateInfo.progress = &progress;
+		botUpdateInfo.progressResult = &progressResult;
 		botUpdateInfo.fpfnTester = &fpfnTester;
 		botUpdateInfo.userPtr = bot.userPtr;
 		botUpdateInfo.start = runInfo.from;
@@ -677,6 +679,7 @@ namespace jv::bt
 		if (ImGui::Button("Reset Progress"))
 		{
 			progress.Clear();
+			progressResult.Clear();
 			prevProgress = FLT_MIN;
 		}
 		if (ImGui::Button("Reset FPFN"))
@@ -1279,13 +1282,17 @@ namespace jv::bt
 
 		auto arr = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
 		auto arrPrev = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
+		auto arrResult = CreateArray<gr::GraphPoint>(stbt.frameArena, progress.count);
 
 		float lowest = 0;
 		if (normalizeProgress)
 		{
 			lowest = progressOverflowing ? prevProgress : FLT_MAX;
 			for (uint32_t i = 0; i < progress.count; i++)
+			{
 				lowest = Min(progress[i], lowest);
+				lowest = Min(progressResult[i], lowest);
+			}
 		}
 
 		float max = prevProgress;
@@ -1303,6 +1310,12 @@ namespace jv::bt
 			arrPrev[i].close = f;
 			arrPrev[i].high = max;
 			arrPrev[i].low = lowest;
+
+			const float fR = progressResult[i];
+			arrResult[i].open = fR;
+			arrResult[i].close = fR;
+			arrResult[i].high = max;
+			arrResult[i].low = lowest;
 		}
 
 		std::string title = "progress [C: ";
@@ -1323,6 +1336,11 @@ namespace jv::bt
 
 		drawInfo.points = arrPrev.ptr;
 		drawInfo.color = glm::vec4(0, 1, 0, 1);
+		drawInfo.title = nullptr;
+		stbt.renderer.DrawLineGraph(drawInfo);
+
+		drawInfo.points = arrResult.ptr;
+		drawInfo.color = glm::vec4(0, 0, 1, 1);
 		drawInfo.title = nullptr;
 		stbt.renderer.DrawLineGraph(drawInfo);
 	}

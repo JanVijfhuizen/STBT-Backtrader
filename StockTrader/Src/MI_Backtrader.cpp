@@ -111,6 +111,8 @@ namespace jv::bt
 		snprintf(buffBuffer, sizeof(buffBuffer), "%i", n);
 		n = MAX_ZOOM;
 		snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
+		n = 1;
+		snprintf(chunkBuffer, sizeof(chunkBuffer), "%i", n);
 		float f = 1e-3f;
 		snprintf(feeBuffer, sizeof(feeBuffer), "%f", f);
 		f = 10000;
@@ -196,12 +198,20 @@ namespace jv::bt
 			drawInfo.normalizeGraph = &normalizeGraph;
 			MI_Symbols::RenderSymbolData(stbt, drawInfo);
 		}
-		
-		BackTest(stbt, true);
+
+		const uint32_t chunkSize = std::atof(chunkBuffer);
+
 		// Instead of going recursively, do this. Otherwise I'd get a stack overflow.
-		if(runType == static_cast<int>(RunType::instant))
-			while(running && runDayIndex != runInfo.length)
-				BackTest(stbt, false);
+		if (runType == static_cast<int>(RunType::instant))
+			for (uint32_t i = 0; i < chunkSize; i++)
+			{
+				BackTest(stbt, i == 0);
+				while (running && runDayIndex != runInfo.length)
+					BackTest(stbt, false);
+				if (!running)
+					break;
+			}
+			
 		return false;
 	}
 
@@ -226,237 +236,237 @@ namespace jv::bt
 
 	void MI_Backtrader::BackTest(STBT& stbt, bool render)
 	{
-		if (running)
+		if (!running)
+			return;
+
+		auto& bot = stbt.bots[algoIndex];
+
+		bool canFinish = !pauseOnFinish;
+		if (runIndex >= runInfo.totalRuns - 1)
+			canFinish = canFinish ? !pauseOnFinishAll : false;
+		bool canEnd = false;
+
+		if (render)
+			RenderRun(stbt, runInfo, canFinish, canEnd);
+
+		if (runIndex == -1)
 		{
-			auto& bot = stbt.bots[algoIndex];
-
-			bool canFinish = !pauseOnFinish;
-			if (runIndex >= runInfo.totalRuns - 1)
-				canFinish = canFinish ? !pauseOnFinishAll : false;
-			bool canEnd = false;
-
-			if(render)
-				RenderRun(stbt, runInfo, canFinish, canEnd);
-
-			if (runIndex == -1)
+			runIndex = 0;
+			runDayIndex = -1;
+			runTimePoint = std::chrono::system_clock::now();
+		}
+		else if (runIndex >= runInfo.totalRuns)
+		{
+			running = false;
+			runDayIndex = -1;
+		}
+		else
+		{
+			// If this is a new run, set everything up.
+			if (runDayIndex == -1)
 			{
-				runIndex = 0;
-				runDayIndex = -1;
-				runTimePoint = std::chrono::system_clock::now();
-			}
-			else if (runIndex >= runInfo.totalRuns)
-			{
-				running = false;
-				runDayIndex = -1;
-			}
-			else
-			{
-				// If this is a new run, set everything up.
-				if (runDayIndex == -1)
+				// If random, decide on day.
+				if (randomizeDate)
 				{
-					// If random, decide on day.
-					if (randomizeDate)
+					const uint32_t maxDiff = runInfo.range - runInfo.buffer - runInfo.length;
+					const uint32_t randOffset = rand() % maxDiff;
+					runInfo.to = randOffset;
+					runInfo.from = runInfo.to + runInfo.length;
+				}
+
+				// Fill portfolio.
+				portfolio.liquidity = std::atof(buffers[0]);
+				for (uint32_t i = 0; i < timeSeries.length; i++)
+					portfolio.stocks[i].count = static_cast<uint32_t>(*buffers[i + 1]);
+
+				stbtScope = STBTScope::Create(&portfolio, timeSeries);
+				for (uint32_t i = 0; i < timeSeries.length; i++)
+					trades[i].change = 0;
+
+				runDayIndex = 0;
+				runScope = stbt.arena.CreateScope();
+
+				if (bot.init)
+				{
+					auto botInfo = GetBotInfo(stbt);
+					if (!bot.init(botInfo))
 					{
-						const uint32_t maxDiff = runInfo.range - runInfo.buffer - runInfo.length;
-						const uint32_t randOffset = rand() % maxDiff;
-						runInfo.to = randOffset;
-						runInfo.from = runInfo.to + runInfo.length;
+						running = false;
+						runDayIndex = runInfo.length;
 					}
+				}
 
-					// Fill portfolio.
-					portfolio.liquidity = std::atof(buffers[0]);
-					for (uint32_t i = 0; i < timeSeries.length; i++)
-						portfolio.stocks[i].count = static_cast<uint32_t>(*buffers[i + 1]);
+				runLog = Log::Create(stbt.arena, stbtScope, runInfo.from, runInfo.to);
+				stepCompleted = false;
+				tpStart = std::chrono::steady_clock::now();
 
-					stbtScope = STBTScope::Create(&portfolio, timeSeries);
-					for (uint32_t i = 0; i < timeSeries.length; i++)
-						trades[i].change = 0;
+				portPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
+				relPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
+				pctPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
+			}
+			// If this run is completed, either start a new run or quit.
+			if (runDayIndex == runInfo.length)
+			{
+				if (canFinish || canEnd)
+				{
+					// Save the average of all runs.
+					for (uint32_t i = 0; i < runInfo.length; i++)
+					{
+						auto& r = gRelPoints[i];
+						r.close *= runIndex;
+						r.close += relPoints[i].close;
+						r.close /= runIndex + 1;
 
-					runDayIndex = 0;
-					runScope = stbt.arena.CreateScope();
+						r.open = r.close;
+						r.high = r.close;
+						r.low = r.close;
 
-					if (bot.init)
+						auto& p = gPortPoints[i];
+						p.close *= runIndex;
+						p.close += portPoints[i].close;
+						p.close /= runIndex + 1;
+
+						p.open = p.close;
+						p.high = p.close;
+						p.low = p.close;
+					}
+					avrDeviations[runIndex] = relPoints[runInfo.length - 1].close;
+
+					// Save market & portfolio profit percentage seperately			
+					scatterBeta[runIndex].x = pctPoints[runInfo.length - 1].close - 1.f;
+					scatterBeta[runIndex].y = portPoints[runInfo.length - 1].close / portPoints[0].close - 1.f;
+
+					scatterBetaRel[runIndex].x = scatterBeta[runIndex].x;
+					scatterBetaRel[runIndex].y = relPoints[runInfo.length - 1].close - 1.f;
+
+					if (bot.cleanup)
 					{
 						auto botInfo = GetBotInfo(stbt);
-						if (!bot.init(botInfo))
-						{
-							running = false;
-							runDayIndex = runInfo.length;
-						}
+						bot.cleanup(botInfo);
 					}
-					
-					runLog = Log::Create(stbt.arena, stbtScope, runInfo.from, runInfo.to);
-					stepCompleted = false;
-					tpStart = std::chrono::steady_clock::now();
 
-					portPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
-					relPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
-					pctPoints = CreateArray<jv::gr::GraphPoint>(stbt.arena, runInfo.length);
-				}
-				// If this run is completed, either start a new run or quit.
-				if (runDayIndex == runInfo.length)
-				{
-					if (canFinish || canEnd)
+					runDayIndex = -1;
+					runIndex++;
+
+					stbt.arena.DestroyScope(runScope);
+
+					if (canEnd)
+						runIndex = runInfo.length;
+
+					if (log)
 					{
-						// Save the average of all runs.
-						for (uint32_t i = 0; i < runInfo.length; i++)
-						{
-							auto& r = gRelPoints[i];
-							r.close *= runIndex;
-							r.close += relPoints[i].close;
-							r.close /= runIndex + 1;
-
-							r.open = r.close;
-							r.high = r.close;
-							r.low = r.close;
-
-							auto& p = gPortPoints[i];
-							p.close *= runIndex;
-							p.close += portPoints[i].close;
-							p.close /= runIndex + 1;
-
-							p.open = p.close;
-							p.high = p.close;
-							p.low = p.close;
-						}
-						avrDeviations[runIndex] = relPoints[runInfo.length - 1].close;
-
-						// Save market & portfolio profit percentage seperately			
-						scatterBeta[runIndex].x = pctPoints[runInfo.length - 1].close - 1.f;
-						scatterBeta[runIndex].y = portPoints[runInfo.length - 1].close / portPoints[0].close - 1.f;
-
-						scatterBetaRel[runIndex].x = scatterBeta[runIndex].x;
-						scatterBetaRel[runIndex].y = relPoints[runInfo.length - 1].close - 1.f;
-
-						if (bot.cleanup)
-						{
-							auto botInfo = GetBotInfo(stbt);
-							bot.cleanup(botInfo);
-						}
-							
-						runDayIndex = -1;
-						runIndex++;
-
-						stbt.arena.DestroyScope(runScope);
-
-						if (canEnd)
-							runIndex = runInfo.length;
-
-						if (log)
-						{
-							std::string s = std::format("Logs/{:%d-%m-%Y %H-%M-%OS}-", runTimePoint);
-							s += std::to_string(runIndex) + ".log";
-							Log::Save(runLog, s.c_str());
-						}	
+						std::string s = std::format("Logs/{:%d-%m-%Y %H-%M-%OS}-", runTimePoint);
+						s += std::to_string(runIndex) + ".log";
+						Log::Save(runLog, s.c_str());
 					}
-				}
-				else if((runType != static_cast<int>(RunType::stepwise)) || !stepCompleted)
-				{
-					auto tpEnd = std::chrono::steady_clock::now();
-					auto diff = std::chrono::duration_cast<std::chrono::microseconds>(tpEnd - tpStart).count();
-					timeElapsed += diff;
-					tpStart = tpEnd;
-
-					const uint32_t dayOffsetIndex = runInfo.from - runDayIndex;
-					const float fee = std::atof(feeBuffer);
-					const auto& stocks = portfolio.stocks;
-
-					const float dayLiquidity = portfolio.liquidity;
-
-					// Execute trades called on yesterday.
-					for (uint32_t i = 0; i < timeSeries.length; i++)
-					{
-						const auto open = timeSeries[i].open[dayOffsetIndex];
-						auto& trade = trades[i];
-						auto& stock = portfolio.stocks[i];
-						const float feeMod = (1.f + fee * (trade.change > 0 ? 1 : -1));
-
-						// Limit max buys.
-						if (trade.change > 0)
-						{
-							const uint32_t maxBuys = floor(dayLiquidity / (open * feeMod));
-							trade.change = Min<int32_t>(maxBuys, trade.change);
-						}
-						// Limit max sells.
-						if (trade.change < 0)
-						{
-							const int32_t maxSells = stock.count;
-							trade.change = Max<int32_t>(-maxSells, trade.change);
-						}
-
-						float change = trade.change * open;
-						change *= feeMod;
-
-						stock.count += trade.change;
-						portfolio.liquidity -= change;
-						trade.change = 0;
-					}
-
-					// Update portfolio BEFORE doing trades for the next day.
-					float portfolioValue = 0;
-					for (uint32_t i = 0; i < timeSeries.length; i++)
-					{
-						auto& num = runLog.numsInPort[i][runDayIndex] = stocks[i].count;
-						const auto close = timeSeries[i].close[dayOffsetIndex];
-						portfolioValue += close * num;
-						runLog.stockCloses[i][runDayIndex] = close;
-					}
-
-					// Update remaining info also BEFORE trading.
-					runLog.portValues[runDayIndex] = portfolioValue;
-					runLog.liquidities[runDayIndex] = portfolio.liquidity;
-
-					float close = 0;
-					float closeStart = 0;
-
-					for (uint32_t j = 0; j < timeSeries.length; j++)
-					{
-						const auto& series = timeSeries[j];
-						close += series.close[runInfo.from - runDayIndex];
-						closeStart += series.close[runInfo.from];
-					}
-
-					const float pct = close / closeStart;
-					const float rel = (portfolioValue + portfolio.liquidity) /
-						(runLog.portValues[0] + runLog.liquidities[0]) / pct;
-
-					runLog.marktPct[runDayIndex] = pct;
-					runLog.marktRel[runDayIndex] = rel;
-
-					// Update bot info.
-					auto botInfo = GetBotInfo(stbt);
-					botInfo.trades = trades;
-					botInfo.current = dayOffsetIndex;
-
-					if (!bot.update(botInfo))
-						runDayIndex = runInfo.length;
-					else
-						runDayIndex++;
-					stepCompleted = true;
 				}
 			}
-
-			RenderGraphs(stbt, runInfo, render && (showIndex == ShowIndex::current));
-			switch (showIndex)
+			else if ((runType != static_cast<int>(RunType::stepwise)) || !stepCompleted)
 			{
-			case ShowIndex::betaScatter:
-				RenderScatter(stbt, runInfo, render);
-				break;
-			case ShowIndex::bellCurve:
-				RenderBellCurve(stbt, runInfo, render);
-				break;
-			case ShowIndex::progress:
-				RenderProgress(stbt, render);
-				break;
-			case ShowIndex::FPFN:
-				RenderFPFN(stbt, render);
-				break;
-			case ShowIndex::Custom:
-				RenderCustom(stbt, render);
-				break;
-			default:
-				break;
+				auto tpEnd = std::chrono::steady_clock::now();
+				auto diff = std::chrono::duration_cast<std::chrono::microseconds>(tpEnd - tpStart).count();
+				timeElapsed += diff;
+				tpStart = tpEnd;
+
+				const uint32_t dayOffsetIndex = runInfo.from - runDayIndex;
+				const float fee = std::atof(feeBuffer);
+				const auto& stocks = portfolio.stocks;
+
+				const float dayLiquidity = portfolio.liquidity;
+
+				// Execute trades called on yesterday.
+				for (uint32_t i = 0; i < timeSeries.length; i++)
+				{
+					const auto open = timeSeries[i].open[dayOffsetIndex];
+					auto& trade = trades[i];
+					auto& stock = portfolio.stocks[i];
+					const float feeMod = (1.f + fee * (trade.change > 0 ? 1 : -1));
+
+					// Limit max buys.
+					if (trade.change > 0)
+					{
+						const uint32_t maxBuys = floor(dayLiquidity / (open * feeMod));
+						trade.change = Min<int32_t>(maxBuys, trade.change);
+					}
+					// Limit max sells.
+					if (trade.change < 0)
+					{
+						const int32_t maxSells = stock.count;
+						trade.change = Max<int32_t>(-maxSells, trade.change);
+					}
+
+					float change = trade.change * open;
+					change *= feeMod;
+
+					stock.count += trade.change;
+					portfolio.liquidity -= change;
+					trade.change = 0;
+				}
+
+				// Update portfolio BEFORE doing trades for the next day.
+				float portfolioValue = 0;
+				for (uint32_t i = 0; i < timeSeries.length; i++)
+				{
+					auto& num = runLog.numsInPort[i][runDayIndex] = stocks[i].count;
+					const auto close = timeSeries[i].close[dayOffsetIndex];
+					portfolioValue += close * num;
+					runLog.stockCloses[i][runDayIndex] = close;
+				}
+
+				// Update remaining info also BEFORE trading.
+				runLog.portValues[runDayIndex] = portfolioValue;
+				runLog.liquidities[runDayIndex] = portfolio.liquidity;
+
+				float close = 0;
+				float closeStart = 0;
+
+				for (uint32_t j = 0; j < timeSeries.length; j++)
+				{
+					const auto& series = timeSeries[j];
+					close += series.close[runInfo.from - runDayIndex];
+					closeStart += series.close[runInfo.from];
+				}
+
+				const float pct = close / closeStart;
+				const float rel = (portfolioValue + portfolio.liquidity) /
+					(runLog.portValues[0] + runLog.liquidities[0]) / pct;
+
+				runLog.marktPct[runDayIndex] = pct;
+				runLog.marktRel[runDayIndex] = rel;
+
+				// Update bot info.
+				auto botInfo = GetBotInfo(stbt);
+				botInfo.trades = trades;
+				botInfo.current = dayOffsetIndex;
+
+				if (!bot.update(botInfo))
+					runDayIndex = runInfo.length;
+				else
+					runDayIndex++;
+				stepCompleted = true;
 			}
+		}
+
+		RenderGraphs(stbt, runInfo, render && (showIndex == ShowIndex::current));
+		switch (showIndex)
+		{
+		case ShowIndex::betaScatter:
+			RenderScatter(stbt, runInfo, render);
+			break;
+		case ShowIndex::bellCurve:
+			RenderBellCurve(stbt, runInfo, render);
+			break;
+		case ShowIndex::progress:
+			RenderProgress(stbt, render);
+			break;
+		case ShowIndex::FPFN:
+			RenderFPFN(stbt, render);
+			break;
+		case ShowIndex::Custom:
+			RenderCustom(stbt, render);
+			break;
+		default:
+			break;
 		}
 	}
 	void MI_Backtrader::DrawLog(STBT& stbt)
@@ -654,6 +664,13 @@ namespace jv::bt
 			snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", n);
 		}
 
+		if (ImGui::InputText("Chunk Size", chunkBuffer, 7, ImGuiInputTextFlags_CharsDecimal))
+		{
+			int32_t n = std::atoi(chunkBuffer);
+			n = Max(n, 1);
+			snprintf(chunkBuffer, sizeof(chunkBuffer), "%i", n);
+		}
+
 		const char* items[]{ "Default", "Stepwise", "Instant"};
 		ImGui::Combo("Type", &runType, items, 3);
 		prevRunType = runType == 1 ? prevRunType : runType;
@@ -709,6 +726,8 @@ namespace jv::bt
 				std::getline(fin, line);
 				snprintf(zoomBuffer, sizeof(zoomBuffer), "%i", std::stoi(line));
 				std::getline(fin, line);
+				snprintf(chunkBuffer, sizeof(chunkBuffer), "%i", std::stoi(line));
+				std::getline(fin, line);
 				runType = std::stoi(line);
 				std::getline(fin, line);
 				showIndex = std::stoi(line);
@@ -744,6 +763,7 @@ namespace jv::bt
 				fout << std::atoi(buffBuffer) << std::endl;
 				fout << std::atof(feeBuffer) << std::endl;
 				fout << std::atoi(zoomBuffer) << std::endl;
+				fout << std::atoi(chunkBuffer) << std::endl;
 				fout << runType << std::endl;
 				fout << showIndex << std::endl;
 				fout << pauseOnFinish << std::endl;

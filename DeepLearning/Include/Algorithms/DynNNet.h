@@ -98,7 +98,7 @@ namespace jv::ai
 		float breedablePct = .4f;
 		float arrivalsPct = .1f;
 		float weightToNeuronMutateChance = .5f;
-		uint32_t alpha = 1;
+		uint32_t alpha = 10;
 		uint32_t kmPointCount = 3;
 		uint32_t kmCycles = 50;
 

@@ -279,7 +279,7 @@ namespace jv
 		dynInfo.outputCount = 2 * info.timeFrames.length;
 		dynInfo.generationSize = 80;
 		auto& nnet = trader.nnet = jv::ai::DynNNet::Create(arena, tempArena, dynInfo);
-		nnet.alpha = 10;
+		nnet.alpha = 2; // 10
 		nnet.kmPointCount = 3;
 		nnet.gaLength = 60;
 		nnet.gaKmPointCount = 3;

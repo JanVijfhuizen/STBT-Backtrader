@@ -29,8 +29,8 @@ namespace jv
 		const char* loadFile = "loadfile";
 		const char* saveFile = "savefile";
 
-		uint32_t epochs = 1; // 25
-		uint32_t batchSize = 5; // 20
+		uint32_t epochs = 25; // 25
+		uint32_t batchSize = 50; // 20
 		uint32_t maxCyclesWithoutProgress = 8;
 
 		float cycleHighestRating = 0;

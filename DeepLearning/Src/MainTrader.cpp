@@ -106,7 +106,7 @@ namespace jv
 			{
 				mt->ga.Rate(*mt->arena, *mt->tempArena, mt->rating, info.output);
 				if (mt->ga.trainId == 0)
-					info.progress->Add() = mt->ga.genRating;
+					info.progress->Add().test = mt->ga.genRating;
 				mt->rating = 0;
 				mt->currentInstanceRun = 0;
 			}

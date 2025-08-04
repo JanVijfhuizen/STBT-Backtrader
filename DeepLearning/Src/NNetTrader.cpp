@@ -172,7 +172,8 @@ namespace jv
 			if (isBestOfPrevGen)
 			{
 				*info.fpfnTester = ptr->testers[0];
-				info.progressResult->Add() = r;
+				ptr->progress.validation = r;
+				info.progress->Add() = ptr->progress;
 			}
 
 			nnet.RateParameters(arena, tempArena, r);
@@ -227,7 +228,7 @@ namespace jv
 				msg.color = glm::vec4(.8, .8, .8, 1);
 				info.output->Add() = msg;
 
-				info.progress->Add() = nnet.generationRating;
+				ptr->progress.test = nnet.generationRating;
 				ptr->genRating = 0;
 
 				if (ptr->saveFile)

@@ -30,7 +30,7 @@ namespace jv
 		const char* saveFile = "savefile";
 
 		uint32_t epochs = 25; // 25
-		uint32_t batchSize = 50; // 20
+		uint32_t batchSize = 200; // 20
 		uint32_t maxCyclesWithoutProgress = 8;
 
 		float cycleHighestRating = 0;
@@ -50,6 +50,8 @@ namespace jv
 		uint32_t stockId;
 		float rating;
 		float genRating;
+
+		bt::STBTProgress progress;
 
 		[[nodiscard]] static NNetTrader Create(Arena& arena, Arena& tempArena, const NNetTraderCreateInfo& info);
 		static void Destroy(Arena& arena, NNetTrader& trader);

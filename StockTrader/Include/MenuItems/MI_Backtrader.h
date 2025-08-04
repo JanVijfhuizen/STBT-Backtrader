@@ -75,8 +75,7 @@ namespace jv::bt
 		glm::vec2* scatterBetaRel;
 
 		float zoom;
-		Queue<float> progress;
-		Queue<float> progressResult;
+		Queue<STBTProgress> progress;
 		float prevProgress;
 		FPFNTester fpfnTester;
 		float progressPct;

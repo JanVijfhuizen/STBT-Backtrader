@@ -119,17 +119,20 @@ namespace jv
 				gt.group.Rate(*gt.arena, *gt.tempArena, gt.score, *info.output);
 				if (gt.group.trainId == 0)
 				{
-					info.progress->Add() = gt.group.genRating;
+					gt.progress.test = gt.group.genRating;
 					auto& res = gt.group.result;
 					std::string str = std::to_string(res.neurons.length) + " / " + std::to_string(res.weights.length);
 					info.output->Add() = bt::OutputMsg::Create(str.c_str());
-				}	
+				}
 			}
 			else
 			{
 				gt.ga.Rate(*gt.arena, *gt.tempArena, gt.score, info.output);
 				if (gt.ga.trainId == 0)
-					info.progress->Add() = gt.ga.genRating;
+				{
+					gt.progress.validation = gt.ga.genRating;
+					info.progress->Add() = gt.progress;
+				}					
 			}	
 		}
 			

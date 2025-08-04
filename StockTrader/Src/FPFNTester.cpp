@@ -12,11 +12,15 @@ namespace jv
 	}
 	float FPFNTester::GetRating()
 	{
-		float p = float(positives - falseNegatives) / float(positives + falsePositives);
-		float n = float(negatives - falsePositives) / float(negatives + falseNegatives);
+		// Will crash out if positives + fPositives == 0.
+		float p = 1.f - float(positives - falseNegatives) / positives;
+		float n = 1.f - float(negatives - falsePositives) / negatives;
 
 		// Pow2 to exponentially punish higher offsets.
-		return (powf(p, 2) + powf(n, 2)) * .5;
+		// Multiply with eachother to make sure it doesn't try to optimize one side only.
+		// Reverse to make the first few steps much more impactful than later optimization.
+		const float r = (1.f - pow(p, 2)) * (1.f - pow(n, 2));
+		return r;
 	}
 	void FPFNTester::Reset()
 	{

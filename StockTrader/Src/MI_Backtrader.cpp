@@ -122,8 +122,7 @@ namespace jv::bt
 		subScope = stbt.arena.CreateScope();
 		highlightedGraphIndex = 0;
 
-		progress = CreateQueue<float>(stbt.arena, 128);
-		progressResult = CreateQueue<float>(stbt.arena, 128);
+		progress = CreateQueue<STBTProgress>(stbt.arena, 128);
 		prevProgress = FLT_MIN;
 	}
 
@@ -550,7 +549,6 @@ namespace jv::bt
 		botUpdateInfo.scope = &stbtScope;
 		botUpdateInfo.output = &stbt.output;
 		botUpdateInfo.progress = &progress;
-		botUpdateInfo.progressResult = &progressResult;
 		botUpdateInfo.fpfnTester = &fpfnTester;
 		botUpdateInfo.userPtr = bot.userPtr;
 		botUpdateInfo.start = runInfo.from;
@@ -696,7 +694,6 @@ namespace jv::bt
 		if (ImGui::Button("Reset Progress"))
 		{
 			progress.Clear();
-			progressResult.Clear();
 			prevProgress = FLT_MIN;
 		}
 		if (ImGui::Button("Reset FPFN"))
@@ -1274,7 +1271,7 @@ namespace jv::bt
 	{
 		const bool progressOverflowing = progress.count >= progress.length;
 		if(progressOverflowing)
-			prevProgress = Max(prevProgress, progress.Peek());
+			prevProgress = Max(prevProgress, progress.Peek().test);
 
 		if (!render)
 			return;
@@ -1310,15 +1307,17 @@ namespace jv::bt
 			lowest = progressOverflowing ? prevProgress : FLT_MAX;
 			for (uint32_t i = 0; i < progress.count; i++)
 			{
-				lowest = Min(progress[i], lowest);
-				lowest = Min(progressResult[i], lowest);
+				const auto& p = progress[i];
+				lowest = Min(p.test, lowest);
+				lowest = Min(p.validation, lowest);
 			}
 		}
 
 		float max = prevProgress;
 		for (uint32_t i = 0; i < progress.count; i++)
 		{
-			const float f = progress[i];
+			const auto& p = progress[i];
+			const float f = p.test;
 			max = Max(max, f);
 
 			arr[i].open = max;
@@ -1331,7 +1330,7 @@ namespace jv::bt
 			arrPrev[i].high = max;
 			arrPrev[i].low = lowest;
 
-			const float fR = progressResult[i];
+			const float fR = p.validation;
 			arrResult[i].open = fR;
 			arrResult[i].close = fR;
 			arrResult[i].high = max;

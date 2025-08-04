@@ -36,6 +36,12 @@ namespace jv::bt
 		int32_t change = 0;
 	};
 
+	struct STBTProgress final
+	{
+		float test = 0;
+		float validation = 0;
+	};
+
 	struct STBTBotInfo
 	{
 		Arena* arena;
@@ -43,8 +49,7 @@ namespace jv::bt
 
 		STBTScope* scope;
 		Queue<OutputMsg>* output;
-		Queue<float>* progress;
-		Queue<float>* progressResult;
+		Queue<STBTProgress>* progress;
 		FPFNTester* fpfnTester;
 		float* progressPct;
 

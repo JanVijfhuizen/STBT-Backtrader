@@ -31,10 +31,10 @@ namespace jv
 
 		uint32_t epochs = 25; // 25
 		uint32_t batchSize = 200; // 20
-		uint32_t maxCyclesWithoutProgress = 8;
+		uint32_t maxEpochsWithoutProgress = 8;
 
-		float cycleHighestRating = 0;
-		uint32_t lastCycleWithProgress = 0;
+		float epochHighestRating = 0;
+		uint32_t lastEpochWithProgress = 0;
 		uint32_t currentEpoch = 0;
 		uint32_t currentBatch = 0;
 

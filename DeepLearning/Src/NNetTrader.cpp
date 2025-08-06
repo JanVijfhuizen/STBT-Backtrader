@@ -185,13 +185,13 @@ namespace jv
 			if (nnet.ga.trainId == 0)
 			{
 				const uint32_t genId = nnet.ga.genId;
-				if (nnet.rating > ptr->cycleHighestRating)
+				if (nnet.rating > ptr->epochHighestRating)
 				{
-					ptr->cycleHighestRating = nnet.rating;
-					ptr->lastCycleWithProgress = genId;
+					ptr->epochHighestRating = nnet.rating;
+					ptr->lastEpochWithProgress = genId;
 				}
 				// If the network hasn't had a better score for a while already, stop the training for this instance.
-				else if ((ptr->lastCycleWithProgress + ptr->maxCyclesWithoutProgress) <= genId)
+				else if ((ptr->lastEpochWithProgress + ptr->maxEpochsWithoutProgress) <= genId)
 					ptr->currentEpoch = maxEpochs;
 			}
 		}
@@ -202,9 +202,9 @@ namespace jv
 			nnet.Deconstruct(arena, nnet.GetCurrent());
 			nnet.Rate(arena, tempArena);
 
-			ptr->cycleHighestRating = 0;
+			ptr->epochHighestRating = 0;
 			ptr->currentEpoch = 0;
-			ptr->lastCycleWithProgress = 0;
+			ptr->lastEpochWithProgress = 0;
 			
 			if (nnet.currentId == 0)
 			{

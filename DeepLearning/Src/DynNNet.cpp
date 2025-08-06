@@ -7,6 +7,7 @@
 
 namespace jv::ai
 {
+	// Type & up to 2 values
 	const uint32_t NEURON_VARIABLE_COUNT = 3;
 
 	struct Key final
@@ -603,7 +604,7 @@ namespace jv::ai
 		return ga.GetTrainee();
 	}
 
-	void DynNNet::RateParameters(Arena& arena, Arena& tempArena, float rating)
+	void DynNNet::RateParameters(Arena& arena, Arena& tempArena, const float rating)
 	{
 		ga.Rate(arena, tempArena, rating, nullptr);
 		if (ga.trainId == 0)

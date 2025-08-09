@@ -22,40 +22,13 @@ namespace jv
 	{
 		Array<NNetTraderMod> mods;
 		Array<uint32_t> timeFrames;
+		const char* loadFile = "loadfile";
 	};
 
-	struct NNetTrader final
+	struct NNetTrader
 	{
-		const char* loadFile = "loadfile";
-		const char* saveFile = "savefile";
-
-		uint32_t epochs = 25; // 25
-		uint32_t batchSize = 200; // 20
-		uint32_t maxEpochsWithoutProgress = 8;
-
-		float epochHighestRating = 0;
-		uint32_t lastEpochWithProgress = 0;
-		uint32_t currentEpoch = 0;
-		uint32_t currentBatch = 0;
-
-		Arena* arena;
-		Arena* tempArena;
-
-		uint64_t scope;
 		Array<NNetTraderMod> mods;
 		Array<uint32_t> timeFrames;
-		Array<jv::FPFNTester> testers;
-		ai::DynNNet nnet;
-
-		uint32_t stockId;
-		float rating;
-		float genRating;
-
-		bt::STBTProgress progress;
-
-		[[nodiscard]] static NNetTrader Create(Arena& arena, Arena& tempArena, const NNetTraderCreateInfo& info);
-		static void Destroy(Arena& arena, NNetTrader& trader);
-		[[nodiscard]] jv::bt::STBTBot GetBot();
 	};
 
 	[[nodiscard]] NNetTraderMod NNetGetDefaultMod(NNetTraderDefaultMod& out);

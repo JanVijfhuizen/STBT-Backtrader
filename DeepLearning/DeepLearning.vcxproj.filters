@@ -63,6 +63,12 @@
     <ClInclude Include="Include\Traders\Modules\MBounds.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Traders\NNetTraderTrainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Traders\NNetTraderResult.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\pch.cpp">
@@ -114,6 +120,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\MBounds.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\NNetTraderTrainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\NNetTraderResult.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

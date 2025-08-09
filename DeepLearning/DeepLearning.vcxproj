@@ -35,8 +35,12 @@
     <ClInclude Include="Include\Algorithms\NNet.h" />
     <ClInclude Include="Include\Traders\NNetTrader.h" />
     <ClInclude Include="Include\Traders\Modules\MBounds.h" />
+    <ClInclude Include="Include\Traders\NNetTraderResult.h" />
+    <ClInclude Include="Include\Traders\NNetTraderTrainer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\NNetTraderResult.cpp" />
+    <ClCompile Include="Src\NNetTraderTrainer.cpp" />
     <ClCompile Include="Src\MBounds.cpp" />
     <ClCompile Include="Src\NNetTrader.cpp" />
     <ClCompile Include="Src\DynNNet.cpp" />

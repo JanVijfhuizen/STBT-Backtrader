@@ -347,6 +347,9 @@ namespace jv::ai
 	}
 	void DynNNet::Construct(Arena& arena, Arena& tempArena, const DynInstance& instance)
 	{
+		assert(!constructed);
+		constructed = true;
+
 		constructScope = arena.CreateScope();
 		const auto tempScope = tempArena.CreateScope();
 
@@ -381,6 +384,9 @@ namespace jv::ai
 	}
 	void DynNNet::Deconstruct(Arena& arena, const DynInstance& instance)
 	{
+		assert(constructed);
+		constructed = false;
+
 		for (auto& neuron : neurons)
 			neuron.cWeights = {};
 		arena.DestroyScope(constructScope);
@@ -451,7 +457,8 @@ namespace jv::ai
 		if (generationId > 0)
 		{
 			// Set first instance of GA to previous values.
-			memcpy(ga.generation[0], current.parameters, GetParameterSize(current));
+			const size_t s = GetParameterSize(current) * sizeof(float);
+			memcpy(ga.generation[0], current.parameters, s);
 		}
 	}
 
@@ -1090,7 +1097,7 @@ namespace jv::ai
 		const size_t s = GetParameterSize(*this);
 		dst.parameters = arena.New<float>(s);
 		if (copyParameters)
-			memcpy(dst.parameters, parameters, s);
+			memcpy(dst.parameters, parameters, s * sizeof(float));
 		dst.outputType = outputType;
 	}
 }

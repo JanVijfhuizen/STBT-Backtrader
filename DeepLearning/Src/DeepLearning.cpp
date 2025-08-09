@@ -9,6 +9,8 @@
 #include <Traders/NNetTrader.h>
 #include <Traders/Modules/MBounds.h>
 #include <Jlib/ArrayUtils.h>
+#include <Traders/NNetTraderTrainer.h>
+#include <Traders/NNetTraderResult.h>
 
 void* MAlloc(const uint32_t size)
 {
@@ -46,7 +48,8 @@ int main()
 
 	jv::NNetTraderDefaultMod defaultMod;
 	jv::NNetTraderModBounds mBounds;
-	jv::NNetTrader nnetTrader;
+	jv::NNetTraderTrainer nnetTraderTrainer;
+	jv::NNetTraderResult nnetTraderResult;
 	{
 		auto mods = CreateArray<jv::NNetTraderMod>(arena, 2);
 		mods[0] = jv::NNetGetDefaultMod(defaultMod);
@@ -60,15 +63,17 @@ int main()
 		jv::NNetTraderCreateInfo info{};
 		info.mods = mods;
 		info.timeFrames = timeFrames;
-		nnetTrader = jv::NNetTrader::Create(arena, tempArena, info);
+		nnetTraderTrainer = jv::NNetTraderTrainer::Create(arena, tempArena, info);
+		nnetTraderResult = jv::NNetTraderResult::Create(arena, tempArena, info);
 	}
 
-	jv::bt::STBTBot bots[5];
+	jv::bt::STBTBot bots[6];
 	bots[0] = gaTrader.GetBot();
 	bots[1] = tradTrader.GetBot();
 	bots[2] = mainTrader.GetBot();
 	bots[3] = corTrader.GetBot();
-	bots[4] = nnetTrader.GetBot();
+	bots[4] = nnetTraderTrainer.GetBot();
+	bots[5] = nnetTraderResult.GetBot();
 
 	auto stbt = jv::bt::CreateSTBT(bots, sizeof(bots) / sizeof(jv::bt::STBTBot));
 	while (!stbt.Update())

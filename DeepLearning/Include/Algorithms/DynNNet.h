@@ -108,6 +108,8 @@ namespace jv::ai
 		float gaMutateMultiplier = .1f;
 		uint32_t gaKmPointCount = 3;
 
+		bool constructed = false;
+
 		uint64_t scope;
 		uint64_t resultScope;
 		uint64_t generationScope;

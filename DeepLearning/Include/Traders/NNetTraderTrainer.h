@@ -3,9 +3,16 @@
 
 namespace jv
 {
+	struct NNetTraderTrainerCreateInfo final : NNetTraderCreateInfo
+	{
+		Array<uint32_t> timeFrames;
+	};
+
 	struct NNetTraderTrainer final : NNetTrader
 	{
 		const char* saveFile = "savefile";
+
+		Array<uint32_t> timeFrames;
 
 		uint32_t epochs = 25; // 25
 		uint32_t batchSize = 200; // 20
@@ -29,7 +36,7 @@ namespace jv
 
 		bt::STBTProgress progress;
 
-		[[nodiscard]] static NNetTraderTrainer Create(Arena& arena, Arena& tempArena, const NNetTraderCreateInfo& info);
+		[[nodiscard]] static NNetTraderTrainer Create(Arena& arena, Arena& tempArena, const NNetTraderTrainerCreateInfo& info);
 		static void Destroy(Arena& arena, NNetTraderTrainer& trader);
 		[[nodiscard]] jv::bt::STBTBot GetBot();
 	};

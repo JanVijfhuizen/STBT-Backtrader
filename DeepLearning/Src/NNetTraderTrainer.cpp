@@ -246,7 +246,7 @@ namespace jv
 
 		const auto tempScope = tempArena->CreateScope();
 
-		NNetTraderCreateInfo nnetInfo{};
+		NNetTraderTrainerCreateInfo nnetInfo{};
 		nnetInfo.mods = Copy(*tempArena, ptr->mods);
 		nnetInfo.timeFrames = Copy(*tempArena, ptr->timeFrames);
 
@@ -260,7 +260,7 @@ namespace jv
 	{
 	}
 
-	NNetTraderTrainer NNetTraderTrainer::Create(Arena& arena, Arena& tempArena, const NNetTraderCreateInfo& info)
+	NNetTraderTrainer NNetTraderTrainer::Create(Arena& arena, Arena& tempArena, const NNetTraderTrainerCreateInfo& info)
 	{
 		NNetTraderTrainer trader{};
 		trader.arena = &arena;
@@ -278,7 +278,7 @@ namespace jv
 		jv::ai::DynNNetCreateInfo dynInfo{};
 		dynInfo.inputCount = outputCount;
 		dynInfo.outputCount = 2 * info.timeFrames.length;
-		dynInfo.generationSize = 80;
+		dynInfo.generationSize = NNET_GEN_SIZE;
 		auto& nnet = trader.nnet = jv::ai::DynNNet::Create(arena, tempArena, dynInfo);
 		nnet.alpha = 2; // 10
 		nnet.kmPointCount = 3;
@@ -298,7 +298,7 @@ namespace jv
 	jv::bt::STBTBot NNetTraderTrainer::GetBot()
 	{
 		bt::STBTBot bot{};
-		bot.name = "NNet Trader";
+		bot.name = "NNet Trainer";
 		bot.author = "jannie";
 		bot.description = "uses evolving topologies.";
 		bot.init = NNTraderInit;

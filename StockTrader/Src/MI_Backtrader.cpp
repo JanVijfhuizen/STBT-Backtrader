@@ -703,7 +703,8 @@ namespace jv::bt
 		{
 			auto botInfo = GetBotInfo(stbt);
 			auto& bot = stbt.bots[algoIndex];
-			bot.reset(botInfo);
+			if(bot.reset)
+				bot.reset(botInfo);
 		}
 
 		const auto SAVE_PATH = "BT.set";

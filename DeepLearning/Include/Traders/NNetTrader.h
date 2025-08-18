@@ -3,6 +3,8 @@
 
 namespace jv
 {
+	constexpr uint32_t NNET_GEN_SIZE = 80;
+
 	struct NNetTraderDefaultMod final
 	{
 		float multiplier;
@@ -18,17 +20,15 @@ namespace jv
 		void* userPtr = nullptr;
 	};
 
-	struct NNetTraderCreateInfo final
+	struct NNetTraderCreateInfo
 	{
 		Array<NNetTraderMod> mods;
-		Array<uint32_t> timeFrames;
 		const char* loadFile = "loadfile";
 	};
 
 	struct NNetTrader
 	{
 		Array<NNetTraderMod> mods;
-		Array<uint32_t> timeFrames;
 	};
 
 	[[nodiscard]] NNetTraderMod NNetGetDefaultMod(NNetTraderDefaultMod& out);

@@ -60,7 +60,7 @@ int main()
 		//timeFrames[1] = 3;
 		//timeFrames[2] = 6;
 
-		jv::NNetTraderCreateInfo info{};
+		jv::NNetTraderTrainerCreateInfo info{};
 		info.mods = mods;
 		info.timeFrames = timeFrames;
 		nnetTraderTrainer = jv::NNetTraderTrainer::Create(arena, tempArena, info);
